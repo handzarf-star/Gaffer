@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.wrangler/
+.dev.vars
+*.log
+test-results/
+playwright-report/
+.DS_Store
+# Reference screenshots of the original app: kept locally for diffing, never committed or shipped (Replica rules)
+replica/screens/
+replica/clone-screens/
