@@ -64,12 +64,23 @@ await shot(guest, '02-lobby-guest');
 
 // 3) Settings + start
 if (FORMAT === 'packs') await host.page.getByRole('button', { name: /Packs/ }).click();
+if (FORMAT === 'turns') await host.page.getByRole('button', { name: /^Take turns/ }).click();
 await host.page.getByRole('radio', { name: 'Numbers' }).click();
 await sleep(300);
 await host.page.getByRole('button', { name: 'Start the draft' }).click();
 await host.page.locator('.draft').waitFor();
 await guest.page.locator('.draft').waitFor();
 log('draft started');
+if (FORMAT === 'turns') {
+  // the friend watches the host's pack and pitch live; nobody is ever up at the same time
+  await guest.page.getByText(/Sam is picking/).first().waitFor({ timeout: 8000 });
+  await guest.page.locator('.draft__board[aria-label="Sam\'s pack"]').waitFor();
+  await guest.page.getByRole('tab', { name: /Sam/, selected: true }).waitFor();
+  if ((await guest.page.locator('.board .pcard').count()) < 1) throw new Error('the friend cannot see the pack being drafted');
+  await sleep(500);
+  await shot(guest, '03b-watching-guest');
+  log('turns: the friend watches the host draft');
+}
 
 // 4) Draft
 const both = [host, guest];
@@ -77,6 +88,7 @@ let shotsTaken = 0;
 for (let step = 0; step < 80; step++) {
   if (await host.page.locator('.setup').count()) break;
   let acted = false;
+  if (FORMAT === 'turns' && (await host.page.locator('.turn--you').count()) && (await guest.page.locator('.turn--you').count())) throw new Error('both players are up at the same time');
   for (const p of both) {
     const mine = p.page.locator('.turn--you');
     if (await mine.count()) {
@@ -93,6 +105,7 @@ for (let step = 0; step < 80; step++) {
     }
   }
   if (!acted) await sleep(300);
+  if (FORMAT === 'turns' && step === 5) await shot(guest, '03c-watching-guest-mid');
   if (step === 14) { await shot(host, '05-draft-mid'); await shot(guest, '05-draft-mid-guest'); }
 }
 await host.page.locator('.setup').waitFor({ timeout: 20000 });

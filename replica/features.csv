@@ -47,3 +47,4 @@ Quiet stretches fast-forward,match,should,no,yes,added
 Real-world card and penalty rates plus player traits,match,should,no,yes,added: traits are approximate
 Game waits when your phone locks,stability,should,no,yes,added
 Landscape layout and iOS and Android install polish,mobile,should,no,yes,added: emulated only
+Take turns draft (one drafts while the other watches live),draft,should,no,yes,added: the other person sees the pack and the pitch fill up

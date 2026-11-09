@@ -38,7 +38,7 @@ function pickFor(c: Ctx, id: string): ReturnType<RoomEngine['handle']> {
 function playDraft(c: Ctx) {
   for (let guard = 0; guard < 400 && c.eng.s.phase === 'draft'; guard++) {
     const d = c.eng.s.draft!;
-    const who = d.shared ? [d.order[d.turn]!] : c.ids.filter((id) => !d.picked.includes(id));
+    const who = d.shared || d.turns ? [d.order[d.turn]!] : c.ids.filter((id) => !d.picked.includes(id));
     for (const id of who) {
       const r = pickFor(c, id);
       expect(r.ok, JSON.stringify(r)).toBe(true);
@@ -460,7 +460,7 @@ describe('chaos: random players, random disconnects, random timing', () => {
       const n = 2 + rng.int(3);
       const kind = n > 2 ? rng.pick(['league', 'groups', 'knockout'] as const) : rng.pick(['match', 'league', 'groups', 'knockout'] as const);
       const c = mk(n, {
-        format: rng.chance(0.5) ? 'duel' : 'packs',
+        format: rng.pick(['duel', 'packs', 'turns'] as const),
         pool: rng.pick(['modern', 'legends', 'all'] as const),
         pickSeconds: rng.pick([0, 15, 25, 40] as const),
         competition: kind,
@@ -474,7 +474,7 @@ describe('chaos: random players, random disconnects, random timing', () => {
         if (roll < 0.25) c.eng.setConnected(id, rng.chance(0.5), c.t);
         else if (roll < 0.55 && c.eng.s.phase === 'draft') {
           const d = c.eng.s.draft!;
-          const who = d.shared ? d.order[d.turn]! : id;
+          const who = d.shared || d.turns ? d.order[d.turn]! : id;
           if (rng.chance(0.8)) pickFor(c, who);
           else c.eng.handle(who, { t: 'pick', round: d.round + rng.int(2), card: 'bogus', slot: 's' + rng.int(14) }, c.t);
         } else if (roll < 0.7 && c.eng.s.phase === 'setup') {
@@ -513,8 +513,8 @@ describe('chaos: random players, random disconnects, random timing', () => {
       for (let i = 0; i < 1200 && c.eng.s.phase !== 'result'; i++) {
         c.t += 5000;
         c.eng.tick(c.t);
-        if (c.eng.s.phase === 'draft') {
-          // players come back and play on
+        // players come back and play on. A room with nobody in it is frozen on purpose, so somebody has to return.
+        if (c.eng.s.phase === 'draft' || !c.eng.s.seats.some((x) => !x.bot && x.connected)) {
           for (const id of c.ids) c.eng.setConnected(id, true, c.t);
         }
       }
@@ -669,6 +669,20 @@ describe('dropped connections', () => {
     expect(c.eng.s.phase).toBe('hub');
   });
 
+  it('after everyone was away, a friend who is still away gets a fresh grace period', () => {
+    const c = mk(2, { format: 'packs', competition: 'league', teams: 4 });
+    toMatch(c);
+    c.t = c.eng.s.day!.startedAt + 1000;
+    for (const id of c.ids) c.eng.setConnected(id, false, c.t);
+    c.t += 30 * MIN;
+    c.eng.setConnected(c.ids[0]!, true, c.t); // one comes back, the other is still away
+    c.eng.handle(c.ids[0]!, { t: 'seen' }, c.t);
+    c.eng.tick(c.t + 1000);
+    expect(c.eng.s.phase).toBe('match'); // the grace runs from now, not from half an hour ago
+    c.eng.tick(c.t + DROP_GRACE_MS + 1);
+    expect(c.eng.s.phase).toBe('hub');
+  });
+
   it('an abandoned frozen room still gets cleaned up, and sets no pointless alarms', () => {
     const c = mk(1, { format: 'packs', competition: 'league', teams: 4 });
     toMatch(c);
@@ -701,5 +715,103 @@ describe('idle rooms', () => {
     expect(c.eng.s.hostId).toBe(c.ids[1]);
     const wake = c.eng.nextWake(c.t);
     if (wake !== null) expect(wake).toBeGreaterThan(c.t + 1000);
+  });
+});
+
+describe('take turns draft', () => {
+  const draftOne = (c: Ctx, id: string, n = 11) => {
+    for (let i = 0; i < n; i++) expect(pickFor(c, id).ok, `${id} pick ${i + 1}`).toBe(true);
+  };
+
+  it('one human drafts all 11 spots, then the next, then the CPU teams. Nobody drafts at the same time', () => {
+    const c = mk(2, { format: 'turns', competition: 'league', teams: 4 });
+    const [a, b] = c.ids as [string, string];
+    c.eng.handle(a, { t: 'start' }, c.t);
+    const d = c.eng.s.draft!;
+    expect(d.turns).toBe(true);
+    expect(d.order).toEqual([a, b]);
+    expect(d.order[d.turn]).toBe(a);
+    // the one who is not up cannot pick, however hard they try
+    const board = c.eng.view(a, c.t).draft!.board;
+    expect(c.eng.handle(b, { t: 'pick', round: 1, card: board[0]!, slot: Object.keys(c.eng.s.squads[b]!.slots)[0]! }, c.t)).toMatchObject({ ok: false, code: 'not_your_turn' });
+    draftOne(c, a, 10);
+    expect(c.eng.s.draft!.order[c.eng.s.draft!.turn]).toBe(a); // still a's, one spot left
+    expect(c.eng.s.draft!.round).toBe(11);
+    draftOne(c, a, 1);
+    // a is done; it is b's turn and b starts from round 1
+    expect(c.eng.s.phase).toBe('draft');
+    expect(Object.values(c.eng.s.squads[a]!.slots).filter(Boolean)).toHaveLength(11);
+    expect(Object.values(c.eng.s.squads[b]!.slots).filter(Boolean)).toHaveLength(0);
+    expect(c.eng.s.draft!.order[c.eng.s.draft!.turn]).toBe(b);
+    expect(c.eng.s.draft!.round).toBe(1);
+    expect(c.eng.handle(a, { t: 'pick', round: 1, card: c.eng.view(b, c.t).draft!.board[0]!, slot: 'x' }, c.t)).toMatchObject({ ok: false });
+    draftOne(c, b);
+    // then the CPU teams, all at once, from what is left
+    expect(c.eng.s.phase).toBe('setup');
+    expect(Object.keys(c.eng.s.squads).sort()).toEqual([a, b, 'cpu1', 'cpu2'].sort());
+    for (const cpu of ['cpu1', 'cpu2']) expect(Object.values(c.eng.s.squads[cpu]!.slots).filter(Boolean)).toHaveLength(11);
+    playToResult(c);
+  });
+
+  it('the one waiting sees the pack and the picks of whoever is up, live', () => {
+    const c = mk(2, { format: 'turns' });
+    const [a, b] = c.ids as [string, string];
+    c.eng.handle(a, { t: 'start' }, c.t);
+    const mine = c.eng.view(a, c.t).draft!;
+    const theirs = c.eng.view(b, c.t).draft!;
+    expect(theirs.board).toEqual(mine.board); // b watches a's pack
+    expect(theirs.turns).toBe(true);
+    pickFor(c, a);
+    const seen = c.eng.view(b, c.t);
+    expect(seen.draft!.log.at(-1)!.seat).toBe(a);
+    expect(Object.values(seen.squads[a]!.slots).filter(Boolean)).toHaveLength(1); // and a's pitch fills up in front of them
+    draftOne(c, a, 10);
+    // once everyone has drafted, the usual privacy applies again: lineups stay hidden until kick-off
+    draftOne(c, b);
+    expect(c.eng.view(b, c.t).squads[a]).toBeUndefined();
+  });
+
+  it('the first drafter alternates between games', () => {
+    const c = mk(2, { format: 'turns' });
+    const [a, b] = c.ids as [string, string];
+    c.eng.handle(a, { t: 'start' }, c.t);
+    expect(c.eng.s.draft!.order).toEqual([a, b]);
+    playToResult(c);
+    for (const id of c.ids) c.eng.handle(id, { t: 'rematch', want: true }, c.t);
+    expect(c.eng.s.phase).toBe('draft');
+    expect(c.eng.s.draft!.order).toEqual([b, a]);
+  });
+
+  it('only the player who is up runs against the pick timer', () => {
+    const c = mk(2, { format: 'turns', pickSeconds: 15 });
+    const [a, b] = c.ids as [string, string];
+    c.eng.handle(a, { t: 'start' }, c.t);
+    c.t = c.eng.s.draft!.deadline! + 1000;
+    c.eng.tick(c.t);
+    const log = c.eng.s.draft!.log;
+    expect(log).toHaveLength(1);
+    expect(log[0]).toMatchObject({ seat: a, auto: true });
+    expect(Object.values(c.eng.s.squads[b]!.slots).filter(Boolean)).toHaveLength(0);
+  });
+
+  it('a drafter who drops out is auto-picked for, so the friend is never left waiting', () => {
+    const c = mk(2, { format: 'turns' });
+    const [a, b] = c.ids as [string, string];
+    c.eng.handle(a, { t: 'start' }, c.t);
+    c.eng.setConnected(a, false, c.t);
+    for (let i = 0; i < 60 && c.eng.s.draft!.order[c.eng.s.draft!.turn] === a; i++) {
+      c.t += AFK_GRACE_MS + 2000;
+      c.eng.tick(c.t);
+    }
+    expect(c.eng.s.draft!.order[c.eng.s.draft!.turn]).toBe(b);
+    expect(Object.values(c.eng.s.squads[a]!.slots).filter(Boolean)).toHaveLength(11);
+  });
+
+  it('alone against CPU teams it is just a normal draft', () => {
+    const c = mk(1, { format: 'turns', competition: 'league', teams: 4 });
+    c.eng.handle(c.ids[0]!, { t: 'start' }, c.t);
+    draftOne(c, c.ids[0]!);
+    expect(c.eng.s.phase).toBe('setup');
+    playToResult(c);
   });
 });

@@ -29,6 +29,7 @@ Every one of these was found by a test, a measurement or a screenshot, then fixe
 | G-22 | S4 | Home-screen icon on iPhone would have black corners (transparent pixels) | Review of how iOS renders touch icons | Full-bleed 180px apple-touch-icon |
 | G-23 | S1 | Competition state was persisted by reference, but it is changed in place, so a restart could bring back a stale table | Reasoning during the build, then pinned by the save/restore test | Written on every change; save/restore test across league, groups and knockout |
 | G-24 | S2 | First version of the match engine produced 0.27 red cards a match and 73-second matches | Calibration run | Rates fitted to league averages (about 0.13 reds, about 4 yellows); matches about 48s normal, about 30s quick |
+| G-25 | S4 | The Duel draft's description said "Take turns picking", so with the new Take turns style two options in the same list both read as "take turns" | Strict-mode selector clash in the new browser test | Duel now says "picks alternate" |
 
 ## To check (not reproduced, so not claimed as bugs)
 

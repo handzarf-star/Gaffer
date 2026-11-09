@@ -1,6 +1,24 @@
 # Deploying Gaffer on Cloudflare
 
-You need a free Cloudflare account and Node 20 or newer. I can't do the account steps for you (logging in, adding a domain), so this is exactly what to run.
+You need a free Cloudflare account. On a laptop you also need Node 20 or newer; on a phone, skip to section 0. I can't do the account steps for you (logging in, adding a domain), so this is exactly what to do.
+
+## 0. From an iPhone, no laptop (about ten minutes)
+
+You do not need Node, npm or the terminal. Cloudflare can build the game straight from your GitHub repository. Do this in Safari on the phone. Cloudflare's dashboard is cramped on a phone, so tap **aA** in the address bar and choose **Request Desktop Website** first.
+
+1. Sign up or log in (free) at **dash.cloudflare.com**.
+2. Go to **Workers & Pages**, tap **Create**, then **Import a repository** (labelled "Connect to Git" in some versions). Sign in to GitHub when asked and install the Cloudflare GitHub app. Give it access to **only the repository this project lives in**.
+3. Pick the repository. Keep the project name **`gaffer`**. It has to match `name` in `wrangler.jsonc`, or the build fails.
+4. Under branch settings, set the **production branch** to `claude/dazzling-brown-bgiy1o` (that is where the finished game is). Once you have merged it into `main`, switch this to `main`.
+5. **Build command:** `npm run build`. **Deploy command:** `npx wrangler deploy` (that is the default).
+6. Tap **Save and Deploy**. The first build takes a minute or two. When it is green, open the Worker. The address is `https://gaffer.<your-name>.workers.dev`.
+7. Open that address on your phone, tap **Create a room**, and send the link to your friend. Add it to your home screen from Safari's share sheet if you like.
+
+From then on, every push to the production branch deploys by itself. If a build fails, open the build log in the dashboard and send me the last 20 lines.
+
+The free plan is enough: Durable Objects are available on it when they use SQLite storage, which is what this game uses. (Free plan limits are 100,000 requests and 13,000 GB-seconds of Durable Object time a day, far more than an evening of drafting.)
+
+Menu names in Cloudflare's dashboard change now and then. If a label differs, look for the same idea: connect a Git repository, set the production branch, set the build command.
 
 ## 1. First deploy (about two minutes)
 

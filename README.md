@@ -7,7 +7,9 @@
 | ![Home](docs/screens/home.png) | ![Draft](docs/screens/draft.png) |
 | ![Tactics](docs/screens/setup.png) | ![Match](docs/screens/match-dark.png) |
 
-<p align="center"><img src="docs/screens/mobile-draft.png" width="260" alt="Phone layout"> &nbsp; <img src="docs/screens/mobile-sealed.png" width="260" alt="Sealed pack on a phone"></p>
+<p align="center"><img src="docs/screens/mobile-match.png" width="230" alt="Live match on a phone: chances, cards and goals highlighted"> &nbsp; <img src="docs/screens/mobile-watching.png" width="230" alt="Watching your mate draft, live, in Take turns mode"> &nbsp; <img src="docs/screens/mobile-draft.png" width="230" alt="Draft on a phone"></p>
+
+<p align="center"><img src="docs/screens/landscape-match.png" width="520" alt="The match held sideways: pitch on the left, scoreboard and events on the right"></p>
 
 ## What you can do
 
@@ -16,6 +18,7 @@
 - **Only watch your own games.** Two friends side by side each see their own match. Games between CPU teams are just a result: they appear in the table between matchdays and nobody sits through them.
 - **Duel draft.** One shared board per round, snake order. Once a card is taken it is gone, so you can steal your mate's target.
 - **Packs draft.** Everyone opens their own sealed pack at the same time. The glow hints at the best card inside.
+- **Take turns draft.** One of you drafts a whole squad while the other watches the pack and the pitch fill up live, then you swap, then the CPU teams draft. Nobody drafts at the same time, and because each person has their own packs there is no stealing. Who goes first alternates every game.
 - **See the fit.** Every spot on the pitch shows how well a player suits it (natural, close, a stretch, out of position) as colour, icon and words, with the exact rating penalty. Same-nation neighbours link for chemistry.
 - **Pick tactics.** Five styles, each with a stated trade-off. Your rival can't see your lineup or tactics until kick-off.
 - **Watch the match on a pitch.** Dots and a ball on a live pitch. Chances are flagged and highlighted, and so are corners, free kicks (with a wall), penalties, yellow and red cards, saves and goals. Quiet stretches fast-forward on their own; extra time and penalties happen when the stage needs a winner. Skip any time.
@@ -46,7 +49,7 @@ That is the whole deploy: it builds the client and publishes one Worker that ser
 ## Test it
 
 ```bash
-npm test                   # 89 unit, simulation, tournament, room-machine, chaos and socket tests
+npm test                   # 96 unit, simulation, tournament, room-machine, chaos and socket tests
 npm run test:e2e           # real browsers: two-player games, two phones in a league, one phone at five sizes,
                            # reconnects, accessibility audit, and a hard kill-and-restart of the runtime
 npm run check:persistence  # just the kill-and-restart check (boots its own copy of the runtime)

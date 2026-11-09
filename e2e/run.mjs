@@ -27,6 +27,7 @@ if (!up) { console.error('server did not start'); process.exit(1); }
 const steps = [
   ['two players, Duel draft, desktop', 'e2e/flow.mjs', { BASE }],
   ['two players, Packs draft, phone', 'e2e/flow.mjs', { BASE, FORMAT: 'packs', MOBILE: '1' }],
+  ['two players, Take turns draft (one drafts, the other watches), phone', 'e2e/flow.mjs', { BASE, FORMAT: 'turns', MOBILE: '1' }],
   ['reconnect, resume, solo cup, daily', 'e2e/more.mjs', { BASE }],
   ['two phones play a league with CPU teams (iPhone + Pixel emulation)', 'e2e/tournament.mjs', { BASE }],
   ['one phone vs CPU teams at small, large and landscape sizes (+ iOS zoom rule)', 'e2e/devices.mjs', { BASE }],

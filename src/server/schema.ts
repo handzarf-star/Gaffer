@@ -20,7 +20,7 @@ export const C2SSchema = z.discriminatedUnion('t', [
   z.object({
     t: z.literal('settings'),
     patch: z.object({
-      format: z.enum(['duel', 'packs']).optional(),
+      format: z.enum(['duel', 'packs', 'turns']).optional(),
       pool: z.enum(['modern', 'legends', 'all']).optional(),
       ratings: z.enum(['hidden', 'tier', 'full']).optional(),
       pickSeconds: z.union([z.literal(0), z.literal(15), z.literal(25), z.literal(40)]).optional(),

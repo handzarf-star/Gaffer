@@ -3,17 +3,18 @@ import { Rng } from './rng';
 import { PLAYERS, player, poolPlayers, tierOf, type Pos, type PoolId, type Tier } from './players';
 import type { Squad } from './squad';
 
-export type DraftFormat = 'duel' | 'packs';
+export type DraftFormat = 'duel' | 'packs' | 'turns';
 export type RatingsMode = 'hidden' | 'tier' | 'full';
 export const ROUNDS = 11;
 
 export const FORMAT_INFO: Record<DraftFormat, { name: string; blurb: string }> = {
-  duel: { name: 'Duel', blurb: 'One shared board each round. Take turns picking. Steal your mate\'s target.' },
+  duel: { name: 'Duel', blurb: 'One shared board each round, picks alternate. Steal your mate\'s target.' },
   packs: { name: 'Packs', blurb: 'Everyone opens their own pack at the same time. Fast and lucky.' },
+  turns: { name: 'Take turns', blurb: 'One of you drafts a whole squad while the other watches live, then you swap. CPU teams go last.' },
 };
 
 export function boardSize(format: DraftFormat, seats: number): number {
-  return format === 'packs' ? 3 : Math.min(8, seats + 4);
+  return format === 'duel' ? Math.min(8, seats + 4) : 3;
 }
 
 const POS_WEIGHT: Record<Pos, number> = {

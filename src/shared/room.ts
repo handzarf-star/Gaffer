@@ -188,6 +188,8 @@ export class RoomEngine {
       s.day.deadline += ms;
     }
     if (s.hub) s.hub.deadline += ms;
+    // a friend who is still away starts their grace (and their auto-pick timer) afresh, not from before the pause
+    for (const x of this.humans()) if (!x.connected && x.droppedAt > 0) x.droppedAt += ms;
   }
 
   /** A dropped human counts as finished only after a grace period, so a locked phone does not skip their match. */
@@ -350,7 +352,7 @@ export class RoomEngine {
     const s = this.s;
     const next: Settings = { ...s.settings };
     if (p.format !== undefined) {
-      if (p.format !== 'duel' && p.format !== 'packs') return fail('bad_message', 'Unknown draft format.');
+      if (p.format !== 'duel' && p.format !== 'packs' && p.format !== 'turns') return fail('bad_message', 'Unknown draft format.');
       next.format = p.format;
     }
     if (p.pool !== undefined) {
@@ -427,6 +429,7 @@ export class RoomEngine {
       round: 0,
       deadline: null,
       shared: s.settings.format === 'duel',
+      turns: s.settings.format === 'turns',
       board: [],
       boards: {},
       order: [],
@@ -435,6 +438,12 @@ export class RoomEngine {
       taken: [],
       log: [],
     };
+    if (s.draft.turns) {
+      // everyone drafts in this order, one after the other; who goes first alternates between games
+      const ids = this.humans().map((x) => x.id);
+      const rot = (s.game - 1) % ids.length;
+      s.draft.order = ids.slice(rot).concat(ids.slice(0, rot));
+    }
     this.dealRound(now, 1);
     this.bump(now);
   }
@@ -452,8 +461,19 @@ export class RoomEngine {
     const n = ids.length;
     d.round = round;
     d.picked = [];
-    d.turn = 0;
-    if (d.shared) {
+    if (!d.turns) d.turn = 0; // in take-turns, turn is whose draft it is and only moves when they are done
+    if (d.turns) {
+      const id = d.order[d.turn]!;
+      const sq = s.squads[id]!;
+      d.boards = {
+        [id]: dealBoard({
+          seed: s.seed, pool: s.settings.pool, round, key: id,
+          size: boardSize('turns', n),
+          taken: new Set(Object.values(sq.slots).filter((x): x is string => !!x)),
+          needs: [openRoles(sq).map((o) => o.role)],
+        }),
+      };
+    } else if (d.shared) {
       const needs = ids.map((id) => openRoles(s.squads[id]!).map((o) => o.role));
       d.board = dealBoard({
         seed: s.seed, pool: s.settings.pool, round, key: 'shared',
@@ -478,6 +498,18 @@ export class RoomEngine {
     d.deadline = this.turnDeadline(now, round === 1);
   }
 
+  /** The humans who owe a pick right now. */
+  private owing(): Seat[] {
+    const d = this.s.draft;
+    if (!d) return [];
+    const humans = this.humans();
+    if (d.shared || d.turns) {
+      const up = humans.find((x) => x.id === d.order[d.turn]);
+      return up ? [up] : [];
+    }
+    return humans.filter((x) => !d.picked.includes(x.id));
+  }
+
   /** The deadline that applies to one seat right now (AFK seats are cut short). */
   private seatDeadline(seatId: string): number | null {
     const d = this.s.draft;
@@ -500,6 +532,9 @@ export class RoomEngine {
     if (d.shared) {
       if (d.order[d.turn] !== id) return fail('not_your_turn', 'Not your turn yet.');
       board = d.board;
+    } else if (d.turns) {
+      if (d.order[d.turn] !== id) return fail('not_your_turn', 'Not your turn to draft yet.');
+      board = d.boards[id] ?? [];
     } else {
       if (d.picked.includes(id)) return fail('not_your_turn', 'You already picked this round.');
       board = d.boards[id] ?? [];
@@ -526,7 +561,8 @@ export class RoomEngine {
       d.turn++;
       if (d.turn >= d.order.length) this.finishRound(now);
       else d.deadline = this.turnDeadline(now, false);
-    } else if (d.picked.length >= this.humans().length) {
+    } else if (d.turns || d.picked.length >= this.humans().length) {
+      // take-turns: the one human who is up has picked, so the round is over
       this.finishRound(now);
     }
     this.bump(now);
@@ -534,8 +570,12 @@ export class RoomEngine {
 
   private finishRound(now: number): void {
     const d = this.s.draft!;
-    if (d.round >= ROUNDS) this.toSetup(now);
-    else this.dealRound(now, d.round + 1);
+    if (d.round >= ROUNDS) {
+      if (d.turns && d.turn + 1 < d.order.length) {
+        d.turn++; // the next human starts their own draft from round 1
+        this.dealRound(now, 1);
+      } else this.toSetup(now);
+    } else this.dealRound(now, d.round + 1);
   }
 
   private autoPickFor(id: string, now: number): void {
@@ -556,7 +596,7 @@ export class RoomEngine {
       if (d.shared) {
         d.turn++;
         if (d.turn >= d.order.length) this.finishRound(now);
-      } else if (d.picked.length >= this.humans().length) this.finishRound(now);
+      } else if (d.turns || d.picked.length >= this.humans().length) this.finishRound(now);
       this.bump(now);
       return;
     }
@@ -713,18 +753,7 @@ export class RoomEngine {
       case 'draft': {
         const d = s.draft;
         if (!d) return false;
-        if (d.shared) {
-          const id = d.order[d.turn];
-          if (!id) return false;
-          const dl = this.seatDeadline(id);
-          if (dl !== null && now >= dl + GRACE_MS) {
-            this.autoPickFor(id, now);
-            return true;
-          }
-          return false;
-        }
-        for (const seat of humans) {
-          if (d.picked.includes(seat.id)) continue;
+        for (const seat of this.owing()) {
           const dl = this.seatDeadline(seat.id);
           if (dl !== null && now >= dl + GRACE_MS) {
             this.autoPickFor(seat.id, now);
@@ -816,18 +845,9 @@ export class RoomEngine {
       case 'draft': {
         const d = s.draft;
         if (d) {
-          if (d.shared) {
-            const id = d.order[d.turn];
-            if (id) {
-              const dl = this.seatDeadline(id);
-              if (dl !== null) add(dl + GRACE_MS);
-            }
-          } else {
-            for (const seat of this.humans()) {
-              if (d.picked.includes(seat.id)) continue;
-              const dl = this.seatDeadline(seat.id);
-              if (dl !== null) add(dl + GRACE_MS);
-            }
+          for (const seat of this.owing()) {
+            const dl = this.seatDeadline(seat.id);
+            if (dl !== null) add(dl + GRACE_MS);
           }
         }
         break;
@@ -892,7 +912,9 @@ export class RoomEngine {
         round: d.round,
         deadline: d.deadline,
         shared: d.shared,
-        board: d.shared ? d.board : (d.boards[forId] ?? []),
+        turns: !!d.turns,
+        // take-turns: everyone sees the pack of whoever is up, so the other player can watch the draft happen
+        board: d.shared ? d.board : d.turns ? (d.boards[d.order[d.turn]!] ?? []) : (d.boards[forId] ?? []),
         order: d.order,
         turn: d.turn,
         picked: d.picked,

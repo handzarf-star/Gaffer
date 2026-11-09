@@ -42,6 +42,10 @@ export interface DraftScreenProps {
   turnHue?: number;
   canPick: boolean;
   shared: boolean;
+  /** take-turns format: one person drafts at a time and the others watch their pack and pitch live */
+  turns?: boolean;
+  /** while watching, whose pitch to show */
+  watchId?: string;
   deadline: number | null;
   offset: number;
   pickMs: number;
@@ -61,6 +65,8 @@ export function DraftScreen(p: DraftScreenProps) {
   const [fresh, setFresh] = useState<string | null>(null);
   const [tab, setTab] = useState<string>('me');
   const [burst, setBurst] = useState(0);
+  // watching someone's draft: show their pitch filling up; when it is my turn, show mine
+  useEffect(() => { setTab(p.watchId ?? 'me'); }, [p.watchId]);
   const [opened, setOpened] = useState(0);
   const prevBoard = useRef<string[]>(p.board);
   const prevTurn = useRef<string>('');
@@ -98,7 +104,7 @@ export function DraftScreen(p: DraftScreenProps) {
   }, [p.round, p.turn, p.turnName]);
 
   // Packs format: the pack starts sealed. Its glow hints at the best card inside; tap to open (or it opens by itself).
-  const sealed = !p.shared && p.canPick && p.board.length > 0 && opened !== p.round;
+  const sealed = !p.shared && !p.turns && p.canPick && p.board.length > 0 && opened !== p.round;
   const bestTier: Tier | 'mystery' = useMemo(() => {
     if (p.mode === 'hidden') return 'mystery';
     const order: Tier[] = ['bronze', 'silver', 'gold', 'icon'];
@@ -132,7 +138,7 @@ export function DraftScreen(p: DraftScreenProps) {
   };
 
   const choose = (id: string) => {
-    if (pending) return;
+    if (pending || (p.turns && !p.canPick)) return; // watching someone else's draft: look, don't touch
     sfx.select();
     setSelected((cur) => (cur === id ? null : id));
   };
@@ -193,7 +199,7 @@ export function DraftScreen(p: DraftScreenProps) {
               <Avatar name={p.turnName ?? '?'} hue={p.turnHue ?? 0} size={34} />
               <div className="turn__text">
                 <b>{p.turnName} is picking</b>
-                <span>{p.shared ? 'Tap a card to plan your next move' : 'Waiting on them'}</span>
+                <span>{p.shared ? 'Tap a card to plan your next move' : p.turns ? 'Watch them build their squad. You are up next.' : 'Waiting on them'}</span>
               </div>
             </>
           ) : (
@@ -209,10 +215,10 @@ export function DraftScreen(p: DraftScreenProps) {
         <Timer deadline={p.deadline} offset={p.offset} totalMs={p.pickMs} tick={yourTurn} />
       </header>
 
-      <section className="draft__board" aria-label={p.shared ? 'Shared board' : 'Your pack'}>
+      <section className="draft__board" aria-label={p.shared ? 'Shared board' : p.turns && !p.canPick ? `${p.turnName}'s pack` : 'Your pack'}>
         <div className="board__title">
-          <h2>{p.shared ? 'Shared board' : 'Your pack'}</h2>
-          <span>{p.shared ? `${p.board.length} left. Once it's taken, it's gone.` : 'Pick 1 of 3'}</span>
+          <h2>{p.shared ? 'Shared board' : p.turns && !p.canPick ? `${p.turnName}'s pack` : 'Your pack'}</h2>
+          <span>{p.shared ? `${p.board.length} left. Once it's taken, it's gone.` : p.turns && !p.canPick ? 'Watching live' : 'Pick 1 of 3'}</span>
         </div>
         {sealed ? (
           <button type="button" className={cx('sealed', `sealed--${bestTier}`)} onClick={openPack}>
@@ -257,12 +263,14 @@ export function DraftScreen(p: DraftScreenProps) {
         </div>
         )}
 
-        <div className="needs" aria-label="Positions you still need">
-          <span className="needs__label">Still need</span>
-          {needs.length === 0 ? <span className="needs__done">All spots filled</span> : needs.map(([role, n]) => (
-            <span key={role} className="chip chip--role" title={ROLE_WORD[role as Role]}>{role}{n > 1 ? ` ×${n}` : ''}</span>
-          ))}
-        </div>
+        {!(p.turns && !p.canPick) && (
+          <div className="needs" aria-label="Positions you still need">
+            <span className="needs__label">Still need</span>
+            {needs.length === 0 ? <span className="needs__done">All spots filled</span> : needs.map(([role, n]) => (
+              <span key={role} className="chip chip--role" title={ROLE_WORD[role as Role]}>{role}{n > 1 ? ` ×${n}` : ''}</span>
+            ))}
+          </div>
+        )}
 
         {p.log.length > 0 && (
           <ol className="picklog" aria-label="Recent picks">

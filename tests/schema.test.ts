@@ -20,6 +20,7 @@ describe('wire schema', () => {
       { competition: 'groups', teams: 8, pace: 'quick' },
       { competition: 'knockout', teams: 4 },
       { botLevel: 'hard' },
+      { format: 'turns' },
       { legs: 2 },
     ]) {
       const parsed = parseMessage(JSON.stringify({ t: 'settings', patch }));

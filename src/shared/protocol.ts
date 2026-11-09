@@ -63,6 +63,8 @@ export interface DraftState {
   round: number;
   deadline: number | null;
   shared: boolean;
+  /** Take-turns format: one human drafts all their rounds while the others watch; order[turn] is who is up. */
+  turns?: boolean;
   board: string[];
   boards: Record<string, string[]>;
   order: string[];
@@ -132,7 +134,8 @@ export interface DraftView {
   round: number;
   deadline: number | null;
   shared: boolean;
-  /** duel: the shared board. packs: your own pack. */
+  turns?: boolean;
+  /** duel: the shared board. packs: your own pack. turns: the pack of whoever is up, for everyone to watch. */
   board: string[];
   order: string[];
   turn: number;

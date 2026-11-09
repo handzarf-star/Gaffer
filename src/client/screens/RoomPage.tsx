@@ -325,8 +325,8 @@ function Lobby({ conn, view }: { conn: RoomConnection; view: RoomView }) {
         <h2 className="panel__title">Draft</h2>
         <div className="setting">
           <label>Draft style</label>
-          <div className="opts">
-            {(['duel', 'packs'] as DraftFormat[]).map((f) => (
+          <div className="opts opts--3">
+            {(['duel', 'packs', 'turns'] as DraftFormat[]).map((f) => (
               <button key={f} disabled={!isHost} className={cx('opt', set.format === f && 'is-on')} onClick={() => patch({ format: f })} aria-pressed={set.format === f}>
                 <b>{FORMAT_INFO[f].name}</b>
                 <span>{FORMAT_INFO[f].blurb}</span>
@@ -387,13 +387,14 @@ function DraftRoom({ conn, view, offset }: PhaseProps) {
   const mySquad = view.squads[you]!;
   const humans = humansOf(view);
   const seatOf = (id: string) => view.seats.find((s) => s.id === id);
-  const turnId = d.shared ? d.order[d.turn] : undefined;
-  const pending = !d.shared ? humans.filter((s) => !d.picked.includes(s.id) && s.id !== you) : [];
+  const turnsMode = !!d.turns;
+  const turnId = d.shared || turnsMode ? d.order[d.turn] : undefined;
+  const pending = !d.shared && !turnsMode ? humans.filter((s) => !d.picked.includes(s.id) && s.id !== you) : [];
   const iPicked = d.picked.includes(you);
 
   const rivals: Rival[] = humans.filter((s) => s.id !== you).map((s) => ({
     id: s.id, name: s.name, hue: s.hue, squad: view.squads[s.id] ?? null, connected: s.connected,
-    done: d.picked.includes(s.id), isTurn: turnId === s.id,
+    done: turnsMode ? Object.values(view.squads[s.id]?.slots ?? {}).filter(Boolean).length >= 11 : d.picked.includes(s.id), isTurn: turnId === s.id,
   }));
 
   const log: DraftLogRow[] = d.log.map((l, i) => {
@@ -405,7 +406,7 @@ function DraftRoom({ conn, view, offset }: PhaseProps) {
   let turnName: string | undefined;
   let turnHue = 0;
   let canPick: boolean;
-  if (d.shared) {
+  if (d.shared || turnsMode) {
     turn = turnId === you ? 'me' : 'rival';
     const t = turnId ? seatOf(turnId) : undefined;
     turnName = t?.name;
@@ -434,13 +435,15 @@ function DraftRoom({ conn, view, offset }: PhaseProps) {
       turnHue={turnHue}
       canPick={canPick}
       shared={d.shared}
+      turns={turnsMode}
+      watchId={turnsMode && turnId !== you ? turnId : undefined}
       deadline={d.deadline}
       offset={offset}
       pickMs={view.settings.pickSeconds * 1000}
       rivals={rivals}
       log={log}
       onPick={send}
-      statusNote={!d.shared && iPicked ? `Locked in. Waiting for ${turnName}…` : undefined}
+      statusNote={!d.shared && !turnsMode && iPicked ? `Locked in. Waiting for ${turnName}…` : undefined}
     />
   );
 }
