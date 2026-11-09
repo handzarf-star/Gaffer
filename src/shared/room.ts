@@ -1,23 +1,23 @@
 // The whole multiplayer game as a pure state machine with an injected clock.
 // The Cloudflare Durable Object and the Node dev server are thin adapters around this class,
-// so every rule (turns, timers, AFK, reconnect) is unit-testable without any network.
+// so every rule (turns, timers, AFK, reconnect, tournaments, CPU teams) is unit-testable without any network.
 
+import { BOT_LEVELS, botNames, buildBotSquad } from './bots';
+import { COMPETITIONS, completeDay, createCompetition, defaultTeams, litefy, validTeams, type CompetitionKind, type Matchday } from './competition';
 import { ROUNDS, autoPick, boardSize, dealBoard, openRoles, placePlayer } from './draft';
 import { FORMATIONS, FORMATION_IDS, type FormationId } from './formations';
 import { PLAYER_BY_ID } from './players';
 import { Rng, randomSeed, randomToken } from './rng';
 import { playbackSchedule, simulateMatch } from './sim';
-import { STYLES, autoArrange, changeFormation, emptySquad, swapSlots, type Squad } from './squad';
+import { STYLES, autoArrange, changeFormation, emptySquad, swapSlots } from './squad';
 import {
   DEFAULT_SETTINGS,
   MAX_SEATS,
-  MIN_SEATS,
   PICK_SECONDS,
   SEAT_HUES,
   type C2S,
   type DraftState,
   type ErrorCode,
-  type Fixture,
   type RoomState,
   type RoomView,
   type Seat,
@@ -29,6 +29,8 @@ export const GRACE_MS = 700;
 /** A dropped player gets this long to come back before the room auto-picks for them. */
 export const AFK_GRACE_MS = 8000;
 export const SETUP_SECONDS = 75;
+/** Time to read the table and tweak a lineup between matchdays before the next one starts anyway. */
+export const HUB_SECONDS = 120;
 export const HOST_MIGRATE_MS = 20_000;
 export const LOBBY_GHOST_MS = 120_000;
 /** Nobody connected for this long: the room is garbage. */
@@ -52,37 +54,16 @@ export function sanitizeName(raw: string): string {
   return clean || 'Player';
 }
 
-export function roundRobin(ids: string[]): Array<[string, string]> {
-  const out: Array<[string, string]> = [];
-  for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) out.push([ids[i]!, ids[j]!]);
-  return out;
-}
-
-export interface TableRow {
-  id: string;
-  played: number;
-  w: number;
-  d: number;
-  l: number;
-  gf: number;
-  ga: number;
-  pts: number;
-}
-
-export function standings(fixtures: Fixture[], ids: string[]): TableRow[] {
-  const rows = new Map<string, TableRow>(ids.map((id) => [id, { id, played: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 }]));
-  for (const f of fixtures) {
-    const a = rows.get(f.a);
-    const b = rows.get(f.b);
-    if (!a || !b) continue;
-    const [ga, gb] = f.result.score;
-    a.played++; b.played++;
-    a.gf += ga; a.ga += gb; b.gf += gb; b.ga += ga;
-    if (f.result.winner === 0) { a.w++; b.l++; a.pts += 3; }
-    else if (f.result.winner === 1) { b.w++; a.l++; b.pts += 3; }
-    else { a.d++; b.d++; a.pts++; b.pts++; }
+/** Make competition and team count consistent with how many humans are in the room. */
+export function fitSettings(settings: Settings, humans: number): Settings {
+  const next = { ...settings };
+  const opts = COMPETITIONS[next.competition].teamOptions;
+  if (humans > opts[opts.length - 1]!) {
+    // e.g. three friends in a "single match": a mini-league is the natural thing
+    next.competition = 'league';
   }
-  return [...rows.values()].sort((x, y) => y.pts - x.pts || y.gf - y.ga - (x.gf - x.ga) || y.gf - x.gf);
+  if (!validTeams(next.competition, next.teams) || next.teams < humans) next.teams = defaultTeams(next.competition, humans);
+  return next;
 }
 
 export class RoomEngine {
@@ -97,7 +78,7 @@ export class RoomEngine {
   static create(code: string, now: number, deps: Deps = defaultDeps): RoomEngine {
     return new RoomEngine(
       {
-        v: 1,
+        v: 2,
         code,
         rev: 0,
         createdAt: now,
@@ -112,7 +93,9 @@ export class RoomEngine {
         draft: null,
         squads: {},
         setup: null,
-        match: null,
+        comp: null,
+        day: null,
+        hub: null,
         series: { wins: {}, games: 0, log: [] },
         rematch: {},
       },
@@ -120,12 +103,19 @@ export class RoomEngine {
     );
   }
 
+  private humans(): Seat[] {
+    return this.s.seats.filter((x) => !x.bot);
+  }
+  private nameOf(id: string): string {
+    return this.s.seats.find((x) => x.id === id)?.name ?? '???';
+  }
+
   /* ───────────── membership ───────────── */
 
   join(msg: { id?: string; secret?: string; name: string }, now: number): Result<{ id: string; secret: string }> {
     const s = this.s;
     if (msg.id) {
-      const seat = s.seats.find((x) => x.id === msg.id);
+      const seat = s.seats.find((x) => x.id === msg.id && !x.bot);
       if (seat) {
         if (!msg.secret || s.secrets[seat.id] !== msg.secret) return fail('bad_secret', 'That seat belongs to someone else.');
         this.setConnected(seat.id, true, now);
@@ -133,7 +123,7 @@ export class RoomEngine {
       }
     }
     if (s.phase !== 'lobby') return fail('in_progress', 'This game has already started.');
-    if (s.seats.length >= MAX_SEATS) return fail('room_full', 'This room is full.');
+    if (this.humans().length >= MAX_SEATS) return fail('room_full', 'This room is full.');
     const id = this.deps.token().slice(0, 8);
     const secret = this.deps.token();
     const used = new Set(s.seats.map((x) => x.hue));
@@ -145,16 +135,16 @@ export class RoomEngine {
       while (taken.has(`${name} ${n}`.toLowerCase())) n++;
       name = `${name} ${n}`;
     }
-    const seat: Seat = { id, name, hue: hue < 0 ? 0 : hue, connected: true, droppedAt: 0, formation: '433' };
-    s.seats.push(seat);
+    s.seats.push({ id, name, hue: hue < 0 ? 0 : hue, connected: true, droppedAt: 0, formation: '433', bot: false });
     s.secrets[id] = secret;
     if (!s.hostId) s.hostId = id;
+    s.settings = fitSettings(s.settings, this.humans().length);
     this.bump(now);
     return { ok: true, id, secret };
   }
 
   setConnected(id: string, connected: boolean, now: number): void {
-    const seat = this.s.seats.find((x) => x.id === id);
+    const seat = this.s.seats.find((x) => x.id === id && !x.bot);
     if (!seat || seat.connected === connected) return;
     seat.connected = connected;
     seat.droppedAt = connected ? 0 : now;
@@ -178,7 +168,8 @@ export class RoomEngine {
     delete s.secrets[id];
     delete s.squads[id];
     delete s.rematch[id];
-    if (s.hostId === id) s.hostId = s.seats.find((x) => x.connected)?.id ?? s.seats[0]?.id ?? '';
+    if (s.hostId === id) s.hostId = s.seats.find((x) => x.connected && !x.bot)?.id ?? s.seats.find((x) => !x.bot)?.id ?? '';
+    s.settings = fitSettings(s.settings, Math.max(1, this.humans().length));
   }
 
   /* ───────────── message handling ───────────── */
@@ -186,7 +177,7 @@ export class RoomEngine {
   handle(id: string, msg: C2S, now: number): Result {
     this.tick(now);
     const s = this.s;
-    const seat = s.seats.find((x) => x.id === id);
+    const seat = s.seats.find((x) => x.id === id && !x.bot);
     if (!seat) return fail('bad_secret', 'You are not in this room.');
     const isHost = s.hostId === id;
 
@@ -199,25 +190,8 @@ export class RoomEngine {
       case 'settings': {
         if (!isHost) return fail('not_host', 'Only the host can change settings.');
         if (s.phase !== 'lobby') return fail('wrong_phase', 'Settings are locked once the draft starts.');
-        const p = msg.patch ?? {};
-        const next: Settings = { ...s.settings };
-        if (p.format !== undefined) {
-          if (p.format !== 'duel' && p.format !== 'packs') return fail('bad_message', 'Unknown draft format.');
-          next.format = p.format;
-        }
-        if (p.pool !== undefined) {
-          if (p.pool !== 'modern' && p.pool !== 'legends' && p.pool !== 'all') return fail('bad_message', 'Unknown pool.');
-          next.pool = p.pool;
-        }
-        if (p.ratings !== undefined) {
-          if (p.ratings !== 'hidden' && p.ratings !== 'tier' && p.ratings !== 'full') return fail('bad_message', 'Unknown rating mode.');
-          next.ratings = p.ratings;
-        }
-        if (p.pickSeconds !== undefined) {
-          if (!(PICK_SECONDS as readonly number[]).includes(p.pickSeconds)) return fail('bad_message', 'Unknown timer.');
-          next.pickSeconds = p.pickSeconds;
-        }
-        s.settings = next;
+        const r = this.applySettings(msg.patch ?? {});
+        if (!r.ok) return r;
         this.bump(now);
         return OK;
       }
@@ -225,9 +199,9 @@ export class RoomEngine {
         if (!FORMATION_IDS.includes(msg.formation)) return fail('bad_message', 'Unknown formation.');
         if (s.phase === 'lobby') {
           seat.formation = msg.formation;
-        } else if (s.phase === 'setup' && s.setup && s.squads[id]) {
+        } else if ((s.phase === 'setup' || s.phase === 'hub') && s.squads[id]) {
           s.squads[id] = changeFormation(s.squads[id]!, msg.formation);
-          s.setup.ready[id] = false;
+          this.unready(id);
         } else {
           return fail('wrong_phase', 'You cannot change formation now.');
         }
@@ -238,47 +212,51 @@ export class RoomEngine {
         if (!isHost) return fail('not_host', 'Only the host can start.');
         if (s.phase !== 'lobby') return fail('wrong_phase', 'Already started.');
         for (const x of s.seats.filter((x) => !x.connected)) this.removeSeat(x.id);
-        if (s.seats.length < MIN_SEATS) return fail('need_players', 'Waiting for at least one more player.');
+        const n = this.humans().length;
+        if (n < 1) return fail('need_players', 'Nobody is here to play.');
+        s.settings = fitSettings(s.settings, n);
+        if (s.settings.teams < 2) return fail('need_players', 'You need at least two teams. Add CPU teams or invite a friend.');
         this.startDraft(now);
         return OK;
       }
       case 'pick':
         return this.pick(id, msg.round, msg.card, msg.slot, now);
       case 'swap': {
-        if (s.phase !== 'setup' || !s.setup || !s.squads[id]) return fail('wrong_phase', 'Lineups are locked.');
+        if (!this.canEditLineup(id)) return fail('wrong_phase', 'Lineups are locked.');
         const a = s.squads[id]!;
         const b = swapSlots(a, msg.a, msg.b);
         if (b === a) return fail('bad_slot', 'Unknown slot.');
         s.squads[id] = b;
-        s.setup.ready[id] = false;
+        this.unready(id);
         this.bump(now);
         return OK;
       }
       case 'arrange': {
-        if (s.phase !== 'setup' || !s.setup || !s.squads[id]) return fail('wrong_phase', 'Lineups are locked.');
+        if (!this.canEditLineup(id)) return fail('wrong_phase', 'Lineups are locked.');
         s.squads[id] = autoArrange(s.squads[id]!);
-        s.setup.ready[id] = false;
+        this.unready(id);
         this.bump(now);
         return OK;
       }
       case 'style': {
-        if (s.phase !== 'setup' || !s.setup || !s.squads[id]) return fail('wrong_phase', 'Lineups are locked.');
+        if (!this.canEditLineup(id)) return fail('wrong_phase', 'Lineups are locked.');
         if (!(msg.style in STYLES)) return fail('bad_message', 'Unknown style.');
         s.squads[id] = { ...s.squads[id]!, style: msg.style };
-        s.setup.ready[id] = false;
+        this.unready(id);
         this.bump(now);
         return OK;
       }
       case 'ready': {
-        if (s.phase !== 'setup' || !s.setup) return fail('wrong_phase', 'Nothing to confirm right now.');
-        s.setup.ready[id] = !!msg.ready;
+        if (s.phase === 'setup' && s.setup) s.setup.ready[id] = !!msg.ready;
+        else if (s.phase === 'hub' && s.hub) s.hub.ready[id] = !!msg.ready;
+        else return fail('wrong_phase', 'Nothing to confirm right now.');
         this.bump(now);
         this.tick(now);
         return OK;
       }
       case 'seen': {
-        if (s.phase !== 'match' || !s.match) return OK;
-        s.match.seen[id] = true;
+        if (s.phase !== 'match' || !s.day) return OK;
+        s.day.seen[id] = true;
         this.bump(now);
         this.tick(now);
         return OK;
@@ -312,6 +290,66 @@ export class RoomEngine {
     }
   }
 
+  private canEditLineup(id: string): boolean {
+    const s = this.s;
+    return (s.phase === 'setup' || s.phase === 'hub') && !!s.squads[id];
+  }
+
+  /** Changing your lineup takes back a "ready". */
+  private unready(id: string): void {
+    const s = this.s;
+    if (s.setup) s.setup.ready[id] = false;
+    if (s.hub) s.hub.ready[id] = false;
+  }
+
+  private applySettings(p: Partial<Settings>): Result {
+    const s = this.s;
+    const next: Settings = { ...s.settings };
+    if (p.format !== undefined) {
+      if (p.format !== 'duel' && p.format !== 'packs') return fail('bad_message', 'Unknown draft format.');
+      next.format = p.format;
+    }
+    if (p.pool !== undefined) {
+      if (p.pool !== 'modern' && p.pool !== 'legends' && p.pool !== 'all') return fail('bad_message', 'Unknown pool.');
+      next.pool = p.pool;
+    }
+    if (p.ratings !== undefined) {
+      if (p.ratings !== 'hidden' && p.ratings !== 'tier' && p.ratings !== 'full') return fail('bad_message', 'Unknown rating mode.');
+      next.ratings = p.ratings;
+    }
+    if (p.pickSeconds !== undefined) {
+      if (!(PICK_SECONDS as readonly number[]).includes(p.pickSeconds)) return fail('bad_message', 'Unknown timer.');
+      next.pickSeconds = p.pickSeconds;
+    }
+    const humans = Math.max(1, this.humans().length);
+    if (p.competition !== undefined) {
+      if (!(p.competition in COMPETITIONS)) return fail('bad_message', 'Unknown competition.');
+      next.competition = p.competition as CompetitionKind;
+      next.teams = defaultTeams(next.competition, humans);
+      // knockout-style games are quicker to watch; leagues have many matches
+      if (p.pace === undefined) next.pace = next.competition === 'match' ? 'normal' : 'quick';
+    }
+    if (p.teams !== undefined) {
+      if (!validTeams(next.competition, p.teams)) return fail('bad_settings', 'That team count does not suit this competition.');
+      if (p.teams < humans) return fail('bad_settings', 'There are more players than teams.');
+      next.teams = p.teams;
+    }
+    if (p.botLevel !== undefined) {
+      if (!(p.botLevel in BOT_LEVELS)) return fail('bad_message', 'Unknown CPU level.');
+      next.botLevel = p.botLevel;
+    }
+    if (p.pace !== undefined) {
+      if (p.pace !== 'normal' && p.pace !== 'quick') return fail('bad_message', 'Unknown pace.');
+      next.pace = p.pace;
+    }
+    if (p.legs !== undefined) {
+      if (p.legs !== 1 && p.legs !== 2) return fail('bad_message', 'Unknown league length.');
+      next.legs = p.legs;
+    }
+    s.settings = fitSettings(next, humans);
+    return OK;
+  }
+
   private uniqueName(name: string, selfId: string): string {
     const taken = new Set(this.s.seats.filter((x) => x.id !== selfId).map((x) => x.name.toLowerCase()));
     if (!taken.has(name.toLowerCase())) return name;
@@ -320,16 +358,25 @@ export class RoomEngine {
     return `${name} ${n}`;
   }
 
-  /* ───────────── draft ───────────── */
+  /* ───────────── draft (humans only; CPU teams draft afterwards) ───────────── */
 
   private startDraft(now: number): void {
     const s = this.s;
     s.game += 1;
     s.seed = this.deps.seed();
+    // CPU teams are created fresh for every game
+    s.seats = s.seats.filter((x) => !x.bot);
+    const nBots = s.settings.teams - this.humans().length;
+    const names = botNames(s.seed, nBots);
+    for (let i = 0; i < nBots; i++) {
+      s.seats.push({ id: `cpu${i + 1}`, name: names[i]!, hue: i, connected: true, droppedAt: 0, formation: '433', bot: true });
+    }
     s.squads = {};
-    for (const seat of s.seats) s.squads[seat.id] = emptySquad(seat.formation);
+    for (const seat of this.humans()) s.squads[seat.id] = emptySquad(seat.formation);
     s.setup = null;
-    s.match = null;
+    s.comp = null;
+    s.day = null;
+    s.hub = null;
     s.rematch = {};
     s.phase = 'draft';
     s.draft = {
@@ -357,7 +404,7 @@ export class RoomEngine {
   private dealRound(now: number, round: number): void {
     const s = this.s;
     const d = s.draft!;
-    const ids = s.seats.map((x) => x.id);
+    const ids = this.humans().map((x) => x.id);
     const n = ids.length;
     d.round = round;
     d.picked = [];
@@ -393,7 +440,7 @@ export class RoomEngine {
     if (!d) return null;
     const seat = this.s.seats.find((x) => x.id === seatId);
     let dl = d.deadline;
-    if (seat && !seat.connected) {
+    if (seat && !seat.bot && !seat.connected) {
       const afk = seat.droppedAt + AFK_GRACE_MS;
       dl = dl === null ? afk : Math.min(dl, afk);
     }
@@ -435,7 +482,7 @@ export class RoomEngine {
       d.turn++;
       if (d.turn >= d.order.length) this.finishRound(now);
       else d.deadline = this.turnDeadline(now, false);
-    } else if (d.picked.length >= s.seats.length) {
+    } else if (d.picked.length >= this.humans().length) {
       this.finishRound(now);
     }
     this.bump(now);
@@ -465,64 +512,123 @@ export class RoomEngine {
       if (d.shared) {
         d.turn++;
         if (d.turn >= d.order.length) this.finishRound(now);
-      } else if (d.picked.length >= s.seats.length) this.finishRound(now);
+      } else if (d.picked.length >= this.humans().length) this.finishRound(now);
       this.bump(now);
       return;
     }
     this.applyPick(id, choice.cardId, choice.slotId, true, now);
   }
 
-  /* ───────────── setup, match, result ───────────── */
+  /* ───────────── setup, matchdays, hub, result ───────────── */
 
   private toSetup(now: number): void {
     const s = this.s;
     s.phase = 'setup';
     s.draft = null;
+    // CPU teams draft from whoever the humans left
+    const taken = new Set<string>();
+    for (const h of this.humans()) for (const p of Object.values(s.squads[h.id]!.slots)) if (p) taken.add(p);
+    for (const b of s.seats.filter((x) => x.bot)) s.squads[b.id] = buildBotSquad(s.seed, s.settings.pool, s.settings.botLevel, taken, b.id);
     s.setup = { deadline: now + SETUP_SECONDS * 1000, ready: {} };
   }
 
-  private startMatches(now: number): void {
+  private humanIds(): string[] {
+    return this.humans().map((x) => x.id);
+  }
+
+  private simulateDay(idx: number): void {
     const s = this.s;
-    const ids = s.seats.map((x) => x.id);
-    const knockout = ids.length === 2;
-    const pairs = knockout ? ([[ids[0]!, ids[1]!]] as Array<[string, string]>) : roundRobin(ids);
-    const nameOf = (id: string) => s.seats.find((x) => x.id === id)?.name ?? '???';
-    const fixtures: Fixture[] = pairs.map(([a, b], i) => {
-      const names: [string, string] = [nameOf(a), nameOf(b)];
-      return { a, b, names, result: simulateMatch(s.squads[a]!, s.squads[b]!, names, `${s.seed}/m/${i}`, { knockout }) };
-    });
-    let total = 0;
-    for (const f of fixtures) total += playbackSchedule(f.result).totalMs + 4000;
-    s.match = { startedAt: now + 3000, knockout, fixtures, seen: {}, deadline: now + 3000 + total + 25_000 };
+    const day = s.comp!.days[idx]!;
+    for (const f of day.fixtures) {
+      if (f.lite) continue;
+      const names: [string, string] = [this.nameOf(f.a), this.nameOf(f.b)];
+      const result = simulateMatch(s.squads[f.a]!, s.squads[f.b]!, names, `${s.seed}/d${idx}/${f.id}`, { knockout: f.knockout });
+      f.lite = litefy(result);
+      // only matches a human plays in are kept in full; CPU-versus-CPU games are just a result
+      f.result = f.humans.length ? result : null;
+    }
+  }
+
+  private dayHasHumans(day: Matchday): boolean {
+    return day.fixtures.some((f) => f.humans.length > 0);
+  }
+
+  /** Matchdays nobody human plays in resolve instantly. Returns the indexes of the days it skipped over. */
+  private skipCpuDays(): number[] {
+    const c = this.s.comp!;
+    const skipped: number[] = [];
+    for (let guard = 0; guard < 80 && !c.champion && !this.dayHasHumans(c.days[c.day]!); guard++) {
+      const idx = c.day;
+      this.simulateDay(idx);
+      completeDay(c, this.humanIds());
+      skipped.push(idx);
+    }
+    return skipped;
+  }
+
+  /** The first matchday starts once everyone has set up. */
+  private startCompetition(now: number): void {
+    const s = this.s;
+    const teamIds = s.seats.map((x) => x.id);
+    s.comp = createCompetition(s.settings.competition, teamIds, this.humanIds(), s.seed, s.settings.legs);
     s.setup = null;
+    this.skipCpuDays();
+    if (s.comp.champion) return this.toResult(now);
+    this.beginHumanDay(now);
+  }
+
+  private beginHumanDay(now: number): void {
+    const s = this.s;
+    const c = s.comp!;
+    this.simulateDay(c.day);
+    const day = c.days[c.day]!;
+    const mine = day.fixtures.filter((f) => f.humans.length > 0);
+    const seen: Record<string, boolean> = {};
+    for (const h of this.humans()) if (!mine.some((f) => f.humans.includes(h.id))) seen[h.id] = true;
+    let longest = 0;
+    for (const f of mine) longest = Math.max(longest, playbackSchedule(f.result!, s.settings.pace).totalMs);
+    s.day = { startedAt: now + 3000, seen, deadline: now + 3000 + longest + 4500 + 30_000 };
+    s.hub = null;
     s.phase = 'match';
+    this.bump(now);
+  }
+
+  /** Everyone has watched (or skipped) their games. Close the matchday, play CPU-only rounds, then show the hub. */
+  private finishHumanDay(now: number): void {
+    const s = this.s;
+    const c = s.comp!;
+    const idx = c.day;
+    completeDay(c, this.humanIds());
+    const played = [idx];
+    if (!c.champion) played.push(...this.skipCpuDays());
+    s.day = null;
+    if (c.champion) return this.toResult(now);
+    s.hub = { deadline: now + HUB_SECONDS * 1000, ready: {}, played };
+    s.phase = 'hub';
     this.bump(now);
   }
 
   private toResult(now: number): void {
     const s = this.s;
-    const m = s.match!;
-    const ids = s.seats.map((x) => x.id);
-    let winner: string | null = null;
-    let summary = '';
-    const nameOf = (id: string) => s.seats.find((x) => x.id === id)?.name ?? '???';
-    if (m.knockout) {
-      const f = m.fixtures[0]!;
-      winner = f.result.winner === null ? null : f.result.winner === 0 ? f.a : f.b;
-      const pens = f.result.pens ? ` (${f.result.pens[0]}-${f.result.pens[1]} pens)` : '';
-      summary = `${f.names[0]} ${f.result.score[0]}-${f.result.score[1]} ${f.names[1]}${pens}`;
+    const c = s.comp!;
+    const champ = c.champion;
+    const isHuman = !!champ && this.humans().some((h) => h.id === champ);
+    let summary: string;
+    if (c.kind === 'match') {
+      const f = c.days[0]!.fixtures[0]!;
+      const pens = f.lite?.pens ? ` (${f.lite.pens[0]}-${f.lite.pens[1]} pens)` : '';
+      summary = `${this.nameOf(f.a)} ${f.lite?.score[0]}-${f.lite?.score[1]} ${this.nameOf(f.b)}${pens}`;
     } else {
-      const table = standings(m.fixtures, ids);
-      const [t0, t1] = table;
-      const tie = !!t0 && !!t1 && t0.pts === t1.pts && t0.gf - t0.ga === t1.gf - t1.ga && t0.gf === t1.gf;
-      winner = tie || !t0 ? null : t0.id;
-      summary = winner ? `${nameOf(winner)} won the table on ${t0!.pts} pts` : 'Dead heat at the top';
+      summary = champ ? `${this.nameOf(champ)} won the ${COMPETITIONS[c.kind].name.toLowerCase()}` : 'No champion';
     }
     s.series.games += 1;
-    if (winner) s.series.wins[winner] = (s.series.wins[winner] ?? 0) + 1;
-    s.series.log.push({ game: s.game, winner, summary });
+    if (isHuman && champ) s.series.wins[champ] = (s.series.wins[champ] ?? 0) + 1;
+    s.series.log.push({ game: s.game, winner: isHuman ? champ : null, summary });
     if (s.series.log.length > 30) s.series.log.shift();
     s.phase = 'result';
+    s.day = null;
+    s.hub = null;
+    s.setup = null;
     s.rematch = {};
     this.bump(now);
   }
@@ -532,10 +638,14 @@ export class RoomEngine {
     s.phase = 'lobby';
     s.draft = null;
     s.setup = null;
-    s.match = null;
+    s.comp = null;
+    s.day = null;
+    s.hub = null;
     s.squads = {};
     s.rematch = {};
+    s.seats = s.seats.filter((x) => !x.bot);
     for (const x of s.seats.filter((x) => !x.connected)) this.removeSeat(x.id);
+    s.settings = fitSettings(s.settings, Math.max(1, this.humans().length));
     this.bump(now);
   }
 
@@ -553,6 +663,7 @@ export class RoomEngine {
 
   private tickOnce(now: number): boolean {
     const s = this.s;
+    const humans = this.humans();
     switch (s.phase) {
       case 'draft': {
         const d = s.draft;
@@ -567,7 +678,7 @@ export class RoomEngine {
           }
           return false;
         }
-        for (const seat of s.seats) {
+        for (const seat of humans) {
           if (d.picked.includes(seat.id)) continue;
           const dl = this.seatDeadline(seat.id);
           if (dl !== null && now >= dl + GRACE_MS) {
@@ -580,26 +691,36 @@ export class RoomEngine {
       case 'setup': {
         const st = s.setup;
         if (!st) return false;
-        const everyoneReady = s.seats.every((x) => !x.connected || st.ready[x.id]);
+        const everyoneReady = humans.every((x) => !x.connected || st.ready[x.id]);
         if (everyoneReady || now >= st.deadline) {
-          this.startMatches(now);
+          this.startCompetition(now);
           return true;
         }
         return false;
       }
       case 'match': {
-        const m = s.match;
-        if (!m) return false;
-        const allSeen = s.seats.every((x) => !x.connected || m.seen[x.id]);
-        if ((allSeen && now >= m.startedAt) || now >= m.deadline) {
-          this.toResult(now);
+        const d = s.day;
+        if (!d) return false;
+        const allSeen = humans.every((x) => !x.connected || d.seen[x.id]);
+        if ((allSeen && now >= d.startedAt) || now >= d.deadline) {
+          this.finishHumanDay(now);
+          return true;
+        }
+        return false;
+      }
+      case 'hub': {
+        const h = s.hub;
+        if (!h) return false;
+        const everyoneReady = humans.every((x) => !x.connected || h.ready[x.id]);
+        if (everyoneReady || now >= h.deadline) {
+          this.beginHumanDay(now);
           return true;
         }
         return false;
       }
       case 'result': {
-        const connected = s.seats.filter((x) => x.connected);
-        if (connected.length >= MIN_SEATS && connected.every((x) => s.rematch[x.id])) {
+        const connected = humans.filter((x) => x.connected);
+        if (connected.length >= 1 && connected.every((x) => s.rematch[x.id])) {
           this.startDraft(now);
           return true;
         }
@@ -617,7 +738,7 @@ export class RoomEngine {
     const s = this.s;
     const host = s.seats.find((x) => x.id === s.hostId);
     if (!host || (!host.connected && now - host.droppedAt >= HOST_MIGRATE_MS)) {
-      const next = s.seats.find((x) => x.connected);
+      const next = s.seats.find((x) => x.connected && !x.bot);
       if (next && next.id !== s.hostId) {
         s.hostId = next.id;
         this.bump(now);
@@ -653,7 +774,7 @@ export class RoomEngine {
               if (dl !== null) add(dl + GRACE_MS);
             }
           } else {
-            for (const seat of s.seats) {
+            for (const seat of this.humans()) {
               if (d.picked.includes(seat.id)) continue;
               const dl = this.seatDeadline(seat.id);
               if (dl !== null) add(dl + GRACE_MS);
@@ -666,8 +787,11 @@ export class RoomEngine {
         add(s.setup?.deadline);
         break;
       case 'match':
-        add(s.match?.deadline);
-        if (s.match) add(s.match.startedAt);
+        add(s.day?.deadline);
+        if (s.day) add(s.day.startedAt);
+        break;
+      case 'hub':
+        add(s.hub?.deadline);
         break;
       default:
         break;
@@ -683,8 +807,9 @@ export class RoomEngine {
   /** When the room should be deleted if nothing happens. */
   expiresAt(_now: number): number {
     const s = this.s;
-    const anyConnected = s.seats.some((x) => x.connected);
-    const abandoned = anyConnected ? Infinity : Math.max(s.lastActive, ...s.seats.map((x) => x.droppedAt)) + ROOM_ABANDONED_MS;
+    const humans = this.humans();
+    const anyConnected = humans.some((x) => x.connected);
+    const abandoned = anyConnected ? Infinity : Math.max(s.lastActive, ...humans.map((x) => x.droppedAt)) + ROOM_ABANDONED_MS;
     return Math.min(abandoned, s.createdAt + ROOM_MAX_AGE_MS);
   }
 
@@ -701,8 +826,8 @@ export class RoomEngine {
       const sq = s.squads[seat.id];
       rosters[seat.id] = sq ? (Object.values(sq.slots).filter((x): x is string => !!x)) : [];
     }
-    const squads: Record<string, Squad> = {};
-    const revealAll = s.phase === 'draft' || s.phase === 'match' || s.phase === 'result';
+    const squads: RoomView['squads'] = {};
+    const revealAll = s.phase === 'draft' || s.phase === 'match' || s.phase === 'hub' || s.phase === 'result';
     for (const seat of s.seats) {
       const sq = s.squads[seat.id];
       if (!sq) continue;
@@ -736,7 +861,9 @@ export class RoomEngine {
       rosters,
       squads,
       setup: s.setup,
-      match: s.match,
+      comp: s.comp,
+      day: s.day,
+      hub: s.hub,
       series: s.series,
       rematch: s.rematch,
     };

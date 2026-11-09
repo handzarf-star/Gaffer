@@ -36,6 +36,7 @@ const PATHS: Record<string, ReactNode> = {
   plus: <path d="M12 5v14M5 12h14" />,
   chev: <path d="M9 6l6 6-6 6" />,
   card: (<><rect x="5" y="3" width="14" height="18" rx="3" /><path d="M9 14h6M9 17h3" /><circle cx="12" cy="9" r="2" /></>),
+  cpu: (<><rect x="6" y="6" width="12" height="12" rx="2.5" /><rect x="9.5" y="9.5" width="5" height="5" rx="1" /><path d="M9 2.5v3.5M15 2.5v3.5M9 18v3.5M15 18v3.5M2.5 9h3.5M2.5 15h3.5M18 9h3.5M18 15h3.5" /></>),
   whistle: (<><circle cx="9" cy="14" r="5" /><path d="M13.5 11.5L21 8v3l-6 2" /><circle cx="9" cy="14" r="1.4" /></>),
 };
 
@@ -135,8 +136,8 @@ export function Spinner({ size = 28 }: { size?: number }) {
   return <span className="spinner" style={{ width: size, height: size }} role="status" aria-label="Loading" />;
 }
 
-export function Avatar({ name, hue, size = 36, connected }: { name: string; hue: number; size?: number; connected?: boolean }) {
-  const color = SEAT_HUES[hue % SEAT_HUES.length]!;
+export function Avatar({ name, hue, size = 36, connected, color: colorProp }: { name: string; hue: number; size?: number; connected?: boolean; color?: string }) {
+  const color = colorProp ?? SEAT_HUES[hue % SEAT_HUES.length]!;
   return (
     <span className="avatar" style={{ width: size, height: size, background: color, fontSize: size * 0.44 }} aria-hidden="true">
       {(name.trim()[0] ?? '?').toUpperCase()}

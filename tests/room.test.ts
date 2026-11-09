@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { autoPick } from '../src/shared/draft';
 import { Rng } from '../src/shared/rng';
-import { AFK_GRACE_MS, RoomEngine, SETUP_SECONDS, standings, testDeps } from '../src/shared/room';
+import { AFK_GRACE_MS, HUB_SECONDS, RoomEngine, SETUP_SECONDS, testDeps } from '../src/shared/room';
+import { tables, currentDay } from '../src/shared/competition';
 import type { C2S, Settings } from '../src/shared/protocol';
 
 interface Ctx {
@@ -10,8 +11,8 @@ interface Ctx {
   secrets: string[];
   t: number;
 }
-function mk(n: number, settings: Partial<Settings> = {}): Ctx {
-  const eng = RoomEngine.create('ABCD', 1_000_000, testDeps());
+function mk(n: number, settings: Partial<Settings> = {}, prefix = 't'): Ctx {
+  const eng = RoomEngine.create('ABCD', 1_000_000, testDeps(prefix));
   let t = 1_000_000;
   const ids: string[] = [];
   const secrets: string[] = [];
@@ -83,11 +84,26 @@ describe('lobby', () => {
     expect(c.eng.handle(c.ids[0]!, { t: 'settings', patch: { pool: 'legends', format: 'packs' } }, c.t).ok).toBe(true);
     expect(c.eng.s.settings.pool).toBe('legends');
   });
-  it('needs two connected players to start and drops ghosts', () => {
+  it('drops disconnected ghosts at start, and a lone human plays a CPU team', () => {
     const c = mk(2);
     c.eng.setConnected(c.ids[1]!, false, c.t);
-    expect(c.eng.handle(c.ids[0]!, { t: 'start' }, c.t)).toMatchObject({ ok: false, code: 'need_players' });
-    expect(c.eng.s.seats).toHaveLength(1);
+    expect(c.eng.handle(c.ids[0]!, { t: 'start' }, c.t).ok).toBe(true);
+    expect(c.eng.s.seats.filter((x) => !x.bot)).toHaveLength(1);
+    expect(c.eng.s.seats.filter((x) => x.bot)).toHaveLength(1);
+    expect(c.eng.s.phase).toBe('draft');
+  });
+  it('settings stay consistent: competition changes reset team counts, 3 friends get a league', () => {
+    const c = mk(2);
+    expect(c.eng.handle(c.ids[0]!, { t: 'settings', patch: { competition: 'knockout' } }, c.t).ok).toBe(true);
+    expect(c.eng.s.settings.teams).toBe(4);
+    expect(c.eng.handle(c.ids[0]!, { t: 'settings', patch: { teams: 8 } }, c.t).ok).toBe(true);
+    expect(c.eng.handle(c.ids[0]!, { t: 'settings', patch: { teams: 6 } }, c.t)).toMatchObject({ ok: false, code: 'bad_settings' });
+    expect(c.eng.handle(c.ids[0]!, { t: 'settings', patch: { competition: 'groups' } }, c.t).ok).toBe(true);
+    expect(c.eng.s.settings.teams).toBe(8);
+    const three = RoomEngine.create('ABCD', 0, testDeps());
+    for (const n of ['A', 'B', 'C']) three.join({ name: n }, 0);
+    expect(three.s.settings.competition).toBe('league');
+    expect(three.s.settings.teams).toBeGreaterThanOrEqual(4);
   });
   it('host passes to someone connected when the host vanishes', () => {
     const c = mk(3);
@@ -203,31 +219,35 @@ describe('packs draft', () => {
   });
 });
 
-describe('a whole game', () => {
-  function runToResult(c: Ctx) {
-    c.eng.handle(c.ids[0]!, { t: 'start' }, c.t);
-    playDraft(c);
-    expect(c.eng.s.phase).toBe('setup');
-    for (const id of c.ids) expect(c.eng.handle(id, { t: 'ready', ready: true }, c.t).ok).toBe(true);
-    expect(c.eng.s.phase).toBe('match');
-    c.t += 4000;
-    for (const id of c.ids) c.eng.handle(id, { t: 'seen' }, c.t);
-    expect(c.eng.s.phase).toBe('result');
+/** drive any game to its result by having every human do the obvious thing at every stage */
+function playToResult(c: Ctx, onPhase?: (phase: string) => void) {
+  let guard = 0;
+  while (c.eng.s.phase !== 'result' && guard++ < 400) {
+    const ph = c.eng.s.phase;
+    onPhase?.(ph);
+    if (ph === 'draft') playDraft(c);
+    else if (ph === 'setup' || ph === 'hub') for (const id of c.ids) c.eng.handle(id, { t: 'ready', ready: true }, c.t);
+    else if (ph === 'match') {
+      c.t += 4000;
+      for (const id of c.ids) c.eng.handle(id, { t: 'seen' }, c.t);
+    } else break;
   }
+  expect(c.eng.s.phase).toBe('result');
+}
 
+describe('a whole game', () => {
   it('duel: draft, setup, match, result, then rematch rotates who picks first', () => {
     const c = mk(2, { format: 'duel' });
     c.eng.handle(c.ids[0]!, { t: 'start' }, c.t);
     const firstGame1 = c.eng.s.draft!.order[0];
-    c.eng.s.phase = 'lobby'; c.eng.s.game = 0; // reset to reuse helper
-    runToResult(c);
+    playToResult(c);
     expect(c.eng.s.series.games).toBe(1);
-    expect(Object.values(c.eng.s.series.wins).reduce((a, b) => a + b, 0)).toBe(1);
+    expect(c.eng.s.comp!.champion).toBeTruthy();
     for (const id of c.ids) c.eng.handle(id, { t: 'rematch', want: true }, c.t);
     expect(c.eng.s.phase).toBe('draft');
     expect(c.eng.s.game).toBe(2);
     expect(c.eng.s.series.games).toBe(1); // series survives
-    expect(c.eng.s.draft!.order[0]).not.toBe(firstGame1 === c.ids[0] ? undefined : firstGame1);
+    expect(c.eng.s.draft!.order[0]).not.toBe(firstGame1);
   });
 
   it('hides the other squad\'s lineup and style during setup, reveals at kickoff', () => {
@@ -243,31 +263,13 @@ describe('a whole game', () => {
     expect(c.eng.view(c.ids[0]!, c.t).squads[c.ids[1]!]).toBeTruthy();
   });
 
-  it('setup deadline starts the match even if nobody is ready', () => {
+  it('setup deadline starts the match even if nobody is ready, and a stuck match screen moves on by itself', () => {
     const c = mk(2, { format: 'packs' });
     c.eng.handle(c.ids[0]!, { t: 'start' }, c.t);
     playDraft(c);
     c.t += SETUP_SECONDS * 1000 + 10;
     c.eng.tick(c.t);
     expect(c.eng.s.phase).toBe('match');
-  });
-
-  it('three players play a round robin and a table decides the series', () => {
-    const c = mk(3, { format: 'packs' });
-    runToResult(c);
-    const m = c.eng.s.match!;
-    expect(m.knockout).toBe(false);
-    expect(m.fixtures).toHaveLength(3);
-    const table = standings(m.fixtures, c.ids);
-    expect(table.reduce((a, r) => a + r.played, 0)).toBe(6);
-    expect(c.eng.s.series.games).toBe(1);
-  });
-
-  it('a stuck match screen still moves on by itself', () => {
-    const c = mk(2, { format: 'duel' });
-    c.eng.handle(c.ids[0]!, { t: 'start' }, c.t);
-    playDraft(c);
-    for (const id of c.ids) c.eng.handle(id, { t: 'ready', ready: true }, c.t);
     c.t += 10 * 60_000;
     c.eng.tick(c.t);
     expect(c.eng.s.phase).toBe('result');
@@ -286,6 +288,141 @@ describe('a whole game', () => {
     expect(new Set(Object.values(after.slots))).toEqual(before);
     expect(after.formation).toBe('352');
     expect(c.eng.s.setup!.ready[c.ids[0]!]).toBe(false);
+  });
+});
+
+describe('CPU teams and tournaments', () => {
+  it('one human vs a CPU: the human drafts alone, the CPU squad appears at setup, nobody shares a player', () => {
+    const c = mk(1, { format: 'duel' });
+    c.eng.handle(c.ids[0]!, { t: 'start' }, c.t);
+    expect(c.eng.s.seats.filter((x) => x.bot)).toHaveLength(1);
+    expect(c.eng.s.draft!.order).toEqual([c.ids[0]]);
+    playDraft(c);
+    const bot = c.eng.s.seats.find((x) => x.bot)!;
+    const mine = Object.values(c.eng.s.squads[c.ids[0]!]!.slots);
+    const theirs = Object.values(c.eng.s.squads[bot.id]!.slots);
+    expect(theirs).toHaveLength(11);
+    expect(theirs.every(Boolean)).toBe(true);
+    expect(theirs.filter((p) => mine.includes(p))).toHaveLength(0);
+    playToResult(c);
+    expect(c.eng.s.series.games).toBe(1);
+  });
+
+  it('league with two humans and two CPUs: you only watch games a human plays; CPU-vs-CPU is just a result', () => {
+    const c = mk(2, { format: 'packs', competition: 'league', teams: 4 });
+    c.eng.handle(c.ids[0]!, { t: 'start' }, c.t);
+    const humanIds = new Set(c.ids);
+    let days = 0;
+    playToResult(c, (ph) => {
+      if (ph !== 'match') return;
+      days++;
+      const day = currentDay(c.eng.s.comp!);
+      for (const f of day.fixtures) {
+        if (f.humans.length) {
+          expect(f.result, 'a human fixture keeps its full story').toBeTruthy();
+          expect(f.humans.every((h) => humanIds.has(h))).toBe(true);
+        } else {
+          expect(f.result, 'a CPU-only fixture is just a result').toBeNull();
+          expect(f.lite).toBeTruthy();
+        }
+      }
+      // nobody plays twice in a matchday
+      const teams = day.fixtures.flatMap((f) => [f.a, f.b]);
+      expect(new Set(teams).size).toBe(teams.length);
+      // every human is in a fixture (4 teams, no byes), so each must watch their own
+      for (const id of c.ids) expect(day.fixtures.some((f) => f.humans.includes(id))).toBe(true);
+    });
+    expect(days).toBe(3); // 4 teams: 3 matchdays
+    expect(tables(c.eng.s.comp!)[0]!.rows.reduce((a, r) => a + r.played, 0)).toBe(12);
+    expect(c.eng.s.comp!.champion).toBeTruthy();
+  });
+
+  it('two humans in different fixtures on the same matchday each watch their own, and the day waits for both', () => {
+    // find a draw where the humans do not face each other on matchday 1
+    for (let attempt = 0; attempt < 30; attempt++) {
+      const c = mk(2, { format: 'packs', competition: 'league', teams: 4 }, 'sep' + attempt);
+      c.eng.handle(c.ids[0]!, { t: 'start' }, c.t);
+      playDraft(c);
+      for (const id of c.ids) c.eng.handle(id, { t: 'ready', ready: true }, c.t);
+      const day = currentDay(c.eng.s.comp!);
+      const separate = day.fixtures.filter((f) => f.humans.length === 1);
+      if (separate.length < 2) continue;
+      expect(c.eng.s.phase).toBe('match');
+      c.t += 4000;
+      c.eng.handle(c.ids[0]!, { t: 'seen' }, c.t);
+      expect(c.eng.s.phase).toBe('match'); // still waiting for the other phone
+      c.eng.handle(c.ids[1]!, { t: 'seen' }, c.t);
+      expect(c.eng.s.phase).toBe('hub');
+      expect(c.eng.s.hub!.played).toEqual([0]);
+      return;
+    }
+    throw new Error('never found a draw with separate fixtures');
+  });
+
+  it('the hub lets you change tactics between matchdays and starts the next matchday when everyone is ready', () => {
+    const c = mk(2, { format: 'packs', competition: 'league', teams: 4 });
+    c.eng.handle(c.ids[0]!, { t: 'start' }, c.t);
+    playDraft(c);
+    for (const id of c.ids) c.eng.handle(id, { t: 'ready', ready: true }, c.t);
+    c.t += 4000;
+    for (const id of c.ids) c.eng.handle(id, { t: 'seen' }, c.t);
+    expect(c.eng.s.phase).toBe('hub');
+    expect(c.eng.handle(c.ids[0]!, { t: 'style', style: 'fortress' }, c.t).ok).toBe(true);
+    expect(c.eng.handle(c.ids[0]!, { t: 'formation', formation: '532' }, c.t).ok).toBe(true);
+    expect(c.eng.s.squads[c.ids[0]!]!.style).toBe('fortress');
+    for (const id of c.ids) c.eng.handle(id, { t: 'ready', ready: true }, c.t);
+    expect(c.eng.s.phase).toBe('match');
+    expect(c.eng.s.comp!.day).toBe(1);
+  });
+
+  it('a hub nobody touches moves on after its deadline', () => {
+    const c = mk(2, { format: 'packs', competition: 'league', teams: 4 });
+    c.eng.handle(c.ids[0]!, { t: 'start' }, c.t);
+    playDraft(c);
+    for (const id of c.ids) c.eng.handle(id, { t: 'ready', ready: true }, c.t);
+    c.t += 4000;
+    for (const id of c.ids) c.eng.handle(id, { t: 'seen' }, c.t);
+    c.t += HUB_SECONDS * 1000 + 50;
+    c.eng.tick(c.t);
+    expect(c.eng.s.phase).toBe('match');
+  });
+
+  it('knockout of 8 with two humans: when both are knocked out the CPU rounds resolve instantly', () => {
+    let sawBothOut = false;
+    for (let seed = 0; seed < 25 && !sawBothOut; seed++) {
+      const c = mk(2, { format: 'packs', competition: 'knockout', teams: 8 }, 'ko' + seed);
+      c.eng.handle(c.ids[0]!, { t: 'start' }, c.t);
+      let humanDays = 0;
+      playToResult(c, (ph) => { if (ph === 'match') humanDays++; });
+      const comp = c.eng.s.comp!;
+      expect(comp.champion).toBeTruthy();
+      expect(comp.days.at(-1)!.label).toBe('Final');
+      // the number of rounds a human actually watched is at most the number of rounds
+      expect(humanDays).toBeLessThanOrEqual(3);
+      if (humanDays < 3) sawBothOut = true;
+      // finished without anyone watching a CPU-only game: those days have no full results at all
+      for (const day of comp.days) for (const f of day.fixtures) if (!f.humans.length) expect(f.result).toBeNull();
+    }
+    expect(sawBothOut).toBe(true);
+  });
+
+  it('groups + knockout, 8 teams, finishes with a champion and a coherent series entry', () => {
+    const c = mk(2, { format: 'packs', competition: 'groups', teams: 8 });
+    c.eng.handle(c.ids[0]!, { t: 'start' }, c.t);
+    playToResult(c);
+    const comp = c.eng.s.comp!;
+    expect(comp.days.length).toBe(5);
+    expect(comp.groups).toHaveLength(2);
+    expect(c.eng.s.series.log.at(-1)!.summary).toContain('won the');
+  });
+
+  it('three friends and a CPU play a league', () => {
+    const c = mk(3, { format: 'packs' });
+    expect(c.eng.s.settings.competition).toBe('league');
+    c.eng.handle(c.ids[0]!, { t: 'start' }, c.t);
+    expect(c.eng.s.seats).toHaveLength(c.eng.s.settings.teams);
+    playToResult(c);
+    expect(c.eng.s.comp!.champion).toBeTruthy();
   });
 });
 
@@ -321,13 +458,17 @@ describe('chaos: random players, random disconnects, random timing', () => {
     for (let seed = 0; seed < 120; seed++) {
       const rng = new Rng('chaos' + seed);
       const n = 2 + rng.int(3);
+      const kind = n > 2 ? rng.pick(['league', 'groups', 'knockout'] as const) : rng.pick(['match', 'league', 'groups', 'knockout'] as const);
       const c = mk(n, {
         format: rng.chance(0.5) ? 'duel' : 'packs',
         pool: rng.pick(['modern', 'legends', 'all'] as const),
         pickSeconds: rng.pick([0, 15, 25, 40] as const),
-      });
+        competition: kind,
+      }, 'chaos' + seed);
+      const opts = { match: [2], league: [4, 6, 8], groups: [8, 16], knockout: [4, 8, 16] }[kind].filter((t) => t >= n);
+      c.eng.handle(c.ids[0]!, { t: 'settings', patch: { teams: rng.pick(opts), botLevel: rng.pick(['easy', 'normal', 'hard'] as const), pace: rng.pick(['normal', 'quick'] as const) } }, c.t);
       c.eng.handle(c.ids[0]!, { t: 'start' }, c.t);
-      for (let step = 0; step < 900 && c.eng.s.phase !== 'result'; step++) {
+      for (let step = 0; step < 1400 && c.eng.s.phase !== 'result'; step++) {
         const roll = rng.next();
         const id = rng.pick(c.ids);
         if (roll < 0.25) c.eng.setConnected(id, rng.chance(0.5), c.t);
@@ -339,7 +480,9 @@ describe('chaos: random players, random disconnects, random timing', () => {
         } else if (roll < 0.7 && c.eng.s.phase === 'setup') {
           const msgs: C2S[] = [{ t: 'ready', ready: true }, { t: 'arrange' }, { t: 'style', style: 'counter' }, { t: 'swap', a: 's2', b: 's5' }, { t: 'formation', formation: rng.pick(['433', '442', '4231', '352', '343', '532'] as const) }];
           c.eng.handle(id, rng.pick(msgs), c.t);
-        } else if (roll < 0.8 && c.eng.s.phase === 'match') c.eng.handle(id, { t: 'seen' }, c.t);
+        } else if (roll < 0.8 && (c.eng.s.phase === 'match' || c.eng.s.phase === 'hub')) {
+          c.eng.handle(id, c.eng.s.phase === 'match' ? { t: 'seen' } : rng.pick<C2S>([{ t: 'ready', ready: true }, { t: 'style', style: 'counter' }, { t: 'arrange' }]), c.t);
+        }
         c.t += rng.int(9000);
         c.eng.tick(c.t);
         // invariants
@@ -349,13 +492,25 @@ describe('chaos: random players, random disconnects, random timing', () => {
           const all = Object.values(s.squads).flatMap((sq) => Object.values(sq.slots)).filter(Boolean);
           expect(new Set(all).size, `seed ${seed} duplicate player`).toBe(all.length);
         }
+        // CPU teams never share a player with anyone. (Humans may overlap in the Packs format: their packs are independent.)
+        if (s.phase !== 'lobby' && s.phase !== 'draft') {
+          const humanSquads = s.seats.filter((x) => !x.bot).map((x) => s.squads[x.id]).filter(Boolean);
+          const humanPlayers = new Set(humanSquads.flatMap((sq) => Object.values(sq!.slots)));
+          const botPlayers = s.seats.filter((x) => x.bot).flatMap((x) => Object.values(s.squads[x.id]?.slots ?? {}));
+          expect(new Set(botPlayers).size, `seed ${seed} two CPU teams share a player`).toBe(botPlayers.length);
+          for (const p of botPlayers) expect(humanPlayers.has(p), `seed ${seed} a CPU took a human's player`).toBe(false);
+          if (s.settings.format === 'duel') {
+            const humanList = humanSquads.flatMap((sq) => Object.values(sq!.slots));
+            expect(new Set(humanList).size, `seed ${seed} duel duplicate`).toBe(humanList.length);
+          }
+        }
         if (s.draft) {
           expect(s.draft.round).toBeGreaterThanOrEqual(1);
           expect(s.draft.round).toBeLessThanOrEqual(11);
         }
       }
       // whatever the chaos did, time alone must carry it home
-      for (let i = 0; i < 600 && c.eng.s.phase !== 'result'; i++) {
+      for (let i = 0; i < 1200 && c.eng.s.phase !== 'result'; i++) {
         c.t += 5000;
         c.eng.tick(c.t);
         if (c.eng.s.phase === 'draft') {

@@ -17,7 +17,7 @@ const json = (data: unknown, status = 200) =>
  */
 export class Room extends DurableObject<Env> {
   private host: RoomHost | null = null;
-  private lastMatch: RoomState['match'] | undefined = undefined;
+  private lastComp: RoomState['comp'] | undefined = undefined;
   private alarmAt: number | null = null;
   private conns = new WeakMap<WebSocket, Conn>();
 
@@ -26,16 +26,19 @@ export class Room extends DurableObject<Env> {
     // Keep-alive pings are answered by the runtime without waking the object.
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'));
     ctx.blockConcurrencyWhile(async () => {
-      const core = await ctx.storage.get<Omit<RoomState, 'match'>>('core');
-      if (core) {
-        const match = (await ctx.storage.get<RoomState['match']>('match')) ?? null;
-        this.start({ ...core, match } as RoomState);
+      const core = await ctx.storage.get<Omit<RoomState, 'comp'>>('core');
+      if (core && (core as { v?: number }).v === 2) {
+        const comp = (await ctx.storage.get<RoomState['comp']>('comp')) ?? null;
+        this.start({ ...core, comp } as RoomState);
+      } else if (core) {
+        // a room saved by an older version of the game cannot be resumed; drop it so the code is free again
+        await ctx.storage.deleteAll();
       }
     });
   }
 
   private start(state: RoomState): void {
-    this.lastMatch = state.match;
+    this.lastComp = state.comp;
     this.host = new RoomHost(new RoomEngine(state), this.io());
   }
 
@@ -59,11 +62,13 @@ export class Room extends DurableObject<Env> {
       conns: () => this.ctx.getWebSockets().map((ws) => this.conn(ws)),
       now: () => Date.now(),
       persist: async (state) => {
-        const { match, ...core } = state;
-        const puts: Record<string, unknown> = { core: { ...core, match: null } };
-        if (match !== this.lastMatch) {
-          puts.match = match;
-          this.lastMatch = match;
+        const { comp, ...core } = state;
+        const puts: Record<string, unknown> = { core: { ...core, comp: null } };
+        // The competition is mutated in place as matchdays are played, so it must be written every time it exists
+        // (comparing references would silently persist a stale table).
+        if (comp || this.lastComp) {
+          puts.comp = comp;
+          this.lastComp = comp;
         }
         await this.ctx.storage.put(puts);
       },

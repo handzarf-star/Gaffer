@@ -1,9 +1,12 @@
 import { z } from 'zod';
 import { ROOM_CODE_RE, type C2S } from '../shared/protocol';
+import { COMPETITIONS } from '../shared/competition';
+import { BOT_LEVELS } from '../shared/bots';
 
 const formation = z.enum(['433', '442', '4231', '352', '343', '532']);
 const style = z.enum(['possession', 'press', 'wings', 'fortress', 'counter']);
 const slotId = z.string().max(8);
+const enumOf = (o: object) => z.enum(Object.keys(o) as [string, ...string[]]);
 
 export const C2SSchema = z.discriminatedUnion('t', [
   z.object({
@@ -21,6 +24,11 @@ export const C2SSchema = z.discriminatedUnion('t', [
       pool: z.enum(['modern', 'legends', 'all']).optional(),
       ratings: z.enum(['hidden', 'tier', 'full']).optional(),
       pickSeconds: z.union([z.literal(0), z.literal(15), z.literal(25), z.literal(40)]).optional(),
+      competition: enumOf(COMPETITIONS).optional(),
+      teams: z.number().int().min(2).max(64).optional(),
+      botLevel: enumOf(BOT_LEVELS).optional(),
+      pace: z.enum(['normal', 'quick']).optional(),
+      legs: z.union([z.literal(1), z.literal(2)]).optional(),
     }),
   }),
   z.object({ t: z.literal('formation'), formation }),

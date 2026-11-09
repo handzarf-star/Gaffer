@@ -122,7 +122,7 @@ describe('over real WebSockets', () => {
     b.send({ t: 'ready', ready: true });
     await a.until((v) => v.phase === 'match');
     expect(Object.keys(a.view!.squads).sort()).toEqual([a.id, b.id].sort());
-    expect(a.view!.match!.fixtures[0]!.result.winner).not.toBeNull();
+    expect(a.view!.comp!.days[0]!.fixtures[0]!.result!.winner).not.toBeNull();
     a.send({ t: 'seen' });
     b.send({ t: 'seen' });
     await a.until((v) => v.phase === 'result');

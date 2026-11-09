@@ -1,14 +1,18 @@
+import type { BotLevel } from './bots';
+import type { CompetitionKind, CompState } from './competition';
 import type { DraftFormat, RatingsMode } from './draft';
 import type { FormationId } from './formations';
 import type { PoolId } from './players';
-import type { MatchResult } from './sim';
+import type { Pace } from './sim';
 import type { Squad, StyleId } from './squad';
 
+/** Humans per room. CPU teams are extra. */
 export const MAX_SEATS = 4;
-export const MIN_SEATS = 2;
+export const MIN_SEATS = 1;
+export const MAX_TEAMS = 16;
 export const ROOM_CODE_RE = /^[A-HJ-NP-Z]{4}$/;
 
-export type Phase = 'lobby' | 'draft' | 'setup' | 'match' | 'result';
+export type Phase = 'lobby' | 'draft' | 'setup' | 'match' | 'hub' | 'result';
 
 export interface Settings {
   format: DraftFormat;
@@ -16,12 +20,25 @@ export interface Settings {
   ratings: RatingsMode;
   /** seconds per pick; 0 = no timer */
   pickSeconds: 0 | 15 | 25 | 40;
+  competition: CompetitionKind;
+  /** total teams including CPU teams */
+  teams: number;
+  botLevel: BotLevel;
+  /** playback speed of live matches */
+  pace: Pace;
+  /** league only: play everyone once or twice */
+  legs: 1 | 2;
 }
 
-export const DEFAULT_SETTINGS: Settings = { format: 'duel', pool: 'modern', ratings: 'tier', pickSeconds: 25 };
+export const DEFAULT_SETTINGS: Settings = {
+  format: 'duel', pool: 'modern', ratings: 'tier', pickSeconds: 25,
+  competition: 'match', teams: 2, botLevel: 'normal', pace: 'normal', legs: 1,
+};
 export const PICK_SECONDS = [0, 15, 25, 40] as const;
 
 export const SEAT_HUES = ['#ff5a3c', '#2f6bff', '#10a56a', '#a855f7'] as const;
+/** colours for CPU teams, distinct from the human seat colours */
+export const BOT_HUES = ['#64748b', '#0ea5a4', '#d97706', '#be185d', '#4d7c0f', '#7c3aed', '#0369a1', '#b45309'] as const;
 
 export interface Seat {
   id: string;
@@ -31,6 +48,8 @@ export interface Seat {
   /** ms epoch when the seat last lost its connection (0 while connected) */
   droppedAt: number;
   formation: FormationId;
+  /** a CPU team */
+  bot: boolean;
 }
 
 export interface DraftLogEntry {
@@ -53,19 +72,20 @@ export interface DraftState {
   log: DraftLogEntry[];
 }
 
-export interface Fixture {
-  a: string;
-  b: string;
-  names: [string, string];
-  result: MatchResult;
-}
-
-export interface MatchPhase {
+/** The matchday that is being watched right now. */
+export interface DayState {
   startedAt: number;
-  knockout: boolean;
-  fixtures: Fixture[];
+  /** humans who have finished with this matchday (humans without a fixture start as done) */
   seen: Record<string, boolean>;
   deadline: number;
+}
+
+/** Between matchdays: standings, results, tweak your lineup, then everyone is ready. */
+export interface HubState {
+  deadline: number;
+  ready: Record<string, boolean>;
+  /** indexes into comp.days that were played since the last hub (includes CPU-only rounds skipped over) */
+  played: number[];
 }
 
 export interface SeriesEntry {
@@ -82,7 +102,7 @@ export interface Series {
 
 /** Server-side truth. Never sent to clients as-is. */
 export interface RoomState {
-  v: 1;
+  v: 2;
   code: string;
   rev: number;
   createdAt: number;
@@ -97,7 +117,9 @@ export interface RoomState {
   draft: DraftState | null;
   squads: Record<string, Squad>;
   setup: { deadline: number; ready: Record<string, boolean> } | null;
-  match: MatchPhase | null;
+  comp: CompState | null;
+  day: DayState | null;
+  hub: HubState | null;
   series: Series;
   rematch: Record<string, boolean>;
 }
@@ -129,10 +151,12 @@ export interface RoomView {
   draft: DraftView | null;
   /** drafted players per seat, always public */
   rosters: Record<string, string[]>;
-  /** full squads you may see (yours always; everyone's once the match starts) */
+  /** full squads you may see (yours always; everyone's once matches start) */
   squads: Record<string, Squad>;
   setup: { deadline: number; ready: Record<string, boolean> } | null;
-  match: MatchPhase | null;
+  comp: CompState | null;
+  day: DayState | null;
+  hub: HubState | null;
   series: Series;
   rematch: Record<string, boolean>;
 }
@@ -169,6 +193,7 @@ export type ErrorCode =
   | 'bad_card'
   | 'bad_slot'
   | 'need_players'
+  | 'bad_settings'
   | 'rate_limited'
   | 'kicked';
 

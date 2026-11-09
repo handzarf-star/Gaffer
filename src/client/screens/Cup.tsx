@@ -11,6 +11,7 @@ import { Confetti } from '../components/Confetti';
 import { Pitch } from '../components/Pitch';
 import { Button, Icon, Seg, cx, shareOrCopy } from '../components/ui';
 import { navigate, useScrollTop } from '../lib/hooks';
+import { BOT_HUES, SEAT_HUES } from '../../shared/protocol';
 import { sfx } from '../lib/sfx';
 import { lsGet, lsSet } from '../lib/storage';
 import { DraftScreen } from './DraftScreen';
@@ -228,10 +229,11 @@ function CupMatch({ s, opp, update }: { s: Save; opp: ReturnType<typeof buildOpp
   };
   return (
     <MatchPlayer
-      fixtures={[{ a: { name: 'You', hue: 1, squad: s.squad }, b: { name: opp.name, hue: 0, squad: opp.squad }, result }]}
+      fixtures={[{ a: { name: 'You', hue: 1, color: SEAT_HUES[1], squad: s.squad }, b: { name: opp.name, hue: 0, color: BOT_HUES[0], squad: opp.squad, bot: true }, result }]}
       startAt={s.matchStartedAt!}
       you={() => 0}
       onSeen={() => undefined}
+      pace="normal"
       continueLabel={won ? (last ? 'Lift the trophy' : `On to the ${CUP_STAGES[s.stage + 1]}`) : 'See how it ended'}
       onContinue={next}
     />
