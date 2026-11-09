@@ -1,38 +1,38 @@
 feature,area,priority,original,clone,notes
-Pick a competition pool before drafting,home,must,yes,no,
-Sealed pack that opens to 3 candidate players,draft,must,yes,no,
-Pick 1 of 3 cards and place on pitch,draft,must,yes,no,
-Position fit feedback while placing,draft,must,yes,no,
-Formation selector (7 formations),draft,must,yes,no,clone ships 6
-11-pick draft completing a squad,draft,must,yes,no,
-Squad summary: attack / midfield / defence,squad,must,yes,no,
-Style of play selector,squad,should,yes,no,5 styles with own names
-Simulated match with scoreline,match,must,yes,no,
-Match headlines / story to share,match,should,yes,no,
-Solo knockout run (championship),solo,must,yes,no,instant vs AI
-Private room via one shared link,multiplayer,must,yes,no,
-Turn-based drafting with friends,multiplayer,must,yes,no,
-Room creator controls the flow,multiplayer,should,yes,no,
-League / knockout competition in a room,multiplayer,should,yes,no,round robin for 2-4 players
-Display name prompt (no account),onboarding,must,yes,no,
-Mobile layout,responsive,must,yes,no,
-How to play page,pages,should,yes,no,
-Privacy / terms / contact pages,pages,could,yes,no,
-Install to home screen,pwa,could,yes,no,
+Pick a competition pool before drafting,home,must,yes,yes,"3 pools: Modern Stars, Hall of Legends, Everyone"
+Sealed pack that opens to 3 candidate players,draft,must,yes,yes,"sealed pack whose glow hints at the best card; tap to open, auto-opens after ~2s"
+Pick 1 of 3 cards and place on pitch,draft,must,yes,yes,
+Position fit feedback while placing,draft,must,yes,yes,colour + icon + words + rating penalty
+Formation selector (7 formations),draft,must,yes,yes,6 formations
+11-pick draft completing a squad,draft,must,yes,yes,
+Squad summary: attack / midfield / defence,squad,must,yes,yes,"plus keeper, overall, chemistry"
+Style of play selector,squad,should,yes,yes,5 tactics with their own names and trade-offs
+Simulated match with scoreline,match,must,yes,yes,
+Match headlines / story to share,match,should,yes,yes,"minute-by-minute report, headline, share text"
+Solo knockout run (championship),solo,must,yes,yes,"instant vs AI, no matchmaking wait"
+Private room via one shared link,multiplayer,must,yes,yes,4-letter code + link
+Turn-based drafting with friends,multiplayer,must,yes,yes,Duel (shared board) and Packs (parallel)
+Room creator controls the flow,multiplayer,should,yes,yes,"host: settings, start, remove. AFK auto-pick keeps it moving"
+League / knockout competition in a room,multiplayer,should,yes,partial,2 players: knockout with extra time and penalties; 3-4: round robin table; no 8-32 player brackets
+Display name prompt (no account),onboarding,must,yes,yes,
+Mobile layout,responsive,must,yes,yes,tested at 390px with touch
+How to play page,pages,should,yes,yes,
+Privacy / terms / contact pages,pages,could,yes,partial,"no accounts, ads, cookies or analytics; How to play page carries the data and rights notes"
+Install to home screen,pwa,could,yes,partial,manifest + icons; no offline cache
 Ranking / leaderboard,social,could,yes,skip,needs a user population; clone keeps local best runs and series score
 Public lobbies and matchmaking vs online players,social,could,yes,skip,no population; replaced by instant AI cup
 Streamer options (1K-100K players),multiplayer,could,yes,skip,out of scope for a two-friend game
 10 UI languages,i18n,could,yes,skip,English first; strings kept in one file
 Ads,monetisation,could,yes,skip,not wanted
-Multiple competition pools (7),content,should,yes,no,clone ships its own pools: Modern Stars / All-Time Legends / Mixed
-Duel draft (shared board contested picks),draft,should,no,no,added: the real "draft" tension
-Reconnect to a room mid-draft,stability,must,no,no,added
-AFK auto-pick so nobody blocks the room,stability,must,no,no,added
-Series score across rematches,multiplayer,should,no,no,added
-Rarity tiers and pack reveal animation,draft,should,no,no,added
-Nation chemistry on the pitch,squad,should,no,no,added
-Minute-by-minute match story with skip,match,should,no,no,added
-Penalty shootouts in knockouts,match,should,no,no,added
-Daily seeded cup,solo,could,no,no,added
-Dark mode,design,could,no,no,added
-Keyboard play and screen reader announcements,a11y,should,no,no,added
+Multiple competition pools (7),content,should,yes,partial,3 pools; real-league pools need a licensed or hand-built dataset
+Duel draft (shared board contested picks),draft,should,no,yes,"added: the real ""draft"" tension"
+Reconnect to a room mid-draft,stability,must,no,yes,added
+AFK auto-pick so nobody blocks the room,stability,must,no,yes,added
+Series score across rematches,multiplayer,should,no,yes,added
+Rarity tiers and pack reveal animation,draft,should,no,yes,added
+Nation chemistry on the pitch,squad,should,no,yes,added
+Minute-by-minute match story with skip,match,should,no,yes,added
+Penalty shootouts in knockouts,match,should,no,yes,added
+Daily seeded cup,solo,could,no,yes,added
+Dark mode,design,could,no,yes,added
+Keyboard play and screen reader announcements,a11y,should,no,yes,added

@@ -88,20 +88,20 @@ export function Pitch({ formation, slots, links = [], holding, suggested, select
             style={{ left: `${s.x}%`, top: `${s.y}%`, '--hue': pid ? faceHue(pid) : 0 } as CSSProperties}
             onClick={() => onSlot?.(s.id)}
             disabled={!onSlot}
-            aria-label={aria}
             title={kind ? `${ROLE_NAME[s.role]}: ${FIT_WORD[kind]}${pen ? ` (-${pen})` : ''}` : p ? p.name : ROLE_NAME[s.role]}
           >
-            <span className={cx('slot__disc', tier && `tier-${ratings === 'hidden' ? 'mystery' : tier}`)}>
+            <span className="sr-only">{aria}</span>
+            <span className={cx('slot__disc', tier && `tier-${ratings === 'hidden' ? 'mystery' : tier}`)} aria-hidden="true">
               {p ? <span className="slot__init">{initials(p.name)}</span> : <span className="slot__role">{s.role}</span>}
               {p && ratings === 'full' && <span className="slot__ovr">{p.ovr}</span>}
               {chem > 0 && <span className="slot__chem" title={`${chem} nation link${chem > 1 ? 's' : ''}`}>{'•'.repeat(Math.min(chem, 3))}</span>}
               {kind && <span className={cx('slot__fit', `slot__fit--${kind}`)} aria-hidden="true">{FIT_ICON[kind]}</span>}
             </span>
             {p && (
-              <span className="slot__name">{shortName(p.name)}</span>
+              <span className="slot__name" aria-hidden="true">{shortName(p.name)}</span>
             )}
-            {!p && kind && pen > 0 && !compact && <span className="slot__pen">-{pen}</span>}
-            {p && <span className="slot__pos">{s.role}</span>}
+            {!p && kind && pen > 0 && !compact && <span className="slot__pen" aria-hidden="true">-{pen}</span>}
+            {p && <span className="slot__pos" aria-hidden="true">{s.role}</span>}
           </button>
         );
       })}

@@ -267,7 +267,7 @@ export function MatchPlayer({ fixtures, startAt, you, onSeen, continueLabel, onC
               </div>
             </section>
           )}
-          <section className="feed" role="log" aria-label="Match events">
+          <section className="feed" role="log" aria-label="Match events" tabIndex={0}>
             {[...shown].reverse().map((s, i) => {
               const e = s.event;
               const side = e.team === 0 ? fx.a : fx.b;

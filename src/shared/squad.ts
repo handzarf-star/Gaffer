@@ -14,7 +14,7 @@ export interface Style {
 export const STYLES: Record<StyleId, Style> = {
   possession: { id: 'possession', name: 'Possession', blurb: 'Own the ball and the tempo.', tradeoff: '+4 midfield, -1 defence. Fewer, cleaner chances.' },
   press: { id: 'press', name: 'High Press', blurb: 'Suffocate them high up the pitch.', tradeoff: '+2 attack, +3 midfield, -3 defence. More cards, more chaos.' },
-  wings: { id: 'wings', name: 'Wing Play', blurb: 'Stretch them and cross.', tradeoff: '+3 attack with two wide forwards (else +1), -1 midfield.' },
+  wings: { id: 'wings', name: 'Wide Attack', blurb: 'Stretch them and get the ball out wide.', tradeoff: '+3 attack with two wide forwards (else +1), -1 midfield.' },
   fortress: { id: 'fortress', name: 'Fortress', blurb: 'Low block. Frustrate them.', tradeoff: '+5 defence, +2 keeper, -3 attack. Low-scoring games.' },
   counter: { id: 'counter', name: 'Counter', blurb: 'Absorb it, then hit them on the break.', tradeoff: '+3 attack, -2 midfield, and +2 attack more when you are the underdog.' },
 };

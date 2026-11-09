@@ -27,8 +27,8 @@ export function HowTo() {
         <p>Teammates from the <b>same nation</b> who stand next to each other on the pitch are linked. Linked players play a little better.</p>
       </section>
       <section>
-        <h2>5. Set your tactics</h2>
-        <p>After the draft pick a formation and one of five styles: Possession, High Press, Wing Play, Fortress or Counter. Each has a clear trade-off. Your rival cannot see your choices until kick-off.</p>
+        <h2>5. Pick your tactics</h2>
+        <p>After the draft pick a formation and one of five tactics: Possession, High Press, Wide Attack, Fortress or Counter. Each has a clear trade-off. Your rival cannot see your choices until kick-off.</p>
       </section>
       <section>
         <h2>6. Watch it play out</h2>

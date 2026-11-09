@@ -71,11 +71,11 @@ export function PlayerCard({ id, mode, size = 'md', selected, dim, pending, disa
       onClick={onClick}
       onDoubleClick={onDoubleClick}
       disabled={disabled}
-      aria-label={label}
       aria-pressed={selected}
       data-tier={tier}
     >
-      <span className="pcard__cq">
+      <span className="sr-only">{label}</span>
+      <span className="pcard__cq" aria-hidden="true">
         <span className="pcard__body">
         <span className="pcard__shine" aria-hidden="true" />
         <span className="pcard__top">

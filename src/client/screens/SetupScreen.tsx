@@ -153,8 +153,8 @@ export function SetupScreen(p: SetupProps) {
           </div>
 
           <div className="panel">
-            <h2 className="panel__title">Style of play</h2>
-            <div className="styles" role="radiogroup" aria-label="Style of play">
+            <h2 className="panel__title">Tactics</h2>
+            <div className="styles" role="radiogroup" aria-label="Tactics">
               {STYLE_IDS.map((id) => {
                 const s = STYLES[id];
                 return (

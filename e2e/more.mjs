@@ -5,6 +5,7 @@ import { chromium } from '@playwright/test';
 const BASE = process.env.BASE ?? 'http://localhost:8787';
 const errors = [];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+async function openPack(page) { const s = page.locator('.sealed'); if (await s.count()) { await s.first().click({ timeout: 3000 }).catch(() => {}); await new Promise((r) => setTimeout(r, 750)); } }
 const browser = await chromium.launch();
 const results = [];
 const ok = (name) => { results.push(name); console.log('✓', name); };
@@ -19,6 +20,7 @@ async function newPage(name, viewport = { width: 1280, height: 900 }) {
 
 async function pickIfMyTurn(page) {
   if (await page.locator('.turn--you').count()) {
+    await openPack(page);
     const cards = page.locator('.board .pcard:not([disabled])');
     if (await cards.count()) { await cards.first().click(); await page.keyboard.press('Enter'); return true; }
   }
@@ -95,6 +97,7 @@ try {
     await page.goto(`${BASE}/cup`);
     await page.getByRole('button', { name: 'Start drafting' }).click();
     for (let i = 0; i < 4; i++) {
+      await openPack(page);
       await page.locator('.board .pcard').first().click();
       await page.keyboard.press('Enter');
       await sleep(300);
@@ -106,6 +109,7 @@ try {
     if (round !== after) throw new Error(`cup lost progress on reload: ${round} -> ${after}`);
     ok('solo cup resumes exactly where you were after a reload');
     for (let i = 0; i < 7; i++) {
+      await openPack(page);
       await page.locator('.board .pcard').first().click();
       await page.keyboard.press('Enter');
       await sleep(300);
@@ -131,6 +135,7 @@ try {
     for (const p of [a, b]) {
       await p.page.goto(`${BASE}/daily`);
       await p.page.getByRole('button', { name: 'Start drafting' }).click();
+      await openPack(p.page);
       await p.page.locator('.board .pcard').first().waitFor();
       firstBoard.push(await p.page.locator('.board .pcard').evaluateAll((els) => els.map((e) => e.getAttribute('aria-label')?.split(',')[0])));
     }

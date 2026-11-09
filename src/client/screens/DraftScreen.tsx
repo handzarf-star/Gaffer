@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ROUNDS, openRoles, suggestSlot, type RatingsMode } from '../../shared/draft';
 import { FORMATIONS, fitKind, penalty, type Role } from '../../shared/formations';
-import { player, shortName } from '../../shared/players';
+import { player, shortName, tierOf, type Tier } from '../../shared/players';
 import { chemistry, profile, type Squad } from '../../shared/squad';
 import { Confetti } from '../components/Confetti';
 import { PlayerCard } from '../components/PlayerCard';
 import { Pitch } from '../components/Pitch';
 import { Timer } from '../components/Timer';
 import { Avatar, Button, Icon, cx } from '../components/ui';
-import { announce, toast } from '../lib/hooks';
+import { announce, prefersReducedMotion, toast } from '../lib/hooks';
 import { buzz, sfx } from '../lib/sfx';
 
 export interface Rival {
@@ -61,6 +61,7 @@ export function DraftScreen(p: DraftScreenProps) {
   const [fresh, setFresh] = useState<string | null>(null);
   const [tab, setTab] = useState<string>('me');
   const [burst, setBurst] = useState(0);
+  const [opened, setOpened] = useState(0);
   const prevBoard = useRef<string[]>(p.board);
   const prevTurn = useRef<string>('');
 
@@ -95,6 +96,21 @@ export function DraftScreen(p: DraftScreenProps) {
       announce(`Round ${p.round}. ${p.turnName ?? 'Opponent'} is picking.`);
     }
   }, [p.round, p.turn, p.turnName]);
+
+  // Packs format: the pack starts sealed. Its glow hints at the best card inside; tap to open (or it opens by itself).
+  const sealed = !p.shared && p.canPick && p.board.length > 0 && opened !== p.round;
+  const bestTier: Tier | 'mystery' = useMemo(() => {
+    if (p.mode === 'hidden') return 'mystery';
+    const order: Tier[] = ['bronze', 'silver', 'gold', 'icon'];
+    return p.board.reduce<Tier>((best, id) => (order.indexOf(tierOf(player(id).ovr)) > order.indexOf(best) ? tierOf(player(id).ovr) : best), 'bronze');
+  }, [p.board, p.mode]);
+  useEffect(() => {
+    if (!sealed) return;
+    const t = setTimeout(() => { setOpened(p.round); sfx.reveal(bestTier === 'mystery' ? 'silver' : bestTier); }, prefersReducedMotion() ? 0 : 2200);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sealed, p.round]);
+  const openPack = () => { setOpened(p.round); sfx.reveal(bestTier === 'mystery' ? 'silver' : bestTier); buzz(30); };
 
   const suggested = selected ? suggestSlot(p.squad, selected) : null;
   const heldPlayer = selected ? player(selected) : null;
@@ -184,8 +200,8 @@ export function DraftScreen(p: DraftScreenProps) {
             <>
               <span className="turn__badge"><Icon name="bolt" size={18} /></span>
               <div className="turn__text">
-                <b>{p.turn === 'all' ? 'Your pack is open' : 'Your pick'}</b>
-                <span>{selected ? 'Tap a green spot or press Enter' : 'Choose one card'}</span>
+                <b>{sealed ? 'Open your pack' : p.turn === 'all' ? 'Your pack is open' : 'Your pick'}</b>
+                <span>{sealed ? 'Tap it. The glow hints at what is inside' : selected ? 'Tap a green spot or press Enter' : 'Choose one card'}</span>
               </div>
             </>
           )}
@@ -198,6 +214,14 @@ export function DraftScreen(p: DraftScreenProps) {
           <h2>{p.shared ? 'Shared board' : 'Your pack'}</h2>
           <span>{p.shared ? `${p.board.length} left. Once it's taken, it's gone.` : 'Pick 1 of 3'}</span>
         </div>
+        {sealed ? (
+          <button type="button" className={cx('sealed', `sealed--${bestTier}`)} onClick={openPack}>
+            <span className="sealed__foil" aria-hidden="true" />
+            <span className="sealed__mark" aria-hidden="true"><Icon name="ball" size={46} /></span>
+            <b>Tap to open</b>
+            <small>{bestTier === 'icon' ? 'Something special is in there' : bestTier === 'gold' ? 'This one is glowing' : 'Pick 1 of 3'}</small>
+          </button>
+        ) : (
         <div className={cx('board', p.shared ? 'board--duel' : 'board--packs')}>
           {p.board.map((id, i) => (
             <PlayerCard
@@ -231,6 +255,7 @@ export function DraftScreen(p: DraftScreenProps) {
           ))}
           {p.board.length === 0 && <div className="board__empty">Dealing the next round…</div>}
         </div>
+        )}
 
         <div className="needs" aria-label="Positions you still need">
           <span className="needs__label">Still need</span>

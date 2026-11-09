@@ -10,8 +10,8 @@ import { emptySquad, profile, STYLE_IDS, type Squad } from './squad';
 export const CUP_STAGES = ['Round of 16', 'Quarter-final', 'Semi-final', 'Final'] as const;
 
 /** AI drafting skill and pack size per stage: later opponents choose better and from more cards. */
-const STAGE_SKILL = [0.5, 0.68, 0.84, 0.95];
-const STAGE_PACK = [3, 3, 4, 5];
+const STAGE_SKILL = [0.25, 0.48, 0.72, 0.92];
+const STAGE_PACK = [3, 3, 3, 4];
 
 const PREFIX = ['Northgate', 'Harbour', 'Ironbridge', 'Kestrel', 'Ashford', 'Redcliffe', 'Marlow', 'Stonehaven', 'Larkfield', 'Brightwater', 'Thornbury', 'Elmstead', 'Highmoor', 'Saltmarsh', 'Wexcombe', 'Oakham'];
 const SUFFIX = ['Rovers', 'Athletic', 'Wanderers', 'Albion', 'Dynamo', 'Rangers', 'Town', 'Borough', 'Forest', 'Harriers', 'Olympic', 'Vanguard'];
