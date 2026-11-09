@@ -1,16 +1,51 @@
-import { DurableObject } from 'cloudflare:workers';
-export class Room extends DurableObject {
-  async fetch(req: Request) {
-    const pair = new WebSocketPair();
-    this.ctx.acceptWebSocket(pair[1]);
-    return new Response(null, { status: 101, webSocket: pair[0] });
-  }
-  webSocketMessage(ws: WebSocket, msg: string | ArrayBuffer) { ws.send('echo:' + msg); }
-}
+import { ROOM_CODE_RE } from '../shared/protocol';
+import { randomRoomCode } from '../shared/rng';
+import { Room, type Env } from './room-do';
+
+export { Room };
+
+const json = (data: unknown, status = 200) =>
+  new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
+
 export default {
-  async fetch(req: Request, env: { ROOMS: DurableObjectNamespace }) {
-    const url = new URL(req.url);
-    if (url.pathname.startsWith('/ws/')) return env.ROOMS.get(env.ROOMS.idFromName(url.pathname)).fetch(req);
-    return new Response('api ok');
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const url = new URL(request.url);
+    const path = url.pathname;
+
+    if (path === '/api/health') return json({ ok: true, t: Date.now() });
+
+    if (path === '/api/rooms' && request.method === 'POST') {
+      const origin = request.headers.get('origin');
+      if (origin && new URL(origin).host !== url.host) return json({ error: 'forbidden' }, 403);
+      for (let attempt = 0; attempt < 8; attempt++) {
+        const code = randomRoomCode();
+        const stub = env.ROOMS.get(env.ROOMS.idFromName(code));
+        const res = await stub.fetch('https://room/init', { method: 'POST', headers: { 'x-room-code': code } });
+        if (res.status === 201) return json({ code }, 201);
+        if (res.status !== 409) break; // 409 = code collision, try another one
+      }
+      return json({ error: 'could not create a room, please try again' }, 503);
+    }
+
+    const info = path.match(/^\/api\/rooms\/([A-Z]+)$/);
+    if (info && request.method === 'GET') {
+      const code = info[1]!;
+      if (!ROOM_CODE_RE.test(code)) return json({ exists: false });
+      const stub = env.ROOMS.get(env.ROOMS.idFromName(code));
+      const res = await stub.fetch('https://room/info');
+      // a missing room is an answer, not an error: keep the browser console clean
+      return res.status === 404 ? json({ exists: false }) : res;
+    }
+
+    const ws = path.match(/^\/ws\/([A-Z]+)$/);
+    if (ws) {
+      const code = ws[1]!;
+      if (!ROOM_CODE_RE.test(code)) return new Response('No such room.', { status: 404 });
+      const stub = env.ROOMS.get(env.ROOMS.idFromName(code));
+      return stub.fetch(request);
+    }
+
+    if (path.startsWith('/api/')) return json({ error: 'not found' }, 404);
+    return env.ASSETS.fetch(request);
   },
-};
+} satisfies ExportedHandler<Env>;

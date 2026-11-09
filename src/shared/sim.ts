@@ -206,7 +206,7 @@ export function simulateMatch(
     const atk = att === 0 ? A : B;
     const dfn = att === 0 ? B : A;
     const atkSide = sides[att];
-    const dfnSide = sides[1 - att];
+    const dfnSide = sides[att === 0 ? 1 : 0];
 
     // is a chance created?
     const pChance = clamp(0.45 + (atk.att - dfn.def) / 58, 0.18, 0.78);
@@ -357,7 +357,7 @@ export function simulateMatch(
         kick(0, round);
         kick(1, round);
       }
-      if (sh[0] === sh[1]) sh[rng.int(2)]++; // astronomically unlikely safety net
+      if (sh[0] === sh[1]) sh[rng.int(2) as 0 | 1]++; // astronomically unlikely safety net
       pens = [sh[0], sh[1]];
       winner = sh[0] > sh[1] ? 0 : 1;
     }
