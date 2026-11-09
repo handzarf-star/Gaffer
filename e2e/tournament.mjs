@@ -2,6 +2,9 @@
 // Checks the rule that matters: each phone only sees its own game, CPU-vs-CPU games never have to be watched.
 //   BASE=http://localhost:8787 node e2e/tournament.mjs
 import { chromium, devices } from '@playwright/test';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 const BASE = process.env.BASE ?? 'http://localhost:8787';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -25,7 +28,8 @@ const noOverflow = async (p, where) => {
 async function openPack(page) { const s = page.locator('.sealed'); if (await s.count()) { await s.first().click({ timeout: 2500 }).catch(() => {}); await sleep(700); } }
 
 const results = [];
-const SHOTS = process.env.SHOTS ?? '/tmp/claude-0/-home-user-Draftiebetter/82da9fb2-0d3f-53d6-89cb-73731f0b9f66/scratchpad';
+const SHOTS = process.env.SHOTS ?? path.join(os.tmpdir(), 'gaffer-e2e');
+fs.mkdirSync(SHOTS, { recursive: true });
 let pages = [];
 const ok = (m) => { results.push(m); console.log('✓', m); };
 

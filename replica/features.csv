@@ -36,3 +36,14 @@ Penalty shootouts in knockouts,match,should,no,yes,added
 Daily seeded cup,solo,could,no,yes,added
 Dark mode,design,could,no,yes,added
 Keyboard play and screen reader announcements,a11y,should,no,yes,added
+CPU teams at three levels,multiplayer,must,no,yes,added: one phone is enough
+League (once or home and away),tournament,must,no,yes,added
+Groups then knockout,tournament,must,no,yes,added
+Knockout with extra time and penalties,tournament,must,no,yes,added
+Only watch games a human plays in,tournament,must,no,yes,added: CPU-versus-CPU games resolve instantly into the table
+Live pitch with dots and ball,match,must,no,yes,added
+Chances penalties free kicks corners cards highlighted,match,must,no,yes,added
+Quiet stretches fast-forward,match,should,no,yes,added
+Real-world card and penalty rates plus player traits,match,should,no,yes,added: traits are approximate
+Game waits when your phone locks,stability,should,no,yes,added
+Landscape layout and iOS and Android install polish,mobile,should,no,yes,added: emulated only

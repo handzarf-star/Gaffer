@@ -63,6 +63,8 @@ npx wrangler rollback        # back to the previous version
 - A deploy drops open sockets for a moment; players reconnect on their own and their state is kept.
 - **Don't delete a player id from `src/shared/players.ts` while rooms are live.** A room remembers picks by id; a missing id would break that room's screens (the page shows a friendly "Reload" panel, and the room still finishes). Add players freely; remove after rooms have expired.
 - Rooms never touch a database you manage, and there is nothing to back up.
+- A room saved by an older build of the game cannot be resumed (the stored format changed with tournaments), so it is dropped on deploy. Rooms last an evening, so this only matters for a game that is mid-draft at the moment you deploy.
+- **Name clashes with your other Cloudflare projects.** Two things can collide: the Worker name (`gaffer` in `wrangler.jsonc`) and a custom domain or route. A different Worker with a different name and no shared route cannot interfere. If another project already uses the name `gaffer`, or the hostname or route you attach, change `name` in `wrangler.jsonc` (and never reuse a Durable Object class name across Workers you want to keep separate) before deploying. Check **Workers & Pages** in the dashboard first; nothing here deletes or touches another project.
 
 ## Prefer your own server?
 

@@ -242,7 +242,11 @@ export function MatchPlayer({ fixtures, startAt, you, onSeen, continueLabel, onC
             </>
           )}
           {fx.result.pens && pens.length > 0 && (
-            <div className="sb__pens" aria-label="Penalty shootout">
+            <div
+              className="sb__pens"
+              role="img"
+              aria-label={`Penalty shootout: ${[0, 1].map((t) => { const taken = pens.filter((s) => s.event.team === t); return `${(t === 0 ? fx.a : fx.b).name} ${taken.filter((s) => s.event.type === 'pen_goal').length} from ${taken.length}`; }).join(', ')}`}
+            >
               {[0, 1].map((t) => (
                 <span key={t} className="pens">
                   {pens.filter((s) => s.event.team === t).map((s, i) => (
@@ -286,13 +290,13 @@ export function MatchPlayer({ fixtures, startAt, you, onSeen, continueLabel, onC
           {fullPanel}
           {!countdown && (
             <section className="feed" role="log" aria-label="Match events" tabIndex={0}>
-              {[...shown].reverse().map((s, i) => {
+              {shown.map((s, idx) => ({ s, idx })).reverse().map(({ s, idx }) => {
                 const e = s.event;
                 const side = e.team === 0 ? fx.a : fx.b;
                 const big = e.type === 'goal' || e.type === 'red' || e.type === 'penalty';
                 const mark = e.type === 'half' || e.type === 'full' || e.type === 'et' || e.type === 'etend' || e.type === 'shootout' || e.type === 'kickoff';
                 return (
-                  <div key={`${k}-${s.at}-${i}`} className={cx('feed__row', big && 'is-big', mark && 'is-mark', `ev-${e.type}`)}>
+                  <div key={`${k}-${idx}`} className={cx('feed__row', big && 'is-big', mark && 'is-mark', `ev-${e.type}`)}>
                     <span className="feed__min">{e.t <= 120 && !mark ? `${e.t}'` : ''}</span>
                     <span className="feed__ico" aria-hidden="true">{ICON[e.type] ?? '•'}</span>
                     <span className="feed__txt">

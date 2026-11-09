@@ -108,6 +108,8 @@ export interface RoomState {
   createdAt: number;
   lastActive: number;
   phase: Phase;
+  /** Set while a game is running and no human is connected: every timer is frozen until someone comes back. */
+  pausedAt?: number | null;
   hostId: string;
   settings: Settings;
   seats: Seat[];

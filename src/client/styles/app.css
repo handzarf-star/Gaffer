@@ -57,7 +57,7 @@
 .input::placeholder { color: var(--muted); font-weight: 500; }
 .input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent); }
 .input--code { text-transform: uppercase; letter-spacing: .3em; text-align: center; font-family: ui-monospace, Menlo, monospace; font-weight: 800; }
-.input--link { font-size: 14px; font-weight: 600; color: var(--text-2); }
+.input--link { font-size: 16px; font-weight: 600; color: var(--text-2); text-overflow: ellipsis; } /* under 16px makes iOS zoom the page on focus */
 
 .spinner { display: inline-block; width: 28px; height: 28px; border-radius: 50%; border: 3px solid var(--border); border-top-color: var(--accent); animation: spin .8s linear infinite; }
 .spinner--sm { width: 16px; height: 16px; border-width: 2.5px; border-color: rgb(255 255 255 / .4); border-top-color: currentColor; }

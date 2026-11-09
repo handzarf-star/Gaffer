@@ -14,6 +14,8 @@ const jobs = [
   ['icon-192.png', 192, 1, false],
   ['icon-512.png', 512, 1, false],
   ['icon-maskable-512.png', 512, 0.66, true],
+  // iOS rounds the corners itself and paints transparent pixels black, so this one is full-bleed
+  ['apple-touch-icon.png', 180, 0.8, true],
 ];
 const browser = await chromium.launch();
 const page = await browser.newPage();

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { autoPick } from '../src/shared/draft';
 import { Rng } from '../src/shared/rng';
-import { AFK_GRACE_MS, HUB_SECONDS, RoomEngine, SETUP_SECONDS, testDeps } from '../src/shared/room';
+import { AFK_GRACE_MS, DROP_GRACE_MS, HUB_SECONDS, ROOM_ABANDONED_MS, RoomEngine, SETUP_SECONDS, testDeps } from '../src/shared/room';
 import { tables, currentDay } from '../src/shared/competition';
-import type { C2S, Settings } from '../src/shared/protocol';
+import type { C2S, RoomState, Settings } from '../src/shared/protocol';
 
 interface Ctx {
   eng: RoomEngine;
@@ -520,5 +520,186 @@ describe('chaos: random players, random disconnects, random timing', () => {
       }
       expect(c.eng.s.phase, `seed ${seed} stuck in ${c.eng.s.phase}`).toBe('result');
     }
+  });
+});
+
+describe('persistence', () => {
+  // The Durable Object stores `core` and `comp` separately and structured-clones them. A redeploy or eviction can land
+  // at any moment of a tournament, so replaying it with a save/restore at every step must change nothing.
+  const play = (restoreEveryStep: boolean, comp: Partial<Settings>) => {
+    const deps = testDeps('persist');
+    const c: Ctx = { eng: RoomEngine.create('ABCD', 1_000_000, deps), ids: [], secrets: [], t: 1_000_000 };
+    for (const name of ['Sam', 'Alex']) {
+      const r = c.eng.join({ name }, c.t);
+      if (!r.ok) throw new Error(r.msg);
+      c.ids.push(r.id);
+    }
+    expect(c.eng.handle(c.ids[0]!, { t: 'settings', patch: { format: 'packs', ...comp } }, c.t).ok).toBe(true);
+    expect(c.eng.handle(c.ids[0]!, { t: 'start' }, c.t).ok).toBe(true);
+    let restores = 0;
+    for (let guard = 0; c.eng.s.phase !== 'result' && guard < 2000; guard++) {
+      if (restoreEveryStep) {
+        const { comp: liveComp, ...core } = c.eng.s;
+        const saved = structuredClone({ core: { ...core, comp: null }, comp: liveComp });
+        c.eng = new RoomEngine({ ...saved.core, comp: saved.comp } as RoomState, deps);
+        restores++;
+      }
+      const ph = c.eng.s.phase;
+      if (ph === 'draft') {
+        // one round of picks per step, so a restart lands between picks too
+        const d = c.eng.s.draft!;
+        for (const id of d.shared ? [d.order[d.turn]!] : c.ids.filter((x) => !d.picked.includes(x))) expect(pickFor(c, id).ok).toBe(true);
+      } else if (ph === 'setup' || ph === 'hub') for (const id of c.ids) c.eng.handle(id, { t: 'ready', ready: true }, c.t);
+      else if (ph === 'match') { c.t += 4000; for (const id of c.ids) c.eng.handle(id, { t: 'seen' }, c.t); } else break;
+    }
+    expect(c.eng.s.phase).toBe('result');
+    return { comp: JSON.stringify(c.eng.s.comp), restores };
+  };
+
+  for (const [name, comp] of [
+    ['league', { competition: 'league', teams: 4 }],
+    ['groups + knockout', { competition: 'groups', teams: 8 }],
+    ['knockout', { competition: 'knockout', teams: 4 }],
+  ] as Array<[string, Partial<Settings>]>) {
+    it(`${name}: a restart before every single step gives the identical tournament`, () => {
+      const straight = play(false, comp);
+      const bumpy = play(true, comp);
+      expect(bumpy.restores).toBeGreaterThan(11); // every draft round, then lineups and matchdays
+      expect(bumpy.comp).toBe(straight.comp);
+    });
+  }
+});
+
+describe('dropped connections', () => {
+  const MIN = 60_000;
+  const toMatch = (c: Ctx) => {
+    expect(c.eng.handle(c.ids[0]!, { t: 'start' }, c.t).ok).toBe(true);
+    playDraft(c);
+    for (const id of c.ids) c.eng.handle(id, { t: 'ready', ready: true }, c.t);
+    expect(c.eng.s.phase).toBe('match');
+  };
+
+  it('alone against CPU teams, a dropped connection freezes the game instead of playing the tournament without you', () => {
+    const c = mk(1, { format: 'packs', competition: 'league', teams: 4 });
+    toMatch(c);
+    c.t = c.eng.s.day!.startedAt + 12_000; // twelve seconds into the match
+    const day = structuredClone(c.eng.s.day!);
+    const comp = JSON.stringify(c.eng.s.comp);
+    c.eng.setConnected(c.ids[0]!, false, c.t); // the phone locks
+    c.t += 20 * MIN;
+    c.eng.tick(c.t);
+    expect(c.eng.s.phase).toBe('match');
+    expect(JSON.stringify(c.eng.s.comp)).toBe(comp);
+    c.eng.setConnected(c.ids[0]!, true, c.t); // and comes back twenty minutes later
+    c.eng.tick(c.t);
+    expect(c.eng.s.phase).toBe('match');
+    // the match carries on from the same minute: elapsed time is unchanged, so the clock moved by the time away
+    expect(c.eng.s.day!.startedAt - day.startedAt).toBeCloseTo(20 * MIN, 0);
+    expect(c.eng.s.day!.deadline - day.deadline).toBeCloseTo(20 * MIN, 0);
+    expect(c.t - c.eng.s.day!.startedAt).toBeCloseTo(12_000, 0);
+    playToResult(c);
+    expect(c.eng.s.comp!.champion).toBeTruthy();
+  });
+
+  it('a pick timer has the same time left after everyone was away', () => {
+    const c = mk(1, { format: 'packs', competition: 'league', teams: 4, pickSeconds: 15 });
+    c.eng.handle(c.ids[0]!, { t: 'start' }, c.t);
+    const d0 = c.eng.s.draft!;
+    const left = d0.deadline! - c.t;
+    const picks = d0.log.length;
+    c.eng.setConnected(c.ids[0]!, false, c.t);
+    c.t += 10 * MIN;
+    c.eng.tick(c.t);
+    expect(c.eng.s.draft!.log.length).toBe(picks); // no auto-pick for a player who is not there
+    c.eng.setConnected(c.ids[0]!, true, c.t);
+    c.eng.tick(c.t);
+    expect(c.eng.s.draft!.log.length).toBe(picks);
+    expect(c.eng.s.draft!.deadline! - c.t).toBe(left);
+  });
+
+  it('the hub and the lineup screen freeze too', () => {
+    const c = mk(1, { format: 'packs', competition: 'league', teams: 4 });
+    c.eng.handle(c.ids[0]!, { t: 'start' }, c.t);
+    playDraft(c);
+    expect(c.eng.s.phase).toBe('setup');
+    c.eng.setConnected(c.ids[0]!, false, c.t);
+    c.t += 30 * MIN;
+    c.eng.tick(c.t);
+    expect(c.eng.s.phase).toBe('setup');
+    c.eng.setConnected(c.ids[0]!, true, c.t);
+    expect(c.eng.s.setup!.deadline - c.t).toBe(SETUP_SECONDS * 1000);
+    c.eng.handle(c.ids[0]!, { t: 'ready', ready: true }, c.t);
+    c.t = c.eng.s.day!.startedAt + 1000;
+    c.eng.handle(c.ids[0]!, { t: 'seen' }, c.t);
+    expect(c.eng.s.phase).toBe('hub');
+    c.eng.setConnected(c.ids[0]!, false, c.t);
+    c.t += 30 * MIN;
+    c.eng.tick(c.t);
+    expect(c.eng.s.phase).toBe('hub');
+    c.eng.setConnected(c.ids[0]!, true, c.t);
+    expect(c.eng.s.hub!.deadline - c.t).toBe(HUB_SECONDS * 1000);
+  });
+
+  it('with a friend still connected, a dropped player gets a grace period before the match moves on without them', () => {
+    const c = mk(2, { format: 'packs', competition: 'league', teams: 4 });
+    toMatch(c);
+    c.t = c.eng.s.day!.startedAt + 1000;
+    c.eng.setConnected(c.ids[1]!, false, c.t);
+    c.eng.handle(c.ids[0]!, { t: 'seen' }, c.t);
+    c.eng.tick(c.t + 1000);
+    expect(c.eng.s.phase).toBe('match'); // still waiting for the dropped player
+    expect(c.eng.nextWake(c.t)).toBeLessThanOrEqual(c.t + DROP_GRACE_MS); // and an alarm is set for the end of the grace
+    c.eng.tick(c.t + DROP_GRACE_MS - 1);
+    expect(c.eng.s.phase).toBe('match');
+    c.eng.tick(c.t + DROP_GRACE_MS + 1);
+    expect(c.eng.s.phase).toBe('hub');
+  });
+
+  it('a dropped player who returns inside the grace keeps their match', () => {
+    const c = mk(2, { format: 'packs', competition: 'league', teams: 4 });
+    toMatch(c);
+    c.t = c.eng.s.day!.startedAt + 1000;
+    c.eng.setConnected(c.ids[1]!, false, c.t);
+    c.eng.handle(c.ids[0]!, { t: 'seen' }, c.t);
+    c.t += 20_000;
+    c.eng.setConnected(c.ids[1]!, true, c.t);
+    c.eng.tick(c.t);
+    expect(c.eng.s.phase).toBe('match');
+    c.eng.handle(c.ids[1]!, { t: 'seen' }, c.t);
+    expect(c.eng.s.phase).toBe('hub');
+  });
+
+  it('an abandoned frozen room still gets cleaned up, and sets no pointless alarms', () => {
+    const c = mk(1, { format: 'packs', competition: 'league', teams: 4 });
+    toMatch(c);
+    c.eng.setConnected(c.ids[0]!, false, c.t);
+    expect(c.eng.nextWake(c.t)!).toBeGreaterThan(c.t + 40 * MIN); // only the expiry, not the match deadline
+    expect(c.eng.isExpired(c.t + ROOM_ABANDONED_MS + 1)).toBe(true);
+  });
+});
+
+describe('idle rooms', () => {
+  // An empty room used to ask to be woken every 50ms (a host-migration deadline nobody could ever act on) until it expired.
+  it('a room everyone has left sleeps instead of polling', () => {
+    for (const phase of ['lobby', 'draft'] as const) {
+      const c = mk(2, { format: 'packs' });
+      if (phase === 'draft') c.eng.handle(c.ids[0]!, { t: 'start' }, c.t);
+      for (const id of c.ids) c.eng.setConnected(id, false, c.t);
+      c.t += 25_000; // past the host-migration window, with nobody to migrate to
+      c.eng.tick(c.t);
+      const wake = c.eng.nextWake(c.t);
+      expect(wake, phase).not.toBeNull();
+      expect(wake! - c.t, phase).toBeGreaterThan(60_000);
+    }
+  });
+
+  it('never asks to be woken in the past', () => {
+    const c = mk(2, { format: 'packs' });
+    c.eng.setConnected(c.ids[0]!, false, c.t); // the host drops, the friend is still here
+    c.t += 25_000;
+    c.eng.tick(c.t); // host moves to the friend
+    expect(c.eng.s.hostId).toBe(c.ids[1]);
+    const wake = c.eng.nextWake(c.t);
+    if (wake !== null) expect(wake).toBeGreaterThan(c.t + 1000);
   });
 });

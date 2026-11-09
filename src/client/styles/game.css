@@ -267,7 +267,7 @@
 .motm small { font: 700 11px var(--font-sans); text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
 .motm b { font: 800 18px var(--font-display); }
 .motm span { color: var(--text-2); font-size: 14px; }
-.match__controls { display: flex; justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap; position: sticky; bottom: 14px; z-index: 20; }
+.match__controls { display: flex; justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap; position: sticky; bottom: max(14px, env(safe-area-inset-bottom)); z-index: 20; }
 .match__controls--final { padding: 10px; border-radius: var(--r-pill); background: var(--glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--border); box-shadow: var(--shadow-3); width: fit-content; margin: 0 auto; }
 
 /* ═════════════ result ═════════════ */
@@ -469,3 +469,32 @@
 .mskip:active { transform: scale(.96); }
 .match__controls { position: static; min-height: 0; }
 .match__controls--final { position: sticky; }
+
+/* ═════════════ phone held sideways: pitch on the left, scoreboard + events on the right ═════════════ */
+@media (orientation: landscape) and (max-height: 520px) {
+  :root { --topbar-h: 44px; }
+  .page { padding: 8px max(16px, env(safe-area-inset-right)) 8px max(16px, env(safe-area-inset-left)); }
+  .match { --mh: calc(100dvh - var(--topbar-h) - 20px); max-width: none; grid-template-columns: auto minmax(0, 1fr); column-gap: 12px; row-gap: 0; align-items: start; }
+  .match__stage { display: contents; }
+  .mwrap { grid-column: 1; grid-row: 1 / span 6; height: var(--mh); width: calc(var(--mh) * 72 / 115); }
+  .mwrap .mpitch { height: 100%; width: 100%; max-height: none; aspect-ratio: auto; border-radius: 16px; }
+  .fxtabs, .scoreboard, .match__side, .match__controls { grid-column: 2; margin-bottom: 8px; }
+  .match__controls { margin-bottom: 0; }
+  .match__controls--final { bottom: max(6px, env(safe-area-inset-bottom)); }
+  .scoreboard { padding: 6px 12px; gap: 8px; border-radius: 16px; }
+  .sb__team { grid-auto-flow: column; justify-content: center; align-items: center; gap: 8px; }
+  .sb__team small { display: none; }
+  .sb__team b { font-size: 15px; }
+  .sb__team .avatar { width: 26px !important; height: 26px !important; font-size: 12px !important; }
+  .sb__mid { min-width: 96px; gap: 0; }
+  .sb__phase { font-size: 10px; }
+  .sb__score { font-size: 34px; }
+  .sb__clock { font-size: 14px; }
+  .sb__count { font-size: 40px; }
+  .sb__pens { margin-top: 2px; }
+  .match__side { max-height: calc(var(--mh) - 92px); overflow-y: auto; overscroll-behavior: contain; }
+  .match__stage .feed { max-height: none; min-height: 0; }
+  .mtag { top: 8px; padding: 5px 12px 6px; }
+  /* beside the pitch, not on top of the keeper */
+  .mskip { right: auto; left: calc(100% + 12px); bottom: 0; }
+}

@@ -1,5 +1,6 @@
 // One command for every real-browser check: builds, boots Cloudflare's local runtime (workerd + Durable Objects),
-// then runs the two-player flows (desktop duel, mobile packs), the stability scenarios and the accessibility audit.
+// then runs the two-player flows (desktop duel, mobile packs), the tournament and device-size runs, the stability
+// scenarios, the accessibility audit and a hard kill-and-restart of the runtime (which boots its own copy).
 //   npm run test:e2e
 import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -27,7 +28,10 @@ const steps = [
   ['two players, Duel draft, desktop', 'e2e/flow.mjs', { BASE }],
   ['two players, Packs draft, phone', 'e2e/flow.mjs', { BASE, FORMAT: 'packs', MOBILE: '1' }],
   ['reconnect, resume, solo cup, daily', 'e2e/more.mjs', { BASE }],
-  ['WCAG audit (axe-core), light + dark', 'e2e/a11y.mjs', { BASE }],
+  ['two phones play a league with CPU teams (iPhone + Pixel emulation)', 'e2e/tournament.mjs', { BASE }],
+  ['one phone vs CPU teams at small, large and landscape sizes (+ iOS zoom rule)', 'e2e/devices.mjs', { BASE }],
+  ['WCAG audit (axe-core), light + dark, incl. tournament screens', 'e2e/a11y.mjs', { BASE }],
+  ['hard kill + restart of the runtime mid-draft and mid-tournament', 'scripts/check-persistence.mjs', {}],
 ];
 let failed = 0;
 for (const [name, file, env] of steps) {

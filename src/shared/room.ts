@@ -31,6 +31,11 @@ export const AFK_GRACE_MS = 8000;
 export const SETUP_SECONDS = 75;
 /** Time to read the table and tweak a lineup between matchdays before the next one starts anyway. */
 export const HUB_SECONDS = 120;
+/**
+ * A human who drops out of a lineup, match or table screen holds the others up for this long before the room carries on
+ * without them. Locking a phone or switching apps kills the socket, so zero grace would skip their match.
+ */
+export const DROP_GRACE_MS = 45_000;
 export const HOST_MIGRATE_MS = 20_000;
 export const LOBBY_GHOST_MS = 120_000;
 /** Nobody connected for this long: the room is garbage. */
@@ -84,6 +89,7 @@ export class RoomEngine {
         createdAt: now,
         lastActive: now,
         phase: 'lobby',
+        pausedAt: null,
         hostId: '',
         settings: { ...DEFAULT_SETTINGS },
         seats: [],
@@ -148,7 +154,45 @@ export class RoomEngine {
     if (!seat || seat.connected === connected) return;
     seat.connected = connected;
     seat.droppedAt = connected ? 0 : now;
+    const s = this.s;
+    if (this.inPlay()) {
+      // Nobody left to play: freeze the game. When the first human is back, push every timer out by the time they were
+      // away, so a match carries on from the minute they left and a pick timer has the same time left.
+      if (!connected && this.nobodyHere() && s.pausedAt == null) s.pausedAt = now;
+      else if (connected && s.pausedAt != null) {
+        this.shiftClock(now - s.pausedAt);
+        s.pausedAt = null;
+      }
+    } else {
+      s.pausedAt = null;
+    }
     this.bump(now);
+  }
+
+  private inPlay(): boolean {
+    const p = this.s.phase;
+    return p === 'draft' || p === 'setup' || p === 'match' || p === 'hub';
+  }
+
+  private nobodyHere(): boolean {
+    return !this.humans().some((x) => x.connected);
+  }
+
+  private shiftClock(ms: number): void {
+    if (ms <= 0) return;
+    const s = this.s;
+    if (s.draft && s.draft.deadline !== null) s.draft.deadline += ms;
+    if (s.setup) s.setup.deadline += ms;
+    if (s.day) {
+      s.day.startedAt += ms;
+      s.day.deadline += ms;
+    }
+    if (s.hub) s.hub.deadline += ms;
+  }
+
+  /** A dropped human counts as finished only after a grace period, so a locked phone does not skip their match. */
+  private gone(x: Seat, now: number): boolean {
+    return !x.connected && now >= x.droppedAt + DROP_GRACE_MS;
   }
 
   /** Explicit "leave room". In the lobby the seat is freed; mid-game the seat goes AFK. */
@@ -664,6 +708,7 @@ export class RoomEngine {
   private tickOnce(now: number): boolean {
     const s = this.s;
     const humans = this.humans();
+    if (this.inPlay() && this.nobodyHere()) return false;
     switch (s.phase) {
       case 'draft': {
         const d = s.draft;
@@ -691,7 +736,7 @@ export class RoomEngine {
       case 'setup': {
         const st = s.setup;
         if (!st) return false;
-        const everyoneReady = humans.every((x) => !x.connected || st.ready[x.id]);
+        const everyoneReady = humans.every((x) => this.gone(x, now) || st.ready[x.id]);
         if (everyoneReady || now >= st.deadline) {
           this.startCompetition(now);
           return true;
@@ -701,7 +746,7 @@ export class RoomEngine {
       case 'match': {
         const d = s.day;
         if (!d) return false;
-        const allSeen = humans.every((x) => !x.connected || d.seen[x.id]);
+        const allSeen = humans.every((x) => this.gone(x, now) || d.seen[x.id]);
         if ((allSeen && now >= d.startedAt) || now >= d.deadline) {
           this.finishHumanDay(now);
           return true;
@@ -711,7 +756,7 @@ export class RoomEngine {
       case 'hub': {
         const h = s.hub;
         if (!h) return false;
-        const everyoneReady = humans.every((x) => !x.connected || h.ready[x.id]);
+        const everyoneReady = humans.every((x) => this.gone(x, now) || h.ready[x.id]);
         if (everyoneReady || now >= h.deadline) {
           this.beginHumanDay(now);
           return true;
@@ -763,7 +808,11 @@ export class RoomEngine {
     const add = (t: number | null | undefined) => {
       if (typeof t === 'number' && Number.isFinite(t)) cands.push(t);
     };
-    switch (s.phase) {
+    const paused = this.inPlay() && this.nobodyHere();
+    if (!paused && (s.phase === 'setup' || s.phase === 'match' || s.phase === 'hub')) {
+      for (const x of this.humans()) if (!x.connected) add(x.droppedAt + DROP_GRACE_MS);
+    }
+    switch (paused ? 'paused' : s.phase) {
       case 'draft': {
         const d = s.draft;
         if (d) {
@@ -797,11 +846,14 @@ export class RoomEngine {
         break;
     }
     const host = s.seats.find((x) => x.id === s.hostId);
-    if (host && !host.connected) add(host.droppedAt + HOST_MIGRATE_MS);
+    // only when someone else is there to take over; otherwise this moment passes and never resolves
+    if (host && !host.connected && s.seats.some((x) => x.connected && !x.bot)) add(host.droppedAt + HOST_MIGRATE_MS);
     if (s.phase === 'lobby') for (const x of s.seats) if (!x.connected) add(x.droppedAt + LOBBY_GHOST_MS);
     add(this.expiresAt(now));
-    if (cands.length === 0) return null;
-    return Math.max(now + 50, Math.min(...cands));
+    // tick() has already run by now, so a moment in the past is one nothing can act on: waking for it would spin
+    const ahead = cands.filter((t) => t > now);
+    if (ahead.length === 0) return null;
+    return Math.max(now + 50, Math.min(...ahead));
   }
 
   /** When the room should be deleted if nothing happens. */

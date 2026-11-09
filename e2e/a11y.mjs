@@ -30,6 +30,42 @@ async function audit(page, label) {
   console.log(`${res.violations.length ? '✗' : '✓'} ${label}: ${res.violations.length} violation type(s)`);
 }
 
+// One person against CPU teams in a 4-team league: audits the lobby with competition settings, the lineup with CPU
+// teams, the live pitch, the between-matchdays hub and the final table.
+async function tournament(page, scheme) {
+  await page.goto(BASE); await page.getByLabel('Your name').fill('Sam');
+  await page.getByRole('button', { name: 'Create a room' }).click(); await page.getByText('Waiting for a friend').waitFor();
+  await page.getByRole('button', { name: /^League/ }).click();
+  await page.getByRole('button', { name: /Packs/ }).click();
+  await page.getByText(/3 CPU teams/).first().waitFor(); await sleep(300);
+  await audit(page, `${scheme}: lobby (league + CPU teams)`);
+  await page.getByRole('button', { name: /^Start: you vs/ }).click();
+  const done = new Set();
+  const once = async (name, fn) => { if (!done.has(name)) { done.add(name); await fn(); } };
+  for (let i = 0; i < 700 && !(await page.locator('.result').count()); i++) {
+    if (await page.locator('.turn--you').count()) {
+      await openPack(page);
+      const cards = page.locator('.board .pcard:not([disabled])');
+      if (await cards.count()) { await cards.first().click().catch(() => {}); await page.keyboard.press('Enter'); await sleep(120); }
+    } else if (await page.locator('.setup').count()) {
+      await once('setup', () => audit(page, `${scheme}: lineup (CPU teams drafted)`));
+      await page.getByRole('button', { name: /Lock in and kick off/ }).click().catch(() => {});
+    } else if (await page.locator('.mpitch').count()) {
+      await once('match', async () => { await sleep(7000); await audit(page, `${scheme}: tournament match (pitch)`); });
+      await page.locator('.mskip').click().catch(() => {});
+      const c = page.getByRole('button', { name: 'Continue' });
+      if (await c.count()) await c.click().catch(() => {});
+    } else if (await page.locator('.hub').count()) {
+      await once('hub', () => audit(page, `${scheme}: between matchdays (results + table)`));
+      const r = page.getByRole('button', { name: /Ready for the next/ });
+      if (await r.count()) await r.click().catch(() => {});
+    }
+    await sleep(250);
+  }
+  await page.locator('.result').waitFor({ timeout: 20_000 });
+  await audit(page, `${scheme}: tournament result (champion + table)`);
+}
+
 for (const scheme of ['light', 'dark']) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: scheme, bypassCSP: true });
   const page = await ctx.newPage();
@@ -57,6 +93,7 @@ for (const scheme of ['light', 'dark']) {
   await sleep(6000); await audit(page, `${scheme}: match live`);
   await page.getByRole('button', { name: /Skip to the end/ }).click(); await sleep(600);
   await audit(page, `${scheme}: full time`);
+  await tournament(page, scheme);
   await ctx.close();
 }
 await browser.close();
