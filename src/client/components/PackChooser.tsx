@@ -27,18 +27,17 @@ export function PackChooser({ packs, canPick, mode, onOpen, who }: {
             className={cx('pack', `pack--${glow}`)}
             disabled={!canPick}
             onClick={() => onOpen(i)}
-            aria-label={`${c.name}. ${glowText}. ${SCENT_TEXT[c.scent]}. ${c.rumour}`}
             data-pack={i}
           >
             <span className="pack__foil" aria-hidden="true" />
             <span className="pack__art" aria-hidden="true">
-              <span className="pack__mark">?</span>
+              <span className="pack__mark" data-g="?" />
             </span>
             <span className="pack__text">
-              <b className="pack__name">{c.name}</b>
+              <b className="pack__name">{c.name}</b>{' '}
               <span className="pack__chips">
-                <span className="pack__chip"><span aria-hidden="true">✨</span> {glowText}</span>
-                <span className="pack__chip"><span aria-hidden="true">{SCENT_GLYPH[c.scent]}</span> {SCENT_TEXT[c.scent]}</span>
+                <span className="pack__chip" data-g="✨">{glowText}</span>{' '}
+                <span className="pack__chip" data-g={SCENT_GLYPH[c.scent]}>{SCENT_TEXT[c.scent]}</span>
               </span>
               <i className="pack__rumour">{c.rumour}</i>
             </span>

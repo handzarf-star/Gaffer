@@ -76,7 +76,8 @@ if (FORMAT === 'turns') {
   await guest.page.getByText(/Sam is picking/).first().waitFor({ timeout: 8000 });
   await guest.page.locator('.draft__board[aria-label="Sam\'s pack"]').waitFor();
   await guest.page.getByRole('tab', { name: /Sam/, selected: true }).waitFor();
-  if ((await guest.page.locator('.board .pcard').count()) < 1) throw new Error('the friend cannot see the pack being drafted');
+  if ((await guest.page.locator('.pack').count()) !== 3) throw new Error('the friend cannot see the packs being chosen from');
+  if ((await guest.page.locator('.pack:not([disabled])').count()) !== 0) throw new Error('the friend must not be able to open the host\'s packs');
   await sleep(500);
   await shot(guest, '03b-watching-guest');
   log('turns: the friend watches the host draft');

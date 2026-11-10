@@ -15,6 +15,8 @@ const seen = new Map();
 async function audit(page, label) {
   await page.locator('.goalflash').waitFor({ state: 'detached', timeout: 6000 }).catch(() => {});
   await sleep(450);
+  // audit a still picture: a label caught half way through its 0.35s fade-in reads as low contrast (a false alarm)
+  await page.addStyleTag({ content: '*, *::before, *::after { animation: none !important; transition: none !important; }' });
   await page.evaluate(axeSrc);
   const res = await page.evaluate(async () => {
     // eslint-disable-next-line no-undef
