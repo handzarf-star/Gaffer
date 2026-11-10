@@ -95,7 +95,7 @@ export function Window({ ctx }: { ctx: LeagueCtx }) {
           <Section title={t('Release a player')}>
             <ul className="plist">
               {[...mine.roster].filter((id) => !outs.has(id)).sort((a, b) => ovrNow(v, a) - ovrNow(v, b)).map((id) => (
-                <li key={id}><PlayerRow v={v} id={id} selected={out === id} onClick={() => setOut(out === id ? null : id)} /></li>
+                <li key={id}><PlayerRow v={v} id={id} selected={out === id} onClick={() => { const next = out === id ? null : id; setOut(next); if (next) setLine(lineOf(W.player(next).pos)); }} /></li>
               ))}
             </ul>
           </Section>

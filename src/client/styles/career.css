@@ -120,3 +120,8 @@ button.prow { cursor: pointer; }
   .career__actions { grid-template-columns: auto 1fr; align-items: center; }
 }
 @media (max-width: 380px) { .prow { grid-template-columns: 40px 1fr auto; } .prow > :last-child:not(.prow__ovr) { grid-column: 1 / -1; } }
+
+/* touch targets: WCAG 2.2 asks for at least 24 by 24 CSS pixels; phones deserve more */
+.career .seg { flex-wrap: wrap; }
+.career .seg__btn { min-height: 40px; min-width: 40px; }
+.tablewrap:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 2px; }

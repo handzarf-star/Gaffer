@@ -124,7 +124,7 @@ export function Standings({ v, league, mineId }: { v: CareerView; league: 1 | 2;
   const { t } = useI18n();
   const rows: Row[] = v.leagues[league === 1 ? '1' : '2'].table;
   return (
-    <div className="tablewrap">
+    <div className="tablewrap" role="region" tabIndex={0} aria-label={league === 1 ? t('First League table') : t('Second League table')}>
       <table className="league">
         <caption className="sr-only">{league === 1 ? t('First League table') : t('Second League table')}</caption>
         <thead>

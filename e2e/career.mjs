@@ -157,7 +157,7 @@ try {
   await A.page.getByRole('button', { name: /^Ready: play the matchday/ }).waitFor();
 
   // ── Bosnian
-  await A.page.getByRole('button', { name: 'BS' }).click();
+  await A.page.getByRole('button', { name: 'BS', exact: true }).click();
   await A.page.getByRole('button', { name: /^Spreman: odigraj kolo/ }).waitFor();
   for (const word of ['Postava', 'Klupa']) await A.page.getByText(word).first().waitFor();
   must((await A.page.locator('html').getAttribute('lang')) === 'bs', 'html lang should switch to bs');
@@ -166,7 +166,7 @@ try {
   await audit(A.page, 'matchday in Bosnian');
   await noSideScroll(A.page, 'matchday (bs)');
   console.log('✓ Bosnian: headings, buttons and html lang switch');
-  await A.page.getByRole('button', { name: 'EN' }).click();
+  await A.page.getByRole('button', { name: 'EN', exact: true }).click();
 
   // ── play to the mid-season window: both managers on auto-play
   for (const { page } of [A, B]) await page.getByRole('button', { name: /Let the computer play my matches|Auto-play is on/ }).click();
@@ -178,7 +178,8 @@ try {
   // ── make four changes: the fourth is over the free allowance and must warn
   for (let i = 0; i < 4; i++) {
     await A.page.locator('section:has(h2:text-is("Release a player")) .prow').nth(i).click();
-    await A.page.locator('section:has-text("Free agents"), section:has-text("Choose his replacement")').last().getByRole('button', { name: 'Sign' }).nth(i).click();
+    // choosing who to release filters the free agents to his position, so the first Sign is a like-for-like replacement
+    await A.page.getByRole('button', { name: 'Sign', exact: true }).first().click();
   }
   await A.page.getByText(/over the free allowance/).waitFor();
   console.log('✓ the fourth change is flagged as over the free allowance');
