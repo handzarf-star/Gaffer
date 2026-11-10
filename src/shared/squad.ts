@@ -124,6 +124,9 @@ export interface Profile {
   avg: number;
 }
 
+/** How much each sector counts towards a squad's headline `overall`. Exported so the balance harness measures against the same numbers. */
+export const OVERALL_W = { att: 0.3, mid: 0.3, def: 0.25, gk: 0.15 } as const;
+
 const r1 = (n: number) => Math.round(n * 10) / 10;
 
 export function profile(sq: Squad): Profile {
@@ -168,7 +171,7 @@ export function profile(sq: Squad): Profile {
     case 'fortress': def += 5; gkv += 2; att -= 3; tempo = 0.8; aggression = 0.9; break;
     case 'counter': att += 3; mid -= 2; tempo = 0.95; break;
   }
-  const overall = 0.3 * att + 0.3 * mid + 0.25 * def + 0.15 * gkv;
+  const overall = OVERALL_W.att * att + OVERALL_W.mid * mid + OVERALL_W.def * def + OVERALL_W.gk * gkv;
   return {
     att: r1(att),
     mid: r1(mid),

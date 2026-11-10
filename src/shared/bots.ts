@@ -26,10 +26,11 @@ export function botNames(seed: string, count: number): string[] {
   return Array.from({ length: count }, (_, i) => `${prefixes[i % prefixes.length]} ${rng.pick(SUFFIX)}`);
 }
 
-export function buildBotSquad(seed: string, pool: PoolKey, level: BotLevel, taken: Set<string>, key: string): Squad {
+/** `forceFormation` drafts for (and keeps) that formation; it exists so the balance harness can measure formations on squads drafted for them. */
+export function buildBotSquad(seed: string, pool: PoolKey, level: BotLevel, taken: Set<string>, key: string, forceFormation?: FormationId): Squad {
   const rng = new Rng(`${seed}/bot/${key}`);
   const cfg = BOT_LEVELS[level];
-  const formation: FormationId = rng.pick(FORMATION_IDS);
+  const formation: FormationId = forceFormation ?? rng.pick(FORMATION_IDS);
   let sq = emptySquad(formation);
   for (let round = 1; round <= 11; round++) {
     const board = dealBoard({
@@ -51,7 +52,7 @@ export function buildBotSquad(seed: string, pool: PoolKey, level: BotLevel, take
   }
   sq = autoArrange(sq);
   // smarter CPUs also pick the formation and tactic that suit their players
-  if (level !== 'easy') {
+  if (level !== 'easy' && !forceFormation) {
     let best = sq;
     let bestOvr = profile(sq).overall;
     for (const f of FORMATION_IDS) {

@@ -19,6 +19,7 @@
     "check:persistence": "node scripts/check-persistence.mjs",
     "check:career": "node scripts/check-career-api.mjs",
     "check:csp": "node e2e/csp.mjs",
+    "check:balance": "tsx scripts/check-balance.ts",
     "check:update": "node e2e/update.mjs",
     "data:build": "node scripts/data/fetch-wikipedia.mjs && node scripts/data/parse-wikipedia.mjs && node scripts/data/fetch-wikidata.mjs && node scripts/data/merge.mjs && node scripts/data/fetch-players.mjs && node scripts/data/build-career.mjs",
     "predev": "node -e \"require('node:fs').mkdirSync('dist/client',{recursive:true})\"",
