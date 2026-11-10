@@ -1,0 +1,6922 @@
+{
+ "generatedFrom": "Wikipedia article revisions (CC BY-SA 4.0)",
+ "clubs": {
+  "dinamo-zagreb": {
+   "ok": true,
+   "name": "Dinamo Zagreb",
+   "country": "HR",
+   "league": 1,
+   "source": {
+    "site": "en.wikipedia.org",
+    "title": "GNK Dinamo Zagreb",
+    "revid": 1384865371,
+    "revisionAt": "2026-11-10T13:43:01Z",
+    "fetchedAt": "2026-11-10T14:15:01.469Z",
+    "url": "https://en.wikipedia.org/w/index.php?title=GNK_Dinamo_Zagreb&oldid=1384865371"
+   },
+   "players": [
+    {
+     "name": "Danijel Zagorac",
+     "link": "Danijel Zagorac",
+     "no": 1,
+     "pos": "GK",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Bruno Goda",
+     "link": "Bruno Goda",
+     "no": 3,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Kirill Kravtsov",
+     "link": "Kirill Kravtsov",
+     "no": 5,
+     "pos": "MF",
+     "nat": "RUS",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Stjepan Radeljić",
+     "link": "Stjepan Radeljić",
+     "no": 6,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Dani Rodríguez",
+     "link": "Dani Rodríguez (footballer, born 2005)",
+     "no": 7,
+     "pos": "FW",
+     "nat": "ESP",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Miha Zajc",
+     "link": "Miha Zajc",
+     "no": 8,
+     "pos": "MF",
+     "nat": "SVN",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Dion Drena Beljo",
+     "link": "Dion Drena Beljo",
+     "no": 9,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Luka Stojković",
+     "link": "Luka Stojković",
+     "no": 10,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Arbër Hoxha",
+     "link": "Arbër Hoxha",
+     "no": 11,
+     "pos": "FW",
+     "nat": "ALB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Paul Tabinas",
+     "link": "Paul Tabinas",
+     "no": 13,
+     "pos": "DF",
+     "nat": "PHI",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Smail Prevljak",
+     "link": "Smail Prevljak",
+     "no": 14,
+     "pos": "FW",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Niko Galešić",
+     "link": "Niko Galešić",
+     "no": 15,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Luka Ivanušec",
+     "link": "Luka Ivanušec",
+     "no": 17,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Aleks Stojaković",
+     "link": null,
+     "no": 19,
+     "pos": "FW",
+     "nat": "SVN",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Robert Mudražija",
+     "link": "Robert Mudražija",
+     "no": 20,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Mateo Lisica",
+     "link": "Mateo Lisica",
+     "no": 21,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Matteo Pérez Vinlöf",
+     "link": "Matteo Pérez Vinlöf",
+     "no": 22,
+     "pos": "DF",
+     "nat": "SWE",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Iker Almena",
+     "link": "Iker Almena",
+     "no": 23,
+     "pos": "FW",
+     "nat": "ESP",
+     "note": "on loan from Al Qadsiah",
+     "captain": false,
+     "loanFrom": "Al Qadsiah",
+     "section": "squad"
+    },
+    {
+     "name": "Dominik Kotarski",
+     "link": "Dominik Kotarski",
+     "no": 24,
+     "pos": "GK",
+     "nat": "CRO",
+     "note": "on loan from Copenhagen",
+     "captain": false,
+     "loanFrom": "Copenhagen",
+     "section": "squad"
+    },
+    {
+     "name": "Moris Valinčić",
+     "link": "Moris Valinčić",
+     "no": 25,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Scott McKenna",
+     "link": "Scott McKenna",
+     "no": 26,
+     "pos": "DF",
+     "nat": "SCO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Josip Mišić",
+     "link": "Josip Mišić (footballer, born 1994)",
+     "no": 27,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": "Captain",
+     "captain": true,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Fran Topić",
+     "link": "Fran Topić",
+     "no": 30,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ivan Nevistić",
+     "link": "Ivan Nevistić",
+     "no": 33,
+     "pos": "GK",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Sergi Domínguez",
+     "link": "Sergi Domínguez",
+     "no": 36,
+     "pos": "DF",
+     "nat": "ESP",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Sven Šunta",
+     "link": null,
+     "no": 41,
+     "pos": "MF",
+     "nat": "SVN",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ivan Filipović",
+     "link": "Ivan Filipović (footballer)",
+     "no": 44,
+     "pos": "GK",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Noah Nsoki",
+     "link": "Noah Nsoki",
+     "no": 77,
+     "pos": "FW",
+     "nat": "FRA",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Lukas Kačavenda",
+     "link": "Lukas Kačavenda",
+     "no": 80,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Mislav Oršić",
+     "link": "Mislav Oršić",
+     "no": 99,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Raúl Torrente",
+     "link": "Raúl Torrente",
+     "no": 16,
+     "pos": "DF",
+     "nat": "ESP",
+     "note": "{{small|at {{flagicon|FRA}} Le Mans until 30 June 2027}}",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Marko Zebić",
+     "link": null,
+     "no": 42,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": "{{small|at {{flagicon|CRO}} Rudeš until 10 January 2027}}",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Juan Córdoba",
+     "link": "Juan Córdoba",
+     "no": 70,
+     "pos": "FW",
+     "nat": "COL",
+     "note": "{{small|at {{flagicon|COL}} Independiente Medellín until 30 June 2027}}",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Nikola Čavlina",
+     "link": "Nikola Čavlina",
+     "no": 88,
+     "pos": "GK",
+     "nat": "CRO",
+     "note": "{{small|at {{flagicon|POL}} Wieczysta Kraków until 30 June 2027}}",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Antonio Rajić",
+     "link": null,
+     "no": null,
+     "pos": "GK",
+     "nat": "CRO",
+     "note": "{{small|at {{flagicon|CRO}} Kustošija until 26 June 2027}}",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Samy Mmaee",
+     "link": "Samy Mmaee",
+     "no": null,
+     "pos": "DF",
+     "nat": "MAR",
+     "note": "{{small|at {{flagicon|CYP}} Pafos until 30 June 2027}}",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Lovre Kulušić",
+     "link": null,
+     "no": null,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": "{{small|at {{flagicon|CRO}} Lokomotiva Zagreb until 30 June 2027}}",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    }
+   ],
+   "skipped": [
+    {
+     "section": "Youth academy",
+     "name": "Fuzy Taylor"
+    },
+    {
+     "section": "Youth academy",
+     "name": "Noa Mikić"
+    },
+    {
+     "section": "Youth academy",
+     "name": "Kaloyan Bozhkov"
+    },
+    {
+     "section": "Youth academy",
+     "name": "Mislav Ćutuk"
+    },
+    {
+     "section": "Youth academy",
+     "name": "Jona Benkotić"
+    },
+    {
+     "section": "Youth academy",
+     "name": "Gabrijel Šivalec"
+    },
+    {
+     "section": "Youth academy",
+     "name": "Petar Šimun Žaja"
+    },
+    {
+     "section": "Youth academy",
+     "name": "Borna Orlić"
+    },
+    {
+     "section": "Youth academy",
+     "name": "Krešimir Radoš"
+    },
+    {
+     "section": "Youth academy",
+     "name": "Patrik Horvat"
+    },
+    {
+     "section": "Youth academy",
+     "name": "Nikola Radnić"
+    },
+    {
+     "section": "Youth academy",
+     "name": "Josip Brundić"
+    }
+   ]
+  },
+  "crvena-zvezda": {
+   "ok": true,
+   "name": "Crvena Zvezda",
+   "country": "RS",
+   "league": 1,
+   "source": {
+    "site": "en.wikipedia.org",
+    "title": "Red Star Belgrade",
+    "revid": 1384644401,
+    "revisionAt": "2026-11-09T08:49:23Z",
+    "fetchedAt": "2026-11-10T14:15:01.469Z",
+    "url": "https://en.wikipedia.org/w/index.php?title=Red_Star_Belgrade&oldid=1384644401"
+   },
+   "players": [
+    {
+     "name": "Matheus",
+     "link": "Matheus (footballer, born March 1992)",
+     "no": 1,
+     "pos": "GK",
+     "nat": "BRA",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Yūta Nakayama",
+     "link": "Yūta Nakayama",
+     "no": 3,
+     "pos": "DF",
+     "nat": "JPN",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Mirko Ivanić",
+     "link": "Mirko Ivanić",
+     "no": 4,
+     "pos": "MF",
+     "nat": "MNE",
+     "note": "captain",
+     "captain": true,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Mahmudu Bajo",
+     "link": "Mahmudu Bajo",
+     "no": 6,
+     "pos": "MF",
+     "nat": "GAM",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Marko Arnautović",
+     "link": "Marko Arnautović",
+     "no": 7,
+     "pos": "FW",
+     "nat": "AUT",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Kristiyan Balov",
+     "link": "Kristiyan Balov",
+     "no": 8,
+     "pos": "MF",
+     "nat": "BUL",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Bamba Dieng",
+     "link": "Bamba Dieng",
+     "no": 9,
+     "pos": "FW",
+     "nat": "SEN",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Aleksandar Katai",
+     "link": "Aleksandar Katai",
+     "no": 10,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": "vice-captain",
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Miloš Veljković",
+     "link": "Miloš Veljković",
+     "no": 13,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Osman Bukari",
+     "link": "Osman Bukari",
+     "no": 14,
+     "pos": "MF",
+     "nat": "GHA",
+     "note": "on loan from Widzew Łódź",
+     "captain": false,
+     "loanFrom": "Widzew Łódź",
+     "section": "squad"
+    },
+    {
+     "name": "Mohammad Abu Fani",
+     "link": "Mohammad Abu Fani",
+     "no": 15,
+     "pos": "MF",
+     "nat": "ISR",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Kim Ye-geon",
+     "link": "Kim Ye-geon",
+     "no": 19,
+     "pos": "MF",
+     "nat": "KOR",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Tomás Händel",
+     "link": "Tomás Händel",
+     "no": 20,
+     "pos": "MF",
+     "nat": "POR",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Timi Max Elšnik",
+     "link": "Timi Max Elšnik",
+     "no": 21,
+     "pos": "MF",
+     "nat": "SVN",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Vasilije Kostov",
+     "link": "Vasilije Kostov",
+     "no": 22,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Mihailo Ristić",
+     "link": "Mihailo Ristić (footballer)",
+     "no": 23,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Matej Strika",
+     "link": "Matej Strika",
+     "no": 27,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Franklin Tebo Uchenna",
+     "link": "Franklin Tebo Uchenna",
+     "no": 30,
+     "pos": "DF",
+     "nat": "NGA",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Derrick Luckassen",
+     "link": "Derrick Luckassen",
+     "no": 32,
+     "pos": "DF",
+     "nat": "GHA",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Rade Krunić",
+     "link": "Rade Krunić",
+     "no": 33,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": "3rd captain",
+     "captain": true,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Vladimir Lučić",
+     "link": "Vladimir Lučić (footballer)",
+     "no": 37,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Stefan Gudelj",
+     "link": "Stefan Gudelj",
+     "no": 45,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Savo Radanović",
+     "link": "Savo Radanović",
+     "no": 50,
+     "pos": "GK",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Dimitrije Šarić",
+     "link": "Dimitrije Šarić",
+     "no": 55,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Matej Gashtarov",
+     "link": "Matej Gashtarov",
+     "no": 60,
+     "pos": "MF",
+     "nat": "MKD",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Andrej Sibinović",
+     "link": "Andrej Sibinović",
+     "no": 66,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Muhammed Cham",
+     "link": "Muhammed Cham",
+     "no": 70,
+     "pos": "MF",
+     "nat": "AUT",
+     "note": "on loan from Trabzonspor",
+     "captain": false,
+     "loanFrom": "Trabzonspor",
+     "section": "squad"
+    },
+    {
+     "name": "Adem Avdić",
+     "link": "Adem Avdić",
+     "no": 71,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Loizos Loizou",
+     "link": "Loizos Loizou",
+     "no": 75,
+     "pos": "MF",
+     "nat": "CYP",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ivan Guteša",
+     "link": "Ivan Guteša",
+     "no": 77,
+     "pos": "GK",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Jovan Šljivić",
+     "link": "Jovan Šljivić",
+     "no": 8,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": "at {{fbaicon|SRB}} OFK Beograd until the end of the 2026–27 season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Uroš Sremčević",
+     "link": "Uroš Sremčević",
+     "no": 31,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": "at {{fbaicon|SRB}} Radnički 1923 until the end of the 2026–27 season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Balša Papović",
+     "link": null,
+     "no": 34,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": "at {{fbaicon|SRB}} Grafičar Beograd until the end of the 2026–27 season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Luka Zarić",
+     "link": "Luka Zarić",
+     "no": 40,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": "at {{fbaicon|SRB}} OFK Beograd until the end of the 2026–27 season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Edmund Addo",
+     "link": "Edmund Addo",
+     "no": 41,
+     "pos": "MF",
+     "nat": "GHA",
+     "note": "at {{fbaicon|SRB}} OFK Beograd until the end of the 2026–27 season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Dragan Anokić",
+     "link": null,
+     "no": 41,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": "at {{fbaicon|SRB}} Grafičar Beograd until the end of the 2026–27 season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Vuk Roganović",
+     "link": null,
+     "no": 47,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": "at {{fbaicon|SRB}} Grafičar Beograd until the end of the 2026–27 season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Gorazd Ristovski",
+     "link": null,
+     "no": 65,
+     "pos": "DF",
+     "nat": "MKD",
+     "note": "at {{fbaicon|SRB}} Grafičar Beograd until the end of the 2026–27 season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Uroš Đorđević",
+     "link": null,
+     "no": 70,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": "at {{fbaicon|SRB}} Grafičar Beograd until the end of the 2026–27 season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Shavy Babicka",
+     "link": "Shavy Babicka",
+     "no": 80,
+     "pos": "MF",
+     "nat": "GAB",
+     "note": "at {{fbaicon|UAE}} Dubai United until the end of the 2026–27 season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Vasilije Subotić",
+     "link": "Vasilije Subotić",
+     "no": 91,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": "at {{fbaicon|SRB}} Grafičar Beograd until the end of the 2026–27 season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Ognjen Mišić",
+     "link": null,
+     "no": null,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": "at {{fbaicon|SRB}} Torlak until the end of the 2026–27 season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    }
+   ],
+   "skipped": [
+    {
+     "section": "On dual registration",
+     "name": "Matej Strika"
+    },
+    {
+     "section": "On dual registration",
+     "name": "Strahinja Baucal"
+    },
+    {
+     "section": "On dual registration",
+     "name": "Ognjen Matanović"
+    },
+    {
+     "section": "On dual registration",
+     "name": "Savo Radanović"
+    },
+    {
+     "section": "On dual registration",
+     "name": "Dimitrije Šarić"
+    }
+   ]
+  },
+  "partizan": {
+   "ok": true,
+   "name": "Partizan",
+   "country": "RS",
+   "league": 1,
+   "source": {
+    "site": "en.wikipedia.org",
+    "title": "FK Partizan",
+    "revid": 1382286698,
+    "revisionAt": "2026-10-27T20:13:09Z",
+    "fetchedAt": "2026-11-10T14:15:01.469Z",
+    "url": "https://en.wikipedia.org/w/index.php?title=FK_Partizan&oldid=1382286698"
+   },
+   "players": [
+    {
+     "name": "Marko Milošević",
+     "link": "Marko Milošević (footballer)",
+     "no": 1,
+     "pos": "GK",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Mario Jurčević",
+     "link": "Mario Jurčević",
+     "no": 4,
+     "pos": "DF",
+     "nat": "SVN",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Mateja Milovanović",
+     "link": "Mateja Milovanović",
+     "no": 5,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Chaka Traorè",
+     "link": "Chaka Traorè",
+     "no": 7,
+     "pos": "MF",
+     "nat": "CIV",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Aleks Zeković",
+     "link": "Aleks Zeković",
+     "no": 8,
+     "pos": "MF",
+     "nat": "MNE",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Erik Kojzek",
+     "link": "Erik Kojzek",
+     "no": 9,
+     "pos": "FW",
+     "nat": "AUT",
+     "note": "on loan from Wolfsberger AC",
+     "captain": false,
+     "loanFrom": "Wolfsberger AC",
+     "section": "squad"
+    },
+    {
+     "name": "Igor Miladinović",
+     "link": "Igor Miladinović (footballer, born 2003)",
+     "no": 10,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": "on loan from AS Saint-Étienne",
+     "captain": false,
+     "loanFrom": "AS Saint-Étienne",
+     "section": "squad"
+    },
+    {
+     "name": "Milan Vukotić",
+     "link": "Milan Vukotić",
+     "no": 11,
+     "pos": "MF",
+     "nat": "MNE",
+     "note": "vice-captain",
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Iddrisu Baba",
+     "link": "Iddrisu Baba",
+     "no": 14,
+     "pos": "MF",
+     "nat": "GHA",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Milan Aleksić",
+     "link": "Milan Aleksić (footballer)",
+     "no": 17,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": "on loan from Sunderland",
+     "captain": false,
+     "loanFrom": "Sunderland",
+     "section": "squad"
+    },
+    {
+     "name": "Demba Seck",
+     "link": "Demba Seck",
+     "no": 19,
+     "pos": "MF",
+     "nat": "SEN",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Samson Nwulu",
+     "link": "Samson Vitalis Nwulu",
+     "no": 20,
+     "pos": "DF",
+     "nat": "NGA",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Sidney Lima",
+     "link": "Sidney Lima",
+     "no": 21,
+     "pos": "DF",
+     "nat": "BRA",
+     "note": "on loan from Santa Clara",
+     "captain": false,
+     "loanFrom": "Santa Clara",
+     "section": "squad"
+    },
+    {
+     "name": "Stefan Mitrović",
+     "link": "Stefan Mitrović (footballer, born 1990)",
+     "no": 23,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Vukašin Đurđević",
+     "link": "Vukašin Đurđević",
+     "no": 24,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Nikola Čumić",
+     "link": "Nikola Čumić",
+     "no": 27,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Miloš Krunić",
+     "link": "Miloš Krunić",
+     "no": 31,
+     "pos": "GK",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Nemanja Trifunović",
+     "link": "Nemanja Trifunović",
+     "no": 32,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Stefan Petrović",
+     "link": "Stefan Petrović (footballer, born 2008)",
+     "no": 33,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ibrahim Zubairu",
+     "link": "Ibrahim Zubairu",
+     "no": 39,
+     "pos": "MF",
+     "nat": "GHA",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Nikola Simić",
+     "link": "Nikola Simić (footballer, born 2007)",
+     "no": 40,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": "captain",
+     "captain": true,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Tarik Banjić",
+     "link": "Tarik Banjić",
+     "no": 41,
+     "pos": "GK",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Matija Ninić",
+     "link": "Matija Ninić",
+     "no": 42,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Stefan Milić",
+     "link": "Stefan Milić",
+     "no": 44,
+     "pos": "DF",
+     "nat": "MNE",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Marko Lekić",
+     "link": "Marko Lekić (footballer, born 2003)",
+     "no": 46,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Milan Lazarević",
+     "link": "Milan Lazarević (footballer)",
+     "no": 50,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Vojin Marinković",
+     "link": "Vojin Marinković",
+     "no": 66,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Dušan Jovanović",
+     "link": "Dušan Jovanović (footballer, born 2008)",
+     "no": 79,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Dušan Makević",
+     "link": "Dušan Makević",
+     "no": 88,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Jeh",
+     "link": "Jeh (footballer)",
+     "no": 89,
+     "pos": "FW",
+     "nat": "BRA",
+     "note": "on loan from Göztepe",
+     "captain": false,
+     "loanFrom": "Göztepe",
+     "section": "squad"
+    },
+    {
+     "name": "Zoran Alilović",
+     "link": "Zoran Alilović",
+     "no": 90,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Bogdan Kostić",
+     "link": "Bogdan Kostić",
+     "no": 99,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Veljko Popović",
+     "link": "Veljko Popović",
+     "no": 12,
+     "pos": "GK",
+     "nat": "SRB",
+     "note": "on loan at {{flagicon|SRB}} Teleoptik",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Abdulmalik Mohammed",
+     "link": "Abdulmalik Mohammed (footballer, born 2007)",
+     "no": 13,
+     "pos": "DF",
+     "nat": "NGA",
+     "note": "on loan at {{flagicon|SRB}} Teleoptik",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Leonard Owusu",
+     "link": "Leonard Owusu",
+     "no": 16,
+     "pos": "MF",
+     "nat": "GHA",
+     "note": "on loan at {{flagicon|NOR}} Fredrikstad",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Mihailo Radić",
+     "link": "Mihailo Radić",
+     "no": 26,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": "on loan at {{flagicon|ESP}} Almería B",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Dimitrije Janković",
+     "link": "Dimitrije Janković",
+     "no": 70,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": "on loan at {{flagicon|SRB}} Novi Pazar",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Ivan Martinović",
+     "link": "Ivan Martinović (footballer, born 2007)",
+     "no": 77,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": "on loan at {{flagicon|SRB}} Teleoptik",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Nikola Popović",
+     "link": "Nikola Popović (footballer, born 2006)",
+     "no": null,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": "on loan at {{flagicon|SRB}} Teleoptik",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Danilo Bulatović",
+     "link": "Danilo Bulatović",
+     "no": null,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": "on loan at {{flagicon|SRB}} Teleoptik",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Sergej Mladenović",
+     "link": "Sergej Mladenović",
+     "no": null,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": "on loan at {{flagicon|SRB}} Teleoptik",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Duško Janačković",
+     "link": "Duško Janačković",
+     "no": null,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": "on loan at {{flagicon|SRB}} Teleoptik",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Stefan Đurović",
+     "link": "Stefan Đurović",
+     "no": null,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": "on loan at {{flagicon|SRB}} Teleoptik",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    }
+   ],
+   "skipped": [
+    {
+     "section": "Other players on contract",
+     "name": "Vanja Đorđević"
+    },
+    {
+     "section": "Other players on contract",
+     "name": "Mihajlo Petković"
+    },
+    {
+     "section": "On [[two-way contract|dual registration]]",
+     "name": "Matija Ninić"
+    },
+    {
+     "section": "On [[two-way contract|dual registration]]",
+     "name": "Vojin Marinković"
+    },
+    {
+     "section": "On [[two-way contract|dual registration]]",
+     "name": "Dušan Jovanović"
+    },
+    {
+     "section": "On [[two-way contract|dual registration]]",
+     "name": "Dušan Makević"
+    }
+   ]
+  },
+  "hajduk": {
+   "ok": true,
+   "name": "Hajduk Split",
+   "country": "HR",
+   "league": 1,
+   "source": {
+    "site": "en.wikipedia.org",
+    "title": "HNK Hajduk Split",
+    "revid": 1382269399,
+    "revisionAt": "2026-10-27T18:05:22Z",
+    "fetchedAt": "2026-11-10T14:15:01.469Z",
+    "url": "https://en.wikipedia.org/w/index.php?title=HNK_Hajduk_Split&oldid=1382269399"
+   },
+   "players": [
+    {
+     "name": "Ivica Ivušić",
+     "link": "Ivica Ivušić",
+     "no": 1,
+     "pos": "GK",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Adrion Pajaziti",
+     "link": "Adrion Pajaziti",
+     "no": 4,
+     "pos": "MF",
+     "nat": "ALB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Alec Van Hoorenbeeck",
+     "link": "Alec Van Hoorenbeeck",
+     "no": 5,
+     "pos": "DF",
+     "nat": "BEL",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Dennis Hadžikadunić",
+     "link": "Dennis Hadžikadunić",
+     "no": 6,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Abdoulie Sanyang",
+     "link": "Abdoulie Sanyang",
+     "no": 7,
+     "pos": "FW",
+     "nat": "GAM",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Khalil Fayad",
+     "link": "Khalil Fayad",
+     "no": 8,
+     "pos": "MF",
+     "nat": "FRA",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Dalisson de Almeida",
+     "link": "Dalisson de Almeida",
+     "no": 9,
+     "pos": "MF",
+     "nat": "BRA",
+     "note": "on loan from Córdoba",
+     "captain": false,
+     "loanFrom": "Córdoba",
+     "section": "squad"
+    },
+    {
+     "name": "Marko Livaja",
+     "link": "Marko Livaja",
+     "no": 10,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": "captain",
+     "captain": true,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Michele Šego",
+     "link": "Michele Šego",
+     "no": 11,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": "vice-captain",
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ron Raçi",
+     "link": "Ron Raçi",
+     "no": 14,
+     "pos": "DF",
+     "nat": "KOS",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Dario Marešić",
+     "link": "Dario Marešić",
+     "no": 15,
+     "pos": "DF",
+     "nat": "AUT",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Anđelo Šutalo",
+     "link": null,
+     "no": 16,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Dario Melnjak",
+     "link": "Dario Melnjak",
+     "no": 17,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": "vice-captain",
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Leander Dendoncker",
+     "link": "Leander Dendoncker",
+     "no": 18,
+     "pos": "MF",
+     "nat": "BEL",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Etnik Brruti",
+     "link": "Etnik Brruti",
+     "no": 19,
+     "pos": "MF",
+     "nat": "ALB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Alberto del Moral",
+     "link": "Alberto del Moral",
+     "no": 20,
+     "pos": "MF",
+     "nat": "ESP",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Mathieu Acapandié",
+     "link": "Mathieu Acapandié",
+     "no": 22,
+     "pos": "DF",
+     "nat": "MAD",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Marin Šotiček",
+     "link": "Marin Šotiček",
+     "no": 23,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": "on loan from Basel",
+     "captain": false,
+     "loanFrom": "Basel",
+     "section": "squad"
+    },
+    {
+     "name": "Adam Huram",
+     "link": "Adam Huram",
+     "no": 26,
+     "pos": "MF",
+     "nat": "UKR",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Roko Brajković",
+     "link": "Roko Brajković",
+     "no": 28,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Šimun Hrgović",
+     "link": "Šimun Hrgović",
+     "no": 32,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Toni Silić",
+     "link": "Toni Silić",
+     "no": 33,
+     "pos": "GK",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Marino Skelin",
+     "link": "Marino Skelin",
+     "no": 36,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Luka Hodak",
+     "link": "Luka Hodak",
+     "no": 38,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Illia Kutia",
+     "link": "Illia Kutia",
+     "no": 39,
+     "pos": "MF",
+     "nat": "UKR",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Dante Stipica",
+     "link": "Dante Stipica",
+     "no": 44,
+     "pos": "GK",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Carlos Martín",
+     "link": "Carlos Martín (footballer)",
+     "no": 77,
+     "pos": "FW",
+     "nat": "ESP",
+     "note": "on loan from Atlético Madrid",
+     "captain": false,
+     "loanFrom": "Atlético Madrid",
+     "section": "squad"
+    },
+    {
+     "name": "Davyd Fesyuk",
+     "link": "Davyd Fesyuk",
+     "no": 99,
+     "pos": "GK",
+     "nat": "UKR",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ivan Krstanović",
+     "link": null,
+     "no": 13,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": "at Široki Brijeg until 26 June 2027",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Fran Karačić",
+     "link": "Fran Karačić",
+     "no": 29,
+     "pos": "DF",
+     "nat": "AUS",
+     "note": "at Lokomotiva until 30 June 2027",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Noa Skoko",
+     "link": "Noa Skoko",
+     "no": 37,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": "at Rudeš until 30 June 2027",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Mihael Žaper",
+     "link": "Mihael Žaper",
+     "no": 45,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": "at Radomlje until 30 June 2027",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    }
+   ],
+   "skipped": [
+    {
+     "section": "Dual registration",
+     "name": "Roko Gabrić"
+    },
+    {
+     "section": "Dual registration",
+     "name": "Dominik Babić"
+    },
+    {
+     "section": "Dual registration",
+     "name": "Duje Milišić"
+    },
+    {
+     "section": "Dual registration",
+     "name": "Mateo Čupić"
+    },
+    {
+     "section": "Dual registration",
+     "name": "Ivan Pocrnjić"
+    },
+    {
+     "section": "Dual registration",
+     "name": "Peter Ugwuodo"
+    },
+    {
+     "section": "Retired numbers",
+     "name": "12th man"
+    }
+   ]
+  },
+  "zeljeznicar": {
+   "ok": true,
+   "name": "Željezničar",
+   "country": "BA",
+   "league": 1,
+   "source": {
+    "site": "en.wikipedia.org",
+    "title": "FK Željezničar Sarajevo",
+    "revid": 1382699691,
+    "revisionAt": "2026-10-29T21:21:59Z",
+    "fetchedAt": "2026-11-10T14:15:04.181Z",
+    "url": "https://en.wikipedia.org/w/index.php?title=FK_%C5%BDeljezni%C4%8Dar_Sarajevo&oldid=1382699691"
+   },
+   "players": [
+    {
+     "name": "Tarik Abdulahović",
+     "link": null,
+     "no": 1,
+     "pos": "GK",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Marin Karamarko",
+     "link": "Marin Karamarko",
+     "no": 4,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Amar Ibrišimović",
+     "link": null,
+     "no": 5,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": "on loan from Schalke 04 II",
+     "captain": false,
+     "loanFrom": "Schalke 04 II",
+     "section": "squad"
+    },
+    {
+     "name": "Aleksa Pejić",
+     "link": "Aleksa Pejić",
+     "no": 6,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": "captain",
+     "captain": true,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Yacouba Dabo",
+     "link": null,
+     "no": 7,
+     "pos": "MF",
+     "nat": "SEN",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Afan Fočo",
+     "link": null,
+     "no": 8,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Aldian Korora",
+     "link": null,
+     "no": 9,
+     "pos": "FW",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Madžid Šošić",
+     "link": "Madžid Šošić",
+     "no": 10,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Matej Cvetanoski",
+     "link": "Matej Cvetanoski",
+     "no": 11,
+     "pos": "MF",
+     "nat": "MKD",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Afonso Vitorino",
+     "link": null,
+     "no": 14,
+     "pos": "MF",
+     "nat": "POR",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Bojan Nastić",
+     "link": "Bojan Nastić",
+     "no": 15,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Dženan Šabić",
+     "link": null,
+     "no": 16,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ante Kuliš",
+     "link": null,
+     "no": 19,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Giovanni Troupée",
+     "link": "Giovanni Troupée",
+     "no": 20,
+     "pos": "DF",
+     "nat": "CUR",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Admir Gojak",
+     "link": null,
+     "no": 22,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Eldar Dragović",
+     "link": null,
+     "no": 23,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ajdin Raščić",
+     "link": null,
+     "no": 24,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Deni Milošević",
+     "link": "Deni Milošević",
+     "no": 27,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Jonathan Freeman",
+     "link": null,
+     "no": 28,
+     "pos": "MF",
+     "nat": "LBR",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Muharem Husković",
+     "link": "Muharem Husković",
+     "no": 29,
+     "pos": "FW",
+     "nat": "AUT",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Marko Karamarko",
+     "link": "Marko Karamarko",
+     "no": 30,
+     "pos": "DF",
+     "nat": "GER",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Sandro Jovanović",
+     "link": "Sandro Jovanović",
+     "no": 32,
+     "pos": "DF",
+     "nat": "SVN",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Collin Seedorf",
+     "link": "Collin Seedorf",
+     "no": 33,
+     "pos": "DF",
+     "nat": "NED",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Doruk Tuğrul",
+     "link": null,
+     "no": 34,
+     "pos": "MF",
+     "nat": "TUR",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ángel Jiménez",
+     "link": "Ángel Jiménez (footballer)",
+     "no": 41,
+     "pos": "GK",
+     "nat": "ESP",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Gabriel Cunha",
+     "link": null,
+     "no": 49,
+     "pos": "FW",
+     "nat": "BRA",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Armin Hodžić",
+     "link": "Armin Hodžić (footballer, born 2000)",
+     "no": 55,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Samir Radovac",
+     "link": "Samir Radovac",
+     "no": 88,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Rodrigo Piloto",
+     "link": null,
+     "no": 90,
+     "pos": "FW",
+     "nat": "POR",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Alvin Ćosić",
+     "link": null,
+     "no": 99,
+     "pos": "GK",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Olanrewaju Ibraheem",
+     "link": null,
+     "no": 17,
+     "pos": "MF",
+     "nat": "NGA",
+     "note": "at Zvijezda Gradačac until 30 June 2027",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    }
+   ],
+   "skipped": [
+    {
+     "section": "Youth academy players",
+     "name": "Daris Kelmendi"
+    }
+   ]
+  },
+  "sarajevo": {
+   "ok": true,
+   "name": "Sarajevo",
+   "country": "BA",
+   "league": 1,
+   "source": {
+    "site": "en.wikipedia.org",
+    "title": "FK Sarajevo",
+    "revid": 1381875745,
+    "revisionAt": "2026-10-25T09:55:39Z",
+    "fetchedAt": "2026-11-10T14:15:04.181Z",
+    "url": "https://en.wikipedia.org/w/index.php?title=FK_Sarajevo&oldid=1381875745"
+   },
+   "players": [
+    {
+     "name": "Shane Maroodza",
+     "link": "Shane Maroodza",
+     "no": 2,
+     "pos": "DF",
+     "nat": "ZIM",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Renato Gojković",
+     "link": "Renato Gojković",
+     "no": 3,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Rijad Telalović",
+     "link": "Rijad Telalović",
+     "no": 5,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Jovan Ivanišević",
+     "link": "Jovan Ivanišević",
+     "no": 6,
+     "pos": "DF",
+     "nat": "CAN",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ivan Šarić",
+     "link": "Ivan Šarić (footballer)",
+     "no": 7,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Antonio Galešić",
+     "link": null,
+     "no": 8,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Leo Mikić",
+     "link": "Leo Mikić",
+     "no": 9,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Francis Kyeremeh",
+     "link": "Francis Kyeremeh",
+     "no": 11,
+     "pos": "FW",
+     "nat": "GHA",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Sanin Mušija",
+     "link": "Sanin Mušija",
+     "no": 13,
+     "pos": "GK",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Filip Kosi",
+     "link": "Filip Kosi",
+     "no": 17,
+     "pos": "DF",
+     "nat": "SVN",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Matija Glogovac",
+     "link": null,
+     "no": 18,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ricardo Caraballo",
+     "link": "Ricardo Caraballo",
+     "no": 19,
+     "pos": "FW",
+     "nat": "COL",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Andreja Ristić",
+     "link": "Andreja Ristić",
+     "no": 19,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Agon Elezi",
+     "link": "Agon Elezi",
+     "no": 20,
+     "pos": "MF",
+     "nat": "MKD",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Amar Beganović",
+     "link": "Amar Beganović",
+     "no": 22,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": "captain",
+     "captain": true,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Jonathan Agyekum",
+     "link": null,
+     "no": 23,
+     "pos": "FW",
+     "nat": "DEN",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Filip Živković",
+     "link": "Filip Živković",
+     "no": 24,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": "on loan from Osijek",
+     "captain": false,
+     "loanFrom": "Osijek",
+     "section": "squad"
+    },
+    {
+     "name": "Junior Awusi",
+     "link": ":eo:Junior Awusi",
+     "no": 25,
+     "pos": "FW",
+     "nat": "ESP",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Luka Hujber",
+     "link": "Luka Hujber",
+     "no": 27,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Haris Mujanić",
+     "link": null,
+     "no": 28,
+     "pos": "GK",
+     "nat": "BIH",
+     "note": "on loan from Koper",
+     "captain": false,
+     "loanFrom": "Koper",
+     "section": "squad"
+    },
+    {
+     "name": "Amar Cerić",
+     "link": null,
+     "no": 29,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Luka Dajčer",
+     "link": "Luka Dajčer",
+     "no": 30,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ivan Banić",
+     "link": "Ivan Banić",
+     "no": 31,
+     "pos": "GK",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Serhiy Ihnatkov",
+     "link": "Serhiy Ihnatkov",
+     "no": 35,
+     "pos": "MF",
+     "nat": "UKR",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Souleymane Méité",
+     "link": null,
+     "no": 38,
+     "pos": "DF",
+     "nat": "CIV",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Faris Mehić",
+     "link": null,
+     "no": 40,
+     "pos": "GK",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Petar Mišković",
+     "link": null,
+     "no": 44,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Gojko Cimirot",
+     "link": "Gojko Cimirot",
+     "no": 59,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Rafail Mamas",
+     "link": "Rafail Mamas",
+     "no": 66,
+     "pos": "MF",
+     "nat": "CYP",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Selmir Pidro",
+     "link": "Selmir Pidro",
+     "no": 70,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Mihael Kuprešak",
+     "link": "Mihael Kuprešak",
+     "no": 77,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Bartol Barišić",
+     "link": "Bartol Barišić",
+     "no": 99,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Albert Mendy",
+     "link": null,
+     "no": null,
+     "pos": "FW",
+     "nat": "SEN",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Nikola Đurić",
+     "link": null,
+     "no": null,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": "at Zvijezda Gradačac until 31 December 2026",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Haris Ališah",
+     "link": null,
+     "no": null,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": "at Travnik until 31 December 2026",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Ante Pokrajčić",
+     "link": null,
+     "no": null,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": "at Hrvace until 30 June 2027",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Jack Senga",
+     "link": "Jack Senga",
+     "no": null,
+     "pos": "MF",
+     "nat": "BEL",
+     "note": "at Zvijezda Gradačac until 30 June 2027",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Gelson Rocha",
+     "link": null,
+     "no": null,
+     "pos": "FW",
+     "nat": "POR",
+     "note": "at Leotar until 30 June 2027",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    }
+   ],
+   "skipped": [
+    {
+     "section": "Youth academy players",
+     "name": "Vedad Leto"
+    },
+    {
+     "section": "Youth academy players",
+     "name": "Muhamed Dreca"
+    },
+    {
+     "section": "Youth academy players",
+     "name": "Anes H. Mehmedović"
+    },
+    {
+     "section": "Youth academy players",
+     "name": "Daris Dizdarević"
+    },
+    {
+     "section": "Youth academy players",
+     "name": "Ibrahim Zahirović"
+    },
+    {
+     "section": "Youth academy players",
+     "name": "Kenan Vrban"
+    }
+   ]
+  },
+  "rijeka": {
+   "ok": true,
+   "name": "Rijeka",
+   "country": "HR",
+   "league": 1,
+   "source": {
+    "site": "en.wikipedia.org",
+    "title": "HNK Rijeka",
+    "revid": 1383825906,
+    "revisionAt": "2026-11-05T01:44:19Z",
+    "fetchedAt": "2026-11-10T14:15:04.181Z",
+    "url": "https://en.wikipedia.org/w/index.php?title=HNK_Rijeka&oldid=1383825906"
+   },
+   "players": [
+    {
+     "name": "Moreno Živković",
+     "link": "Moreno Živković",
+     "no": 3,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Niko Janković",
+     "link": "Niko Janković",
+     "no": 4,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Alfonso Barco",
+     "link": "Alfonso Barco",
+     "no": 5,
+     "pos": "MF",
+     "nat": "PER",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Branko Pavić",
+     "link": "Branko Pavić",
+     "no": 6,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Yusuf Kabadayı",
+     "link": "Yusuf Kabadayı",
+     "no": 7,
+     "pos": "FW",
+     "nat": "GER",
+     "note": "on loan from Augsburg",
+     "captain": false,
+     "loanFrom": "Augsburg",
+     "section": "squad"
+    },
+    {
+     "name": "Ivan Ćubelić",
+     "link": "Ivan Ćubelić",
+     "no": 8,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Mohammad Mohebi",
+     "link": "Mohammad Mohebi",
+     "no": 9,
+     "pos": "FW",
+     "nat": "IRN",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Toni Fruk",
+     "link": "Toni Fruk",
+     "no": 10,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": "vice-captain",
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Igor Vekić",
+     "link": "Igor Vekić",
+     "no": 13,
+     "pos": "GK",
+     "nat": "SVN",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Amer Gojak",
+     "link": "Amer Gojak",
+     "no": 14,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Goran Grulović",
+     "link": null,
+     "no": 15,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Viktor Vešligaj",
+     "link": null,
+     "no": 16,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Daniel Adu-Adjei",
+     "link": "Daniel Adu-Adjei",
+     "no": 18,
+     "pos": "FW",
+     "nat": "ENG",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Samuele Vignato",
+     "link": "Samuele Vignato",
+     "no": 19,
+     "pos": "MF",
+     "nat": "ITA",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Jakov Puljić",
+     "link": "Jakov Puljić",
+     "no": 21,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ante Oreč",
+     "link": "Ante Oreč",
+     "no": 22,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Justas Lasickas",
+     "link": "Justas Lasickas",
+     "no": 23,
+     "pos": "MF",
+     "nat": "LTU",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Tiago Dantas",
+     "link": "Tiago Dantas",
+     "no": 26,
+     "pos": "MF",
+     "nat": "POR",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Teo Barišić",
+     "link": "Teo Barišić",
+     "no": 28,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Mladen Devetak",
+     "link": "Mladen Devetak",
+     "no": 34,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Calixte Ligue",
+     "link": "Calixte Ligue",
+     "no": 42,
+     "pos": "FW",
+     "nat": "SUI",
+     "note": "on loan from Venezia",
+     "captain": false,
+     "loanFrom": "Venezia",
+     "section": "squad"
+    },
+    {
+     "name": "Ante Majstorović",
+     "link": "Ante Majstorović",
+     "no": 45,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": "captain",
+     "captain": true,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Anel Husić",
+     "link": "Anel Husić",
+     "no": 51,
+     "pos": "DF",
+     "nat": "SUI",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ante Matej Jurić",
+     "link": null,
+     "no": 77,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Noel Bodetić",
+     "link": null,
+     "no": 91,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Aleksa Todorović",
+     "link": null,
+     "no": 99,
+     "pos": "GK",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Lovro Kitin",
+     "link": null,
+     "no": 2,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": "{{small|at {{flagicon|SVN}} Mura until 30 June 2027}}",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Dominik Thaqi",
+     "link": null,
+     "no": 25,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": "{{small|at {{flagicon|CRO}} Lokomotiva Zagreb until 30 June 2027}}",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Šimun Butić",
+     "link": null,
+     "no": 27,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": "{{small|at {{flagicon|SVN}} Mura until 30 June 2027}}",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Cherno Saho",
+     "link": null,
+     "no": 37,
+     "pos": "FW",
+     "nat": "GAM",
+     "note": "{{small|at {{flagicon|CRO}} Rudeš until 30 June 2027}}",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Maroje Kostopeč",
+     "link": null,
+     "no": null,
+     "pos": "GK",
+     "nat": "CRO",
+     "note": "{{small|at {{flagicon|CRO}} Karlovac 1919 until 30 June 2027}}",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Rajan Žlibanović",
+     "link": null,
+     "no": null,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": "{{small|at {{flagicon|AUT}} Kapfenberger SV until 30 June 2027}}",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Komnen Andrić",
+     "link": "Komnen Andrić",
+     "no": null,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": "{{small|at {{flagicon|GEO}} Torpedo Kutaisi until 31 December 2026}}",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Dominik Dogan",
+     "link": null,
+     "no": null,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": "{{small|at {{flagicon|CRO}} Karlovac 1919 until 30 June 2027}}",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Marko Aščić",
+     "link": null,
+     "no": null,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": "{{small|at {{flagicon|SVN}} Mura until 30 June 2027}}",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    }
+   ],
+   "skipped": [
+    {
+     "section": "Dual registration",
+     "name": "Vito Kovač"
+    },
+    {
+     "section": "Dual registration",
+     "name": "Domagoj Ivan Marić"
+    },
+    {
+     "section": "Dual registration",
+     "name": "Simon Karshe Cletus"
+    },
+    {
+     "section": "Dual registration",
+     "name": "David Nwolokor"
+    },
+    {
+     "section": "Dual registration",
+     "name": "Roko Valinčić"
+    },
+    {
+     "section": "Dual registration",
+     "name": "Alasana Samateh"
+    },
+    {
+     "section": "Youth academy",
+     "name": "Fran Škalamera"
+    },
+    {
+     "section": "Other players under contract",
+     "name": "Florent Shehu"
+    }
+   ]
+  },
+  "osijek": {
+   "ok": true,
+   "name": "Osijek",
+   "country": "HR",
+   "league": 1,
+   "source": {
+    "site": "en.wikipedia.org",
+    "title": "NK Osijek",
+    "revid": 1384645874,
+    "revisionAt": "2026-11-09T09:08:38Z",
+    "fetchedAt": "2026-11-10T14:15:04.181Z",
+    "url": "https://en.wikipedia.org/w/index.php?title=NK_Osijek&oldid=1384645874"
+   },
+   "players": [
+    {
+     "name": "Nikola Ćurčija",
+     "link": null,
+     "no": 1,
+     "pos": "GK",
+     "nat": "CAN",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Marcel Heister",
+     "link": "Marcel Heister",
+     "no": 2,
+     "pos": "DF",
+     "nat": "GER",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "David Mejía",
+     "link": null,
+     "no": 6,
+     "pos": "MF",
+     "nat": "COL",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ivan Dolček",
+     "link": "Ivan Dolček",
+     "no": 7,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Šimun Mikolčić",
+     "link": null,
+     "no": 8,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ivan Barić",
+     "link": null,
+     "no": 9,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Jona Ježić",
+     "link": null,
+     "no": 10,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Luka Tunjić",
+     "link": "Luka Tunjić",
+     "no": 11,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Vito Čaić",
+     "link": null,
+     "no": 13,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Oleksandr Petrusenko",
+     "link": "Oleksandr Petrusenko",
+     "no": 16,
+     "pos": "MF",
+     "nat": "UKR",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Niko Farkaš",
+     "link": "Niko Farkaš",
+     "no": 18,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Jan Hlapčić",
+     "link": null,
+     "no": 20,
+     "pos": "GK",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Alejandro Cantero",
+     "link": "Alejandro Cantero",
+     "no": 21,
+     "pos": "FW",
+     "nat": "ESP",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Jay Kruiver",
+     "link": "Jay Kruiver",
+     "no": 22,
+     "pos": "DF",
+     "nat": "NED",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Luka Vrbančić",
+     "link": "Luka Vrbančić",
+     "no": 23,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Luka Posavec",
+     "link": null,
+     "no": 24,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Luka Jelenić",
+     "link": null,
+     "no": 26,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Admir Ljatifi",
+     "link": null,
+     "no": 30,
+     "pos": "FW",
+     "nat": "MKD",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Marko Malenica",
+     "link": "Marko Malenica",
+     "no": 31,
+     "pos": "GK",
+     "nat": "CRO",
+     "note": "captain",
+     "captain": true,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Emin Hasić",
+     "link": "Emin Hasić",
+     "no": 33,
+     "pos": "DF",
+     "nat": "SWE",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Anton Matković",
+     "link": "Anton Matković",
+     "no": 34,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Domagoj Bukvić",
+     "link": "Domagoj Bukvić",
+     "no": 39,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "David Kalem",
+     "link": null,
+     "no": 47,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ivano Kolarik",
+     "link": null,
+     "no": 49,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Balázs Bakti",
+     "link": "Balázs Bakti",
+     "no": 67,
+     "pos": "MF",
+     "nat": "HUN",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Senad Mustafić",
+     "link": null,
+     "no": 77,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Armando León",
+     "link": "Armando León",
+     "no": 79,
+     "pos": "FW",
+     "nat": "MEX",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Izak Ježić",
+     "link": null,
+     "no": 98,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Balelo",
+     "link": null,
+     "no": 99,
+     "pos": "FW",
+     "nat": "POR",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Krešimir Vrbanac",
+     "link": null,
+     "no": 4,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": "{{small|at {{flagicon|CRO}} Vukovar 1991 until 30 June 2027}}",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Jon Mersinaj",
+     "link": "Jon Mersinaj",
+     "no": 5,
+     "pos": "DF",
+     "nat": "ALB",
+     "note": "{{small|at {{flagicon|CRO}} Slaven Belupo until 26 June 2027}}",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Fran Peček",
+     "link": null,
+     "no": 40,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": "{{small|at {{flagicon|CRO}} Orijent until 30 June 2027}}",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Matej Grahovac",
+     "link": null,
+     "no": null,
+     "pos": "GK",
+     "nat": "CRO",
+     "note": "{{small|at {{flagicon|CRO}} Mladost Ždralovi until 30 June 2027}}",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Noel Keresztes",
+     "link": "Noel Keresztes",
+     "no": null,
+     "pos": "MF",
+     "nat": "HUN",
+     "note": "{{small|at {{flagicon|SVN}} Nafta 1903 until 30 June 2027}}",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Andrej Mićić",
+     "link": null,
+     "no": null,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": "{{small|at {{flagicon|SVN}} Nafta 1903 until 30 June 2027}}",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Stanislav Shopov",
+     "link": "Stanislav Shopov",
+     "no": null,
+     "pos": "MF",
+     "nat": "BUL",
+     "note": "{{small|at {{flagicon|BUL}} Botev Plovdiv until 31 May 2027}}",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Yannick Toure",
+     "link": "Yannick Toure",
+     "no": null,
+     "pos": "FW",
+     "nat": "SUI",
+     "note": "{{small|at {{flagicon|SVN}} Nafta 1903 until 30 June 2027}}",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Marino Žeravica",
+     "link": null,
+     "no": null,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": "{{small|at {{flagicon|CRO}} Mladost Ždralovi until 30 June 2027}}",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Filip Živković",
+     "link": "Filip Živković",
+     "no": null,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": "{{small|at {{flagicon|BIH}} Sarajevo until 10 January 2027}}",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    }
+   ],
+   "skipped": [
+    {
+     "section": "Youth academy",
+     "name": "Jan Adžić"
+    },
+    {
+     "section": "Youth academy",
+     "name": "Mateo Sabo"
+    },
+    {
+     "section": "Youth academy",
+     "name": "Frane Nekić"
+    },
+    {
+     "section": "Youth academy",
+     "name": "Karlo Tomašević"
+    },
+    {
+     "section": "Youth academy",
+     "name": "Šimun Begović"
+    },
+    {
+     "section": "Youth academy",
+     "name": "Petar Turić"
+    },
+    {
+     "section": "Other players under contract",
+     "name": "Justice Ohajunwa"
+    }
+   ]
+  },
+  "varazdin": {
+   "ok": true,
+   "name": "Varaždin",
+   "country": "HR",
+   "league": 1,
+   "source": {
+    "site": "en.wikipedia.org",
+    "title": "NK Varaždin (2012)",
+    "revid": 1379885632,
+    "revisionAt": "2026-10-12T13:00:54Z",
+    "fetchedAt": "2026-11-10T14:15:06.863Z",
+    "url": "https://en.wikipedia.org/w/index.php?title=NK_Vara%C5%BEdin_(2012)&oldid=1379885632"
+   },
+   "players": [
+    {
+     "name": "Robby McCrorie",
+     "link": "Robby McCrorie",
+     "no": 1,
+     "pos": "GK",
+     "nat": "SCO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Elvir Duraković",
+     "link": "Elvir Duraković",
+     "no": 3,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Luka Škaričić",
+     "link": null,
+     "no": 4,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Sven Lesjak",
+     "link": null,
+     "no": 5,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "David Puclin",
+     "link": "David Puclin",
+     "no": 6,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Matej Vuk",
+     "link": "Matej Vuk",
+     "no": 7,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Tomislav Duvnjak",
+     "link": "Tomislav Duvnjak",
+     "no": 8,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Stipe Jurić",
+     "link": "Stipe Jurić",
+     "no": 9,
+     "pos": "FW",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Aleksa Latković",
+     "link": "Aleksa Latković",
+     "no": 10,
+     "pos": "FW",
+     "nat": "MNE",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Emmanuel Uchegbu",
+     "link": "Emmanuel Uchegbu",
+     "no": 11,
+     "pos": "MF",
+     "nat": "NGA",
+     "note": "on loan from Crown Legacy FC",
+     "captain": false,
+     "loanFrom": "Crown Legacy FC",
+     "section": "squad"
+    },
+    {
+     "name": "Petar Bočkaj",
+     "link": "Petar Bočkaj",
+     "no": 12,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Mario Mladenovski",
+     "link": "Mario Mladenovski",
+     "no": 13,
+     "pos": "DF",
+     "nat": "MKD",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Roberto Punčec",
+     "link": "Roberto Punčec",
+     "no": 14,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": "captain",
+     "captain": true,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Silvio Ilinković",
+     "link": "Silvio Ilinković",
+     "no": 15,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Novak Tepšić",
+     "link": null,
+     "no": 16,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Valentin Akrap",
+     "link": null,
+     "no": 17,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Luka Lukanić",
+     "link": "Luka Lukanić",
+     "no": 19,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Gregor Sikošek",
+     "link": "Gregor Sikošek",
+     "no": 20,
+     "pos": "DF",
+     "nat": "SVN",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ivan Posavec",
+     "link": null,
+     "no": 21,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Luka Mamić",
+     "link": "Luka Mamić",
+     "no": 22,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Frane Maglica",
+     "link": null,
+     "no": 23,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Mario Marina",
+     "link": "Mario Marina",
+     "no": 24,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": "vice-captain",
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ivan Canjuga",
+     "link": null,
+     "no": 28,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Luka Posinković",
+     "link": null,
+     "no": 30,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Josip Silić",
+     "link": null,
+     "no": 33,
+     "pos": "GK",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Iuri Tavares",
+     "link": "Iuri Tavares",
+     "no": 38,
+     "pos": "FW",
+     "nat": "CPV",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Mateo Barać",
+     "link": "Mateo Barać",
+     "no": 44,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Rufat Abdullazade",
+     "link": "Rufat Abdullazade",
+     "no": 19,
+     "pos": "MF",
+     "nat": "AZE",
+     "note": "at {{flagicon|ISR}} Ironi Kiryat Shmona until 30 June 2027",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    }
+   ],
+   "skipped": [
+    {
+     "section": "Dual registration",
+     "name": "Filipe Quissequel"
+    },
+    {
+     "section": "Dual registration",
+     "name": "Domagoj Begonja"
+    }
+   ]
+  },
+  "vojvodina": {
+   "ok": true,
+   "name": "Vojvodina",
+   "country": "RS",
+   "league": 1,
+   "source": {
+    "site": "en.wikipedia.org",
+    "title": "FK Vojvodina",
+    "revid": 1382859374,
+    "revisionAt": "2026-10-30T18:05:27Z",
+    "fetchedAt": "2026-11-10T14:15:06.863Z",
+    "url": "https://en.wikipedia.org/w/index.php?title=FK_Vojvodina&oldid=1382859374"
+   },
+   "players": [
+    {
+     "name": "Matija Gočmanac",
+     "link": "Matija Gočmanac",
+     "no": 1,
+     "pos": "GK",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Kufre Eta",
+     "link": "Kufre Eta",
+     "no": 2,
+     "pos": "DF",
+     "nat": "CMR",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Marko Poletanović",
+     "link": "Marko Poletanović",
+     "no": 4,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Đorđe Crnomarković",
+     "link": "Đorđe Crnomarković",
+     "no": 5,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Siniša Tanjga",
+     "link": "Siniša Tanjga",
+     "no": 6,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Stefan Mitrović",
+     "link": "Stefan Mitrović (footballer, born 2002)",
+     "no": 7,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": "on loan from {{flagicon|ITA}} Hellas Verona",
+     "captain": false,
+     "loanFrom": "{{flagicon|ITA}} Hellas Verona",
+     "section": "squad"
+    },
+    {
+     "name": "Marko Veličković",
+     "link": "Marko Veličković",
+     "no": 8,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Aleksa Vukanović",
+     "link": "Aleksa Vukanović",
+     "no": 9,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Dejan Zukić",
+     "link": "Dejan Zukić",
+     "no": 10,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": "captain",
+     "captain": true,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Dragan Rosić",
+     "link": "Dragan Rosić",
+     "no": 12,
+     "pos": "GK",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Vladan Novevski",
+     "link": "Vladan Novevski",
+     "no": 13,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Erhan Mašović",
+     "link": "Erhan Mašović",
+     "no": 15,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Mihai Butean",
+     "link": "Mihai Butean",
+     "no": 16,
+     "pos": "DF",
+     "nat": "ROU",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Njegoš Petrović",
+     "link": "Njegoš Petrović",
+     "no": 18,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": "vice-captain",
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Stefan Stanisavljević",
+     "link": "Stefan Stanisavljević",
+     "no": 19,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Dragan Kokanović",
+     "link": "Dragan Kokanović",
+     "no": 20,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Milan Kolarević",
+     "link": "Milan Kolarević",
+     "no": 21,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Lazar Nikolić",
+     "link": "Lazar Nikolić",
+     "no": 22,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Lucas Barros",
+     "link": "Lucas Barros",
+     "no": 23,
+     "pos": "DF",
+     "nat": "BRA",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Jovan Ostojić",
+     "link": "Jovan Ostojić",
+     "no": 24,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Kornél Szűcs",
+     "link": "Kornél Szűcs",
+     "no": 26,
+     "pos": "DF",
+     "nat": "HUN",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Petar Sukačev",
+     "link": "Petar Sukačev",
+     "no": 27,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Vuk Boškan",
+     "link": "Vuk Boškan",
+     "no": 33,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ifet Đakovac",
+     "link": "Ifet Đakovac",
+     "no": 35,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Mateja Gašić",
+     "link": "Mateja Gašić",
+     "no": 66,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Bogdan Bogdanović",
+     "link": "Bogdan Bogdanović (footballer, born 2008)",
+     "no": 71,
+     "pos": "GK",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Lazar Ranđelović",
+     "link": "Lazar Ranđelović",
+     "no": 77,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Nardin Mulahusejnović",
+     "link": "Nardin Mulahusejnović",
+     "no": 99,
+     "pos": "FW",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Branko Nikolić",
+     "link": "Branko Nikolić",
+     "no": null,
+     "pos": "GK",
+     "nat": "SRB",
+     "note": "at Bor until the end of the season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Viktor Matić",
+     "link": "Viktor Matić",
+     "no": null,
+     "pos": "GK",
+     "nat": "SRB",
+     "note": "at Indeks until the end of the season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Vukašin Kravić",
+     "link": "Vukašin Kravić",
+     "no": null,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": "at OFK Vršac until the end of the season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Hamza Redžić",
+     "link": "Hamza Redžić",
+     "no": null,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": "at Bor until the end of the season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Vladimir Mićunović",
+     "link": "Vladimir Mićunović",
+     "no": null,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": "at OFK Vrbas until the end of the season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Andrej Pivaš",
+     "link": "Andrej Pivaš",
+     "no": null,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": "at OFK Vršac until the end of the season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Nikola Ninković",
+     "link": "Nikola Ninković (footballer, born 2006)",
+     "no": null,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": "at Indeks until the end of the season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Đorđe Đorđić",
+     "link": "Đorđe Đorđić",
+     "no": null,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": "at Mačva Šabac until winter transfer window",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Novak Gojkov",
+     "link": "Novak Gojkov",
+     "no": null,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": "at OFK Vršac until winter transfer window",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Ibrahim Mustapha",
+     "link": "Ibrahim Mustapha (Ghanaian footballer)",
+     "no": null,
+     "pos": "FW",
+     "nat": "GHA",
+     "note": "at Radnički Niš until the end of the season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Srđan Bašić",
+     "link": "Srđan Bašić",
+     "no": null,
+     "pos": "FW",
+     "nat": "BIH",
+     "note": "at OFK Vršac until the end of the season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Damjan Đokanović",
+     "link": "Damjan Đokanović",
+     "no": null,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": "at Bor until the end of the season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Lazar Peranović",
+     "link": "Lazar Peranović",
+     "no": null,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": "at Bor until the end of the season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Milutin Vidosavljević",
+     "link": "Milutin Vidosavljević",
+     "no": null,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": "at {{flagicon|RUS}} Akron Tolyatti until the end of the season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    }
+   ],
+   "skipped": [
+    {
+     "section": "Other players on contract",
+     "name": "Marko Pavić"
+    },
+    {
+     "section": "Other players on contract",
+     "name": "Dario Janjić"
+    },
+    {
+     "section": "Other players on contract",
+     "name": "Uroš Paunović"
+    }
+   ]
+  },
+  "cukaricki": {
+   "ok": true,
+   "name": "Čukarički",
+   "country": "RS",
+   "league": 1,
+   "source": {
+    "site": "en.wikipedia.org",
+    "title": "FK Čukarički",
+    "revid": 1380633339,
+    "revisionAt": "2026-10-16T23:45:41Z",
+    "fetchedAt": "2026-11-10T14:15:06.863Z",
+    "url": "https://en.wikipedia.org/w/index.php?title=FK_%C4%8Cukari%C4%8Dki&oldid=1380633339"
+   },
+   "players": [
+    {
+     "name": "Đorđe Nikolić",
+     "link": "Đorđe Nikolić",
+     "no": 1,
+     "pos": "GK",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Zlatan Šehović",
+     "link": "Zlatan Šehović",
+     "no": 3,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": "on loan from Dukla Prague",
+     "captain": false,
+     "loanFrom": "Dukla Prague",
+     "section": "squad"
+    },
+    {
+     "name": "Nenad Tomović",
+     "link": "Nenad Tomović",
+     "no": 4,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Marko Docić",
+     "link": "Marko Docić",
+     "no": 5,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": "captain",
+     "captain": true,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Veljko Žurić",
+     "link": null,
+     "no": 6,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Lazar Mijović",
+     "link": null,
+     "no": 7,
+     "pos": "MF",
+     "nat": "MNE",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Lazar Marković",
+     "link": "Lazar Marković",
+     "no": 8,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Luka Đorđević",
+     "link": null,
+     "no": 9,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Uroš Miladinović",
+     "link": null,
+     "no": 10,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Sambou Sissoko",
+     "link": "Sambou Sissoko (Malian footballer)",
+     "no": 14,
+     "pos": "MF",
+     "nat": "MLI",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Strahinja Anđelić",
+     "link": null,
+     "no": 16,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Jovan Vojnović",
+     "link": null,
+     "no": 17,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Karel Mustmaa",
+     "link": "Karel Mustmaa",
+     "no": 18,
+     "pos": "FW",
+     "nat": "EST",
+     "note": "on loan from PAOK B",
+     "captain": false,
+     "loanFrom": "PAOK B",
+     "section": "squad"
+    },
+    {
+     "name": "Assane Ouedraogo",
+     "link": null,
+     "no": 19,
+     "pos": "DF",
+     "nat": "CIV",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Aboubacar Cissé",
+     "link": null,
+     "no": 20,
+     "pos": "MF",
+     "nat": "SEN",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ramiro Di Luciano",
+     "link": "Ramiro Di Luciano",
+     "no": 22,
+     "pos": "DF",
+     "nat": "ARG",
+     "note": "on loan from CSKA Moscow",
+     "captain": false,
+     "loanFrom": "CSKA Moscow",
+     "section": "squad"
+    },
+    {
+     "name": "Ismael Maiga",
+     "link": null,
+     "no": 23,
+     "pos": "DF",
+     "nat": "CIV",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Nikola Stanković",
+     "link": "Nikola Stanković (footballer, born 2003)",
+     "no": 24,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Fiorin Durmishaj",
+     "link": "Fiorin Durmishaj",
+     "no": 25,
+     "pos": "FW",
+     "nat": "GRE",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Milan Đoković",
+     "link": null,
+     "no": 26,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Aires Nanque",
+     "link": null,
+     "no": 27,
+     "pos": "FW",
+     "nat": "GNB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Nemanja Radonjić",
+     "link": "Nemanja Radonjić",
+     "no": 28,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ognjen Abramušić",
+     "link": null,
+     "no": 33,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Emmanuel Dzigbah",
+     "link": null,
+     "no": 42,
+     "pos": "DF",
+     "nat": "GHA",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Milan Pavkov",
+     "link": "Milan Pavkov",
+     "no": 50,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Remy Rees-Dottin",
+     "link": "Remy Rees-Dottin",
+     "no": 51,
+     "pos": "FW",
+     "nat": "ENG",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Uroš Nikolić",
+     "link": "Uroš Nikolić (footballer)",
+     "no": 72,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Nemanja Miletić",
+     "link": "Nemanja Miletić (footballer, born January 1991)",
+     "no": 73,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Andrej Bajović",
+     "link": null,
+     "no": 77,
+     "pos": "MF",
+     "nat": "MNE",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Vladan Čarapić",
+     "link": null,
+     "no": 81,
+     "pos": "GK",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Veljko Radosavljević",
+     "link": null,
+     "no": 86,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Mateja Prokopijević",
+     "link": null,
+     "no": 87,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Vladimir Stojković",
+     "link": "Vladimir Stojković",
+     "no": 88,
+     "pos": "GK",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Mateo Maravić",
+     "link": null,
+     "no": 91,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Đorđe Jovanović",
+     "link": "Đorđe Jovanović (footballer)",
+     "no": 99,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Lazar Kaličanin",
+     "link": "Lazar Kaličanin",
+     "no": null,
+     "pos": "GK",
+     "nat": "SRB",
+     "note": "at Crown Legacy until 31 December 2026",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Mijat Ivanović",
+     "link": null,
+     "no": null,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": "at BASK until 30 June 2027",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Andrija Miladinović",
+     "link": null,
+     "no": null,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": "at Budućnost Dobanovci until 30 June 2027",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    }
+   ],
+   "skipped": [
+    {
+     "section": "Other players on contract",
+     "name": "Zé Mário"
+    }
+   ]
+  },
+  "imt": {
+   "ok": true,
+   "name": "IMT",
+   "country": "RS",
+   "league": 1,
+   "source": {
+    "site": "en.wikipedia.org",
+    "title": "FK IMT",
+    "revid": 1383636281,
+    "revisionAt": "2026-11-03T21:16:48Z",
+    "fetchedAt": "2026-11-10T14:15:06.863Z",
+    "url": "https://en.wikipedia.org/w/index.php?title=FK_IMT&oldid=1383636281"
+   },
+   "players": [
+    {
+     "name": "Ognjen Čančarević",
+     "link": "Ognjen Čančarević",
+     "no": 1,
+     "pos": "GK",
+     "nat": "ARM",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Julián Delmás",
+     "link": "Julián Delmás",
+     "no": 2,
+     "pos": "DF",
+     "nat": "ESP",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Iván Martos",
+     "link": "Iván Martos",
+     "no": 3,
+     "pos": "DF",
+     "nat": "ESP",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Blagoje Uzunovski",
+     "link": null,
+     "no": 4,
+     "pos": "DF",
+     "nat": "MNE",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Moussa Sissako",
+     "link": "Moussa Sissako",
+     "no": 5,
+     "pos": "DF",
+     "nat": "MLI",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Naum Perović",
+     "link": null,
+     "no": 6,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Nikola Glišić",
+     "link": "Nikola Glišić",
+     "no": 7,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Luka Luković",
+     "link": "Luka Luković",
+     "no": 8,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Aleksa Mitić",
+     "link": "Aleksa Mitić",
+     "no": 9,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Rafael Juninho",
+     "link": "Rafael Juninho",
+     "no": 11,
+     "pos": "FW",
+     "nat": "BRA",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Kadir Gicić",
+     "link": null,
+     "no": 12,
+     "pos": "GK",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ibrahima Kébé",
+     "link": "Ibrahima Kébé (footballer)",
+     "no": 14,
+     "pos": "MF",
+     "nat": "MLI",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Aleksandar Sedlar",
+     "link": "Aleksandar Sedlar",
+     "no": 15,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Josué Tiendrébéogo",
+     "link": "Josué Tiendrébéogo",
+     "no": 18,
+     "pos": "MF",
+     "nat": "BFA",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Tadija Cojić",
+     "link": null,
+     "no": 19,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Đorđe Radivojević",
+     "link": null,
+     "no": 20,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Matej Pribišić",
+     "link": null,
+     "no": 21,
+     "pos": "GK",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Vasilije Novičić",
+     "link": "Vasilije Novičić",
+     "no": 22,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": "captain",
+     "captain": true,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Daniel Akrofi",
+     "link": null,
+     "no": 23,
+     "pos": "MF",
+     "nat": "GHA",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Luka Gutić",
+     "link": null,
+     "no": 24,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Đorđe Jović",
+     "link": null,
+     "no": 26,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Vladimir Radočaj",
+     "link": null,
+     "no": 27,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Andrej Milanović",
+     "link": null,
+     "no": 28,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Karl Fabien",
+     "link": "Karl Fabien",
+     "no": 29,
+     "pos": "FW",
+     "nat": "MTQ",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Daniel Aghahowa",
+     "link": null,
+     "no": 37,
+     "pos": "FW",
+     "nat": "NGA",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "François Kamano",
+     "link": "François Kamano",
+     "no": 40,
+     "pos": "FW",
+     "nat": "GUI",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ismael Casas",
+     "link": "Ismael Casas",
+     "no": 45,
+     "pos": "DF",
+     "nat": "ESP",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Lazar Cvijetić",
+     "link": null,
+     "no": 50,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Stefan Šapić",
+     "link": "Stefan Šapić",
+     "no": 65,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "David Urošević",
+     "link": null,
+     "no": 66,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Vicky Kiankaulua",
+     "link": "Vicky Kiankaulua",
+     "no": 94,
+     "pos": "FW",
+     "nat": "FRA",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Charly Keïta",
+     "link": "Charly Keita",
+     "no": 99,
+     "pos": "FW",
+     "nat": "FRA",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Sheriff Stowe",
+     "link": null,
+     "no": null,
+     "pos": "DF",
+     "nat": "NGA",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Mateja Vukomanović",
+     "link": null,
+     "no": null,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": "at Ušće Novi Beograd until the end of the 2026–27 season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Vukašin Radosavljević",
+     "link": null,
+     "no": null,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": "at Proleter 023 until the end of the 2026–27 season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Leontije Vasić",
+     "link": null,
+     "no": null,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": "at Loznica until the end of the 2026–27 season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Nikola Krstić",
+     "link": null,
+     "no": null,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": "at Al Kharaitiyat until the end of the 2026–27 season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Andrej Vuletić",
+     "link": null,
+     "no": null,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": "at Ušće Novi Beograd until the end of the 2026–27 season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Miloš Bakić",
+     "link": null,
+     "no": null,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": "at Loznica until the end of the 2026–27 season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    }
+   ],
+   "skipped": []
+  },
+  "novi-pazar": {
+   "ok": true,
+   "name": "Novi Pazar",
+   "country": "RS",
+   "league": 1,
+   "source": {
+    "site": "en.wikipedia.org",
+    "title": "FK Novi Pazar",
+    "revid": 1381321628,
+    "revisionAt": "2026-10-21T16:23:47Z",
+    "fetchedAt": "2026-11-10T14:15:09.514Z",
+    "url": "https://en.wikipedia.org/w/index.php?title=FK_Novi_Pazar&oldid=1381321628"
+   },
+   "players": [
+    {
+     "name": "Bogdan Matijašević",
+     "link": null,
+     "no": 1,
+     "pos": "GK",
+     "nat": "SRB",
+     "note": "on loan from Mladost Lučani",
+     "captain": false,
+     "loanFrom": "Mladost Lučani",
+     "section": "squad"
+    },
+    {
+     "name": "Aleksandar Miljković",
+     "link": "Aleksandar Miljković (footballer, born 1990)",
+     "no": 2,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Veljko Mirosavić",
+     "link": null,
+     "no": 3,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ahmed Hadžimujović",
+     "link": "Ahmed Hadžimujović",
+     "no": 4,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Stefan Melentijević",
+     "link": "Stefan Melentijević",
+     "no": 5,
+     "pos": "DF",
+     "nat": "MNE",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Papa Amady Gadio",
+     "link": "Papa Amady Gadio",
+     "no": 6,
+     "pos": "MF",
+     "nat": "SEN",
+     "note": "on loan from Akhmat Grozny",
+     "captain": false,
+     "loanFrom": "Akhmat Grozny",
+     "section": "squad"
+    },
+    {
+     "name": "Jonny Robert",
+     "link": null,
+     "no": 7,
+     "pos": "FW",
+     "nat": "BRA",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Skima Togbe",
+     "link": null,
+     "no": 8,
+     "pos": "MF",
+     "nat": "GHA",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Vieiri Kotzebue",
+     "link": "Vieiri Kotzebue",
+     "no": 9,
+     "pos": "FW",
+     "nat": "NED",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Dominic Sadi",
+     "link": "Dominic Sadi",
+     "no": 10,
+     "pos": "MF",
+     "nat": "ENG",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Nikola Skrobonja",
+     "link": null,
+     "no": 11,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Miloje Preković",
+     "link": "Miloje Preković",
+     "no": 12,
+     "pos": "GK",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Nikola Stanković",
+     "link": null,
+     "no": 14,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Bakir Bilalović",
+     "link": null,
+     "no": 15,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ahmed Ljajić",
+     "link": null,
+     "no": 16,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Matija Malekinušić",
+     "link": "Matija Malekinušić",
+     "no": 17,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Haris Kadrić",
+     "link": "Haris Kadrić",
+     "no": 18,
+     "pos": "FW",
+     "nat": "SLO",
+     "note": "on loan from Kauno Žalgiris",
+     "captain": false,
+     "loanFrom": "Kauno Žalgiris",
+     "section": "squad"
+    },
+    {
+     "name": "Ersan Mavrić",
+     "link": null,
+     "no": 19,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Kaheim Dixon",
+     "link": "Kaheim Dixon",
+     "no": 20,
+     "pos": "FW",
+     "nat": "JAM",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Mihajlo Petrović",
+     "link": null,
+     "no": 21,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Adem Ljajić",
+     "link": "Adem Ljajić",
+     "no": 22,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Jovan Marinković",
+     "link": "Jovan Marinković",
+     "no": 23,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": "captain",
+     "captain": true,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ivan Davidović",
+     "link": null,
+     "no": 24,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Haris Alić",
+     "link": null,
+     "no": 25,
+     "pos": "GK",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Johnson Dauda",
+     "link": null,
+     "no": 26,
+     "pos": "MF",
+     "nat": "NGA",
+     "note": "on loan from Slovan Liberec",
+     "captain": false,
+     "loanFrom": "Slovan Liberec",
+     "section": "squad"
+    },
+    {
+     "name": "Hamad Šaćirović",
+     "link": null,
+     "no": 27,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Bojan Adžić",
+     "link": null,
+     "no": 32,
+     "pos": "DF",
+     "nat": "MNE",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Faris Redžović",
+     "link": null,
+     "no": 34,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Faris Osmanović",
+     "link": null,
+     "no": 35,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Hamza Doljanac",
+     "link": null,
+     "no": 36,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Max Bilać",
+     "link": null,
+     "no": 44,
+     "pos": "DF",
+     "nat": "SLO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Tomislav Dadić",
+     "link": "Tomislav Dadić",
+     "no": 50,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Dimitrije Janković",
+     "link": null,
+     "no": 70,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": "on loan from Partizan",
+     "captain": false,
+     "loanFrom": "Partizan",
+     "section": "squad"
+    },
+    {
+     "name": "Fejsal Mulić",
+     "link": "Fejsal Mulić",
+     "no": 99,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Saladin Mecinović",
+     "link": null,
+     "no": null,
+     "pos": "GK",
+     "nat": "SRB",
+     "note": "at Timok until the end of the 2026–27 season",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    }
+   ],
+   "skipped": []
+  },
+  "zrinjski": {
+   "ok": true,
+   "name": "Zrinjski Mostar",
+   "country": "BA",
+   "league": 1,
+   "source": {
+    "site": "en.wikipedia.org",
+    "title": "HŠK Zrinjski Mostar",
+    "revid": 1381652717,
+    "revisionAt": "2026-10-23T22:26:41Z",
+    "fetchedAt": "2026-11-10T14:15:09.514Z",
+    "url": "https://en.wikipedia.org/w/index.php?title=H%C5%A0K_Zrinjski_Mostar&oldid=1381652717"
+   },
+   "players": [
+    {
+     "name": "Matej Bogdan",
+     "link": null,
+     "no": 1,
+     "pos": "GK",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Hrvoje Barišić",
+     "link": "Hrvoje Barišić",
+     "no": 4,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Dan Lagumdžija",
+     "link": null,
+     "no": 5,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Igor Savić",
+     "link": "Igor Savić (footballer, born 2000)",
+     "no": 6,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Niko Gajzler",
+     "link": null,
+     "no": 7,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ivica Vidović",
+     "link": null,
+     "no": 8,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": "on loan from Celje",
+     "captain": false,
+     "loanFrom": "Celje",
+     "section": "squad"
+    },
+    {
+     "name": "Mario Čuić",
+     "link": "Mario Čuić",
+     "no": 10,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Tomi Jurić",
+     "link": "Tomi Juric",
+     "no": 11,
+     "pos": "FW",
+     "nat": "AUS",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Petar Mamić",
+     "link": "Petar Mamić",
+     "no": 12,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Karlo Stapić",
+     "link": null,
+     "no": 15,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Antonio Ilić",
+     "link": null,
+     "no": 17,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Goran Karačić",
+     "link": "Goran Karačić",
+     "no": 18,
+     "pos": "GK",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Marko Vranjković",
+     "link": null,
+     "no": 19,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Antonio Ivančić",
+     "link": "Antonio Ivančić",
+     "no": 20,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Viktor Grbić",
+     "link": null,
+     "no": 21,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Toma Palić",
+     "link": null,
+     "no": 24,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Mario Ćuže",
+     "link": "Mario Ćuže",
+     "no": 25,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Stefan Cvetković",
+     "link": null,
+     "no": 26,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Slobodan Jakovljević",
+     "link": "Slobodan Jakovljević",
+     "no": 27,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": "vice-captain",
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Neven Đurasek",
+     "link": "Neven Đurasek",
+     "no": 30,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Zvonimir Šubarić",
+     "link": null,
+     "no": 31,
+     "pos": "GK",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Darick Kobie Morris",
+     "link": "Darick Kobie Morris",
+     "no": 37,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Antonio Arapović",
+     "link": null,
+     "no": 39,
+     "pos": "FW",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Branko Ćurdo",
+     "link": null,
+     "no": 40,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Marijan Ćavar",
+     "link": "Marijan Ćavar",
+     "no": 42,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Antonio Đaković",
+     "link": null,
+     "no": 44,
+     "pos": "GK",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Karlo Abramović",
+     "link": null,
+     "no": 77,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Hamza Ljukovac",
+     "link": null,
+     "no": 80,
+     "pos": "FW",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Nemanja Bilbija",
+     "link": "Nemanja Bilbija",
+     "no": 99,
+     "pos": "FW",
+     "nat": "BIH",
+     "note": "captain",
+     "captain": true,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Darko Bašić",
+     "link": null,
+     "no": null,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": "at Posušje until 30 June 2027",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Rino Ivanković",
+     "link": null,
+     "no": null,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": "at Čapljina until 30 June 2027",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "David Karačić",
+     "link": null,
+     "no": null,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": "at Jadran Luka Ploče until 30 June 2027",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Mihajlo Ševa",
+     "link": null,
+     "no": null,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": "at Laktaši until 30 June 2027",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Roko Šilić",
+     "link": null,
+     "no": null,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": "at Jadran Luka Ploče until 31 May 2027",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Borna Filipović",
+     "link": null,
+     "no": null,
+     "pos": "FW",
+     "nat": "BIH",
+     "note": "at Posušje until 30 June 2027",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    }
+   ],
+   "skipped": []
+  },
+  "borac": {
+   "ok": true,
+   "name": "Borac Banja Luka",
+   "country": "BA",
+   "league": 1,
+   "source": {
+    "site": "en.wikipedia.org",
+    "title": "FK Borac Banja Luka",
+    "revid": 1383847986,
+    "revisionAt": "2026-11-05T03:44:57Z",
+    "fetchedAt": "2026-11-10T14:15:09.514Z",
+    "url": "https://en.wikipedia.org/w/index.php?title=FK_Borac_Banja_Luka&oldid=1383847986"
+   },
+   "players": [
+    {
+     "name": "Damjan Shishkovski",
+     "link": "Damjan Shishkovski",
+     "no": 1,
+     "pos": "GK",
+     "nat": "MKD",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Bart Meijers",
+     "link": "Bart Meijers",
+     "no": 2,
+     "pos": "DF",
+     "nat": "NED",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Abel Pascual",
+     "link": null,
+     "no": 3,
+     "pos": "DF",
+     "nat": "ESP",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Branimir Cipetić",
+     "link": "Branimir Cipetić",
+     "no": 4,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Siniša Saničanin",
+     "link": "Siniša Saničanin",
+     "no": 6,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Luka Juričić",
+     "link": "Luka Juričić (footballer)",
+     "no": 7,
+     "pos": "FW",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Karlo Perić",
+     "link": null,
+     "no": 9,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "David Vuković",
+     "link": "David Vuković",
+     "no": 10,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Amer Hiroš",
+     "link": "Amer Hiroš",
+     "no": 12,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Anderson Esiti",
+     "link": "Anderson Esiti",
+     "no": 13,
+     "pos": "MF",
+     "nat": "NGA",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Pavle Đajić",
+     "link": null,
+     "no": 14,
+     "pos": "FW",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Srđan Grahovac",
+     "link": "Srđan Grahovac",
+     "no": 15,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": "captain",
+     "captain": true,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Sebastián Herrera",
+     "link": "Sebastián Herrera (footballer, born 1995)",
+     "no": 16,
+     "pos": "DF",
+     "nat": "MKD",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Omar Sijarić",
+     "link": "Omar Sijarić",
+     "no": 17,
+     "pos": "MF",
+     "nat": "MNE",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Miloš Jojić",
+     "link": "Miloš Jojić",
+     "no": 18,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Viktor Rogan",
+     "link": "Viktor Rogan",
+     "no": 19,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Erik Riđan",
+     "link": null,
+     "no": 20,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Nikola Ćetković",
+     "link": null,
+     "no": 21,
+     "pos": "GK",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ivan Kukavica",
+     "link": null,
+     "no": 22,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Stojan Vranješ",
+     "link": "Stojan Vranješ",
+     "no": 23,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": "vice-captain",
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Jurich Carolina",
+     "link": "Jurich Carolina",
+     "no": 24,
+     "pos": "DF",
+     "nat": "CUW",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Nemanja Jakšić",
+     "link": "Nemanja Jakšić",
+     "no": 30,
+     "pos": "DF",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Nikola Terzić",
+     "link": "Nikola Terzić",
+     "no": 36,
+     "pos": "FW",
+     "nat": "SRB",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ante Roguljić",
+     "link": "Ante Roguljić",
+     "no": 44,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Amar Milak",
+     "link": null,
+     "no": 47,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Mladen Jurkas",
+     "link": "Mladen Jurkas",
+     "no": 72,
+     "pos": "GK",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Stefan Savić",
+     "link": "Stefan Savić (Austrian footballer)",
+     "no": 77,
+     "pos": "MF",
+     "nat": "AUT",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Matej Deket",
+     "link": "Matej Deket",
+     "no": 89,
+     "pos": "FW",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Petar Kunić",
+     "link": "Petar Kunić",
+     "no": 93,
+     "pos": "FW",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Sandi Ogrinec",
+     "link": "Sandi Ogrinec",
+     "no": 98,
+     "pos": "MF",
+     "nat": "SVN",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Dani Romera",
+     "link": "Dani Romera",
+     "no": 99,
+     "pos": "FW",
+     "nat": "ESP",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Srđan Modić",
+     "link": null,
+     "no": null,
+     "pos": "GK",
+     "nat": "BIH",
+     "note": "at BSK until 30 June 2027",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Nikola Antešević",
+     "link": null,
+     "no": null,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": "at BSK until 30 June 2027",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Domagoj Čulina",
+     "link": null,
+     "no": null,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": "at BSK until 30 June 2027",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Cherif Diouf",
+     "link": null,
+     "no": null,
+     "pos": "DF",
+     "nat": "SEN",
+     "note": "at BSK until 30 June 2027",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Jusuf Terzić",
+     "link": null,
+     "no": null,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": "at BSK until 30 June 2027",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Ognjen Radošević",
+     "link": "Ognjen Radošević",
+     "no": null,
+     "pos": "MF",
+     "nat": "SRB",
+     "note": "at BSK until 30 June 2027",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    }
+   ],
+   "skipped": []
+  },
+  "siroki-brijeg": {
+   "ok": true,
+   "name": "Široki Brijeg",
+   "country": "BA",
+   "league": 1,
+   "source": {
+    "site": "en.wikipedia.org",
+    "title": "NK Široki Brijeg",
+    "revid": 1375089478,
+    "revisionAt": "2026-09-15T20:28:25Z",
+    "fetchedAt": "2026-11-10T14:15:09.514Z",
+    "url": "https://en.wikipedia.org/w/index.php?title=NK_%C5%A0iroki_Brijeg&oldid=1375089478"
+   },
+   "players": [
+    {
+     "name": "Mateo Barać",
+     "link": null,
+     "no": 2,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Mateo Soldo",
+     "link": null,
+     "no": 3,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Božo Prusina",
+     "link": null,
+     "no": 4,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Bartul Markovina",
+     "link": null,
+     "no": 5,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Antoni Bajkuša",
+     "link": null,
+     "no": 6,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Dominik Simčić",
+     "link": null,
+     "no": 7,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Mario Kordić-Gružić",
+     "link": null,
+     "no": 8,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Luizinho Guedes",
+     "link": null,
+     "no": 9,
+     "pos": "FW",
+     "nat": "BRA",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Filip Matić",
+     "link": null,
+     "no": 10,
+     "pos": "FW",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "David Virgili",
+     "link": null,
+     "no": 11,
+     "pos": "FW",
+     "nat": "ESP",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ante Slišković",
+     "link": null,
+     "no": 12,
+     "pos": "GK",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Lukas Magđinski",
+     "link": null,
+     "no": 13,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Niko Vukančić",
+     "link": null,
+     "no": 14,
+     "pos": "DF",
+     "nat": "GER",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Luka Romac",
+     "link": null,
+     "no": 17,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Marko Matić",
+     "link": null,
+     "no": 18,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Filip Jelčić",
+     "link": null,
+     "no": 19,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ante Bolanča",
+     "link": null,
+     "no": 23,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Marijan Oršolić",
+     "link": null,
+     "no": 26,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Josip Skoko",
+     "link": null,
+     "no": 27,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Matej Hrkać",
+     "link": null,
+     "no": 29,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ivan Kraljević",
+     "link": null,
+     "no": 30,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ivan Jelić",
+     "link": null,
+     "no": 33,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Eugen Ciban",
+     "link": null,
+     "no": 43,
+     "pos": "GK",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Kristijan Sesar",
+     "link": null,
+     "no": 44,
+     "pos": "FW",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Ivan Krstanović",
+     "link": null,
+     "no": 47,
+     "pos": "DF",
+     "nat": "CRO",
+     "note": "on loan from Hajduk Split",
+     "captain": false,
+     "loanFrom": "Hajduk Split",
+     "section": "squad"
+    },
+    {
+     "name": "Ivan Puljić",
+     "link": null,
+     "no": 51,
+     "pos": "GK",
+     "nat": "BIH",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Robert Marijanović",
+     "link": null,
+     "no": 77,
+     "pos": "MF",
+     "nat": "CRO",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Mario Mourelo",
+     "link": null,
+     "no": 80,
+     "pos": "FW",
+     "nat": "ESP",
+     "note": null,
+     "captain": false,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Tomislav Tomić",
+     "link": "Tomislav Tomić",
+     "no": 90,
+     "pos": "MF",
+     "nat": "BIH",
+     "note": "captain",
+     "captain": true,
+     "loanFrom": null,
+     "section": "squad"
+    },
+    {
+     "name": "Luka Perko",
+     "link": null,
+     "no": 28,
+     "pos": "DF",
+     "nat": "BIH",
+     "note": "at Posušje until 30 June 2027",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    },
+    {
+     "name": "Nikola Marić",
+     "link": null,
+     "no": null,
+     "pos": "FW",
+     "nat": "BIH",
+     "note": "at Tomislav until 30 June 2027",
+     "captain": false,
+     "loanFrom": null,
+     "section": "loanedOut"
+    }
+   ],
+   "skipped": []
+  }
+ }
+}

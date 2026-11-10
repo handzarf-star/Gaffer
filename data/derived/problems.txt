@@ -1,0 +1,5 @@
+partizan: Erik Kojzek [AUT] wikidata citizenship/sport country SLO/SVN (Q128424232)
+zeljeznicar: Giovanni Troupée [CUR] wikidata citizenship/sport country NED/NLD (Q19943017)
+novi-pazar: Stefan Melentijević [MNE] wikidata citizenship/sport country SRB (Q117080091)
+borac: Sebastián Herrera [MKD] wikidata citizenship/sport country COL (Q23668728)
+siroki-brijeg: Ivan Krstanović [CRO] wikidata citizenship/sport country BIH (Q769404)
