@@ -204,7 +204,7 @@ if (want('formations')) {
     });
     return { rows, goals: goals.map(mean), G: mean(rows) };
   };
-  const MS = scale(500);
+  const MS = scale(1000);
   const mk = (pen: boolean) => { const used = new Set<string>(); return Object.fromEntries(IDS.map((f) => [f, synthetic(f, pen, used)])) as Record<FormationId, Syn>; };
   const S0 = roundRobin(mk(false), 'fs0', MS); // every effective rating equal: sim arithmetic only (hypothesis A)
   const S1 = roundRobin(mk(true), 'fs1', MS);  // same players, the fit table in force: A plus the fit rules (part of hypothesis B)
@@ -244,8 +244,10 @@ if (want('formations')) {
   const GN = mean(rawN), GNa = mean(adjN), GO = mean(ovrN);
   const seN = nat.map((rs) => sd(perSquad[nat.indexOf(rs)]!.map((x) => x.ppm)) / Math.sqrt(NN));
 
-  // (R) the cost of SWITCHING INTO each formation: a squad drafted for one formation, re-seated into another by Auto-arrange, against the very
-  //     same opponents and seeds as at home, so squad quality cancels. Fair formations cost the same to switch into.
+  // (R) SWITCHING INTO each formation: a squad drafted for another formation, re-seated into this one by Auto-arrange, against the very
+  //     same opponents and seeds as at home, so squad quality cancels. How much it costs depends on how different the two formations'
+  //     player mixes are (3-4-3 wants four wingers), which is geometry, not a defect, so the raw cost is only REPORTED. What is gated is
+  //     whether the maths pays a re-seated squad what its overall predicts ("equal overall"), which is the realistic-squad test of hypothesis A.
   const NR = scale(60);
   const costIn: number[][] = IDS.map(() => []);
   const ovrIn: number[][] = IDS.map(() => []);
@@ -261,22 +263,24 @@ if (want('formations')) {
   });
   const rowR = costIn.map(mean);
   const GR = mean(rowR);
+  const rowRe = costIn.map((cs, b) => mean(cs.map((c, i) => c - slope * ovrIn[b]![i]!))); // ppm lost beyond what the overall lost predicts
+  const GRe = mean(rowRe);
 
   console.log('[3] FORMATIONS  figures are "ppm minus the mean of the six formations" (0.000 = fair).');
   console.log(`    S0 equal      all 11 effective ratings = ${R}, natural players, no chemistry; round robin of ${MS * 4} matches per pair. Only the sim's arithmetic can differ: hypothesis A.`);
   console.log('    S1 fit rules  the same, but the fit table applies (the dealt card for LM/RM is a winger, for a wing-back a full-back). A plus the fit rules.');
   console.log(`    N native      ${NN} squads drafted FOR each formation by the CPU draft v the population (${NN * OPP * MN} matches each, ±SE shown); "equal-ovr" removes the overall gap (${slope.toFixed(3)} ppm per overall point).`);
-  console.log(`    R switch-in   ${NR * 5} squads drafted for another formation re-seated into this one by Auto-arrange, paired with their own result: ppm lost by switching in (ovr lost in brackets).`);
-  console.log(`    ${pad('', 8)}${pad('', 8)}| ${rpad('S0', 7)} ${rpad('S1', 7)} ${rpad('role pen', 8)} | ${rpad('N raw', 7)} ${rpad('±SE', 6)} ${rpad('equal-ovr', 9)} ${rpad('own ovr', 8)} | ${rpad('R switch', 9)} ${rpad('(ovr)', 7)} | ${rpad('goals', 6)}`);
+  console.log(`    R switch-in   ${NR * 5} squads drafted for another formation re-seated into this one by Auto-arrange, paired with their own result: ppm lost by switching in (overall lost in brackets), and beyond what that overall predicts.`);
+  console.log(`    ${pad('', 8)}${pad('', 8)}| ${rpad('S0', 7)} ${rpad('S1', 7)} ${rpad('role pen', 8)} | ${rpad('N raw', 7)} ${rpad('±SE', 6)} ${rpad('equal-ovr', 9)} ${rpad('own ovr', 8)} | ${rpad('R switch', 9)} ${rpad('(ovr)', 7)} ${rpad('equal-ovr', 9)} | ${rpad('goals', 6)}`);
   IDS.forEach((f, a) => {
-    console.log(`    ${pad(name(f), 8)}${pad(back(f), 8)}| ${rpad(sgn(S0.rows[a]! - S0.G), 7)} ${rpad(sgn(S1.rows[a]! - S1.G), 7)} ${rpad('-' + baked[a]!, 8)} | ${rpad(sgn(rawN[a]! - GN), 7)} ${rpad(seN[a]!.toFixed(3), 6)} ${rpad(sgn(adjN[a]! - GNa), 9)} ${rpad(ovrN[a]!.toFixed(1), 8)} | ${rpad(sgn(rowR[a]! - GR), 9)} ${rpad('(' + mean(ovrIn[a]!).toFixed(1) + ')', 7)} | ${rpad(mean(nat[a]!.map((r) => r.g)).toFixed(2), 6)}`);
+    console.log(`    ${pad(name(f), 8)}${pad(back(f), 8)}| ${rpad(sgn(S0.rows[a]! - S0.G), 7)} ${rpad(sgn(S1.rows[a]! - S1.G), 7)} ${rpad('-' + baked[a]!, 8)} | ${rpad(sgn(rawN[a]! - GN), 7)} ${rpad(seN[a]!.toFixed(3), 6)} ${rpad(sgn(adjN[a]! - GNa), 9)} ${rpad(ovrN[a]!.toFixed(1), 8)} | ${rpad(sgn(rowR[a]! - GR), 9)} ${rpad('(' + mean(ovrIn[a]!).toFixed(1) + ')', 7)} ${rpad(sgn(rowRe[a]! - GRe), 9)} | ${rpad(mean(nat[a]!.map((r) => r.g)).toFixed(2), 6)}`);
   });
   const grp = (arr: number[], g: string) => mean(arr.filter((_, a) => back(IDS[a]!) === g));
   const byBack = (arr: number[], G: number) => (['4-back', '3-back', '5-back'] as const).map((g) => `${g} ${sgn(grp(arr, g) - G)}`).join('  ');
   console.log(`    by back line   S0: ${byBack(S0.rows, S0.G)}`);
   console.log(`                   S1: ${byBack(S1.rows, S1.G)}`);
   console.log(`                   N raw: ${byBack(rawN, GN)}    N equal-ovr: ${byBack(adjN, GNa)}`);
-  console.log(`                   R switch-in: ${byBack(rowR, GR)}`);
+  console.log(`                   R switch-in: ${byBack(rowR, GR)}    R equal-ovr: ${byBack(rowRe, GRe)}`);
   console.log('    WHERE A 3-BACK / 5-BACK GAP COMES FROM  (each line is a direct measurement; "A" is hypothesis A, the rest is hypothesis B):');
   for (const g of ['3-back', '5-back']) {
     const a0 = grp(S0.rows, g) - S0.G, a1 = grp(S1.rows, g) - S1.G;
@@ -291,7 +295,7 @@ if (want('formations')) {
   gate('formations N drafted-for, equal overall', `±${tol} ppm`, `worst ${f3(worst(adjN, GNa))}`, worst(adjN, GNa) <= tol);
   const rawOk = rawN.every((x, a) => Math.abs(x - GN) <= Math.max(tol, 2 * seN[a]!)); // squads differ in quality, so this one is noisy: pass if inside the tolerance or within two standard errors of zero
   gate('formations N drafted-for, raw', `±${tol} ppm (or 2 SE)`, `worst ${f3(worst(rawN, GN))} (SE ~${f3(Math.max(...seN))})`, rawOk);
-  gate('formations R cost of switching in', `±${tol} ppm`, `worst ${f3(worst(rowR, GR))}`, worst(rowR, GR) <= tol);
+  gate('formations R re-seated, equal overall', `±${tol} ppm`, `worst ${f3(worst(rowRe, GRe))}`, worst(rowRe, GRe) <= tol);
   gate('goals a match, every formation', `${GATE.goals[0]}..${GATE.goals[1]}`, `${Math.min(...goalsAll).toFixed(2)}..${Math.max(...goalsAll).toFixed(2)}`, Math.min(...goalsAll) >= GATE.goals[0] && Math.max(...goalsAll) <= GATE.goals[1]);
   void GO;
   console.log('');

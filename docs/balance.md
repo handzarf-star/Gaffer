@@ -5,8 +5,8 @@ same numbers) and checks that the levers the game advertises are the levers that
 for iterating (noisier: only the full run counts), `-- --only=sectors|styles|formations` runs one part, `-- --report` never fails.
 "ppm" is league points per match (win 3, draw 1, loss 0). A gate prints PASS or FAIL and the process exits 1 if any fail.
 
-It is **not** part of `npm run test:all` yet: at the baseline below six gates fail on purpose, and Sprint 2 fixes them one lever at a
-time. Each lever's commit adds its before/after table at the bottom of this file. Once all are green it joins `test:all`.
+It is part of `npm run test:all`. The baseline below was recorded before Sprint 2 and had six gates failing on purpose; each lever's commit
+added its before/after table at the bottom of this file and all gates are now green.
 
 What it measures:
 
@@ -233,3 +233,84 @@ average **64.3**. With the pivot at 85 every career keeper looked poor, and real
 | career goals a match (real data) | 2.60 | 3.49 | **2.61** |
 | career +5 keeper (ppm) | +0.027 (est.) | not measured | **+0.096** |
 | draft game +5 keeper (ppm) | +0.027 | +0.101 | **+0.099** |
+
+### 2.4 Formations: the "3-back / 5-back deficit" was the fit table, not the maths (`formations.ts`)
+
+**Measure first.** The Phase-1 audit saw 3-back and 5-back lose 0.14 to 0.19 ppm. The harness separates the two hypotheses with four
+arms (see the top of this file). Baseline, before any change in this step (full run, two standard errors are about 0.02):
+
+| | A: sim maths (S0, equal ratings) | B: fit table (S1 minus S0) | drafted-for squads, lower overall | switching in from another formation |
+|---|---|---|---|---|
+| 3-back | +0.013 | -0.060 | -0.035 | -0.049 |
+| 5-back | +0.011 | +0.027 | -0.017 | -0.063 |
+
+**The split.** Hypothesis A explains **none** of the gap (it is +0.01 in the *other* direction, inside the noise): sector values are
+weighted *averages* of whoever sits in the sector, so five defenders cannot "shift weight into Defence", and the sim values a point of
+attack and a point of defence in the ratio 1.15 to 1 against the declared 1.20 to 1, not the other way round. Hypothesis B explains
+all of it, and in one specific form that is *not* "3-back and 5-back" but **any formation with LM/RM/wing-back roles**: the pool has no
+LM, RM, LWB or RWB players, the game deals a winger for the first two and a full-back for the others, and the fit table then
+charged that dealt card 6 and 3 rating points. 4-4-2 and 3-4-3 started every match 12 points down (S1: -0.116 and -0.118 ppm), 3-5-2 and
+5-3-2 six points down, and 4-3-3 and 4-2-3-1, whose roles have natural players, none. That is why 4-4-2, a *4-back* formation, was
+as bad as 3-4-3, and why 5-3-2 looked bad only against 4-3-3.
+
+**The fix** (one rule, no stat padding): the card the game deals for a role is natural for it (`fit(pos, role)` returns 1 when
+`ROLE_TO_POS[role] === pos`). A winger at LM is natural, a full-back at wing-back is natural; the wrong side (RW at LM) or the wrong
+job (a striker at LM) still costs. The deal table and the fit table now agree.
+
+| ppm vs the mean of the six formations | before | after |
+|---|---|---|
+| S1 equal players, fit rules on: worst | **0.118** (3-4-3, 4-4-2) | **0.023** |
+| drafted-for squads, raw: worst | **0.088** (4-4-2 -0.076, 4-3-3 +0.088) | **0.039** (SE 0.023) |
+| drafted-for squads, at equal overall: worst | 0.014 | 0.013 |
+| re-seated squads, beyond what their overall predicts: worst | n/a | 0.013 |
+| goals a match across the formations | 2.59 to 2.89 | 2.65 to 2.89 |
+
+After (full run):
+
+```
+[3] FORMATIONS  figures are "ppm minus the mean of the six formations" (0.000 = fair).
+    S0 equal      all 11 effective ratings = 80, natural players, no chemistry; round robin of 4000 matches per pair. Only the sim's arithmetic can differ: hypothesis A.
+    S1 fit rules  the same, but the fit table applies (the dealt card for LM/RM is a winger, for a wing-back a full-back). A plus the fit rules.
+    N native      400 squads drafted FOR each formation by the CPU draft v the population (14400 matches each, ±SE shown); "equal-ovr" removes the overall gap (0.133 ppm per overall point).
+    R switch-in   300 squads drafted for another formation re-seated into this one by Auto-arrange, paired with their own result: ppm lost by switching in (overall lost in brackets), and beyond what that overall predicts.
+                    |      S0      S1 role pen |   N raw    ±SE equal-ovr  own ovr |  R switch   (ovr) equal-ovr |  goals
+    3-4-3   3-back  |  +0.011  +0.006       -0 |  -0.017  0.022    +0.006     86.1 |    -0.056  (-1.5)    +0.002 |   2.70
+    3-5-2   3-back  |  +0.007  +0.005       -0 |  -0.021  0.022    -0.006     86.1 |    -0.023  (-1.2)    -0.005 |   2.65
+    4-3-3   4-back  |  +0.007  +0.004       -0 |  +0.039  0.022    +0.007     86.5 |    +0.066  (-0.7)    +0.013 |   2.71
+    4-4-2   4-back  |  -0.027  -0.023       -0 |  +0.005  0.023    -0.013     86.4 |    +0.051  (-0.8)    +0.004 |   2.68
+    5-3-2   5-back  |  +0.019  +0.019       -0 |  -0.012  0.022    +0.010     86.1 |    -0.051  (-1.4)    -0.006 |   2.69
+    4-2-3-1 4-back  |  -0.017  -0.011       -0 |  +0.006  0.021    -0.004     86.3 |    +0.013  (-0.9)    -0.008 |   2.70
+    by back line   S0: 4-back -0.012  3-back +0.009  5-back +0.019
+                   S1: 4-back -0.010  3-back +0.006  5-back +0.019
+                   N raw: 4-back +0.017  3-back -0.019  5-back -0.012    N equal-ovr: 4-back -0.003  3-back +0.000  5-back +0.010
+                   R switch-in: 4-back +0.043  3-back -0.039  5-back -0.051    R equal-ovr: 4-back +0.003  3-back -0.002  5-back -0.006
+    WHERE A 3-BACK / 5-BACK GAP COMES FROM  (each line is a direct measurement; "A" is hypothesis A, the rest is hypothesis B):
+      3-back  A sim maths +0.009   B1 fit table (roles with no natural player) -0.003   B2 switching in from another formation -0.039   drafted-for, lower overall -0.019
+      5-back  A sim maths +0.019   B1 fit table (roles with no natural player) -0.000   B2 switching in from another formation -0.051   drafted-for, lower overall -0.022
+```
+
+**What is deliberately not "fixed".** Moving a drafted squad into a *different* formation still costs overall, and the cost is
+the distance between the two formations' player mixes: 3-5-2 to 5-3-2 costs 0.2 of an overall point, 4-3-3 to 4-2-3-1 costs 0.3, 3-4-3 to
+anything costs 1.3 to 2.2 (it needs four wingers). That is geometry, not a defect; a fit rule cannot make every formation equally close to
+every other without making them all want the same eleven players. So the raw switch-in cost is reported (3-back -0.04, 5-back -0.05, 4-back
++0.04 against the mean) and what is gated is whether the *maths* pays a re-seated squad what its overall predicts (worst 0.013). Drafting
+*for* a formation, which is how the game is played (the formation is chosen in the lobby), is fair to within the noise.
+
+**All gates, final full run (`npm run check:balance`, exit code 0, 103 s):**
+
+```
+GATES
+  PASS  keeper: +5 GK                            target 0.09..0.12 ppm got +0.101
+  PASS  styles: every row within the mean        target ±0.03 ppm      got worst 0.011
+  PASS  styles: no dominant style                target none           got none
+  PASS  formations S0 equal ratings (maths)      target ±0.03 ppm      got worst 0.027
+  PASS  formations S1 with the fit rules         target ±0.03 ppm      got worst 0.023
+  PASS  formations N drafted-for, equal overall  target ±0.03 ppm      got worst 0.013
+  PASS  formations N drafted-for, raw            target ±0.03 ppm (or 2 SE) got worst 0.039 (SE ~0.023)
+  PASS  formations R re-seated, equal overall    target ±0.03 ppm      got worst 0.013
+  PASS  goals a match, every formation           target 2.4..3.2       got 2.65..2.89
+  PASS  career: goals a match (real data)        target 2.4..2.9       got 2.57
+  PASS  career: +5 GK                            target 0.09..0.12 ppm got +0.099
+```
+
+`check:balance` now runs in `npm run test:all`.

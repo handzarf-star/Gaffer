@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FORMATIONS, FORMATION_IDS, assignBest, fit, fitKind, penalty, slotLinks } from '../src/shared/formations';
+import { FORMATIONS, FORMATION_IDS, ROLE_TO_POS, assignBest, fit, fitKind, penalty, slotLinks } from '../src/shared/formations';
 import { PLAYERS } from '../src/shared/players';
 
 describe('formations', () => {
@@ -34,14 +34,23 @@ describe('formations', () => {
   it('fit behaves sensibly', () => {
     expect(fit('CM', 'CM')).toBe(1);
     expect(fitKind('CM', 'CM')).toBe('natural');
-    expect(fitKind('LB', 'LWB')).toBe('close');
     expect(penalty('CM', 'CDM')).toBeLessThanOrEqual(5);
     expect(penalty('ST', 'GK')).toBeGreaterThanOrEqual(20);
     expect(penalty('GK', 'ST')).toBeGreaterThanOrEqual(20);
     expect(penalty('ST', 'CB')).toBeGreaterThan(penalty('CM', 'CB'));
     expect(penalty('LB', 'RB')).toBeLessThan(penalty('LB', 'LW'));
-    // fit is symmetric for pairs that are both real roles
-    expect(fit('LW', 'LM')).toBeCloseTo(fit('LM' as never, 'LW'), 5);
+  });
+  it('the card the game deals for a role is natural for it, so no formation starts a match behind', () => {
+    // there are no LM, RM, LWB or RWB players: a winger is the wide midfielder and a full-back the wing-back, at no cost
+    expect(fitKind('LW', 'LM')).toBe('natural');
+    expect(fitKind('RW', 'RM')).toBe('natural');
+    expect(fitKind('LB', 'LWB')).toBe('natural');
+    expect(fitKind('RB', 'RWB')).toBe('natural');
+    for (const id of FORMATION_IDS) for (const s of FORMATIONS[id].slots) expect(penalty(ROLE_TO_POS[s.role], s.role), `${id} ${s.role}`).toBe(0);
+    // but it is still a position: the wrong side, or the wrong job, still costs
+    expect(penalty('RW', 'LM')).toBeGreaterThan(10);
+    expect(penalty('RB', 'LWB')).toBeGreaterThan(0);
+    expect(penalty('ST', 'LM')).toBeGreaterThan(penalty('CM', 'LM'));
   });
   it('assignBest seats a natural XI exactly', () => {
     const pick = (pos: string, n: number) => PLAYERS.filter((p) => p.pos === pos && p.era === 'M').slice(0, n).map((p) => p.id);

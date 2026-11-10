@@ -14,7 +14,7 @@
     "test": "vitest run",
     "test:e2e": "node e2e/run.mjs",
     "check:brand": "node scripts/brand-sweep.mjs",
-    "test:all": "npm run typecheck && npm test && npm run build && npm run test:e2e && npm run check:brand",
+    "test:all": "npm run typecheck && npm test && npm run build && npm run test:e2e && npm run check:brand && npm run check:balance",
     "icons": "node scripts/make-icons.mjs",
     "check:persistence": "node scripts/check-persistence.mjs",
     "check:career": "node scripts/check-career-api.mjs",

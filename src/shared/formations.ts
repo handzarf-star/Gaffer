@@ -57,6 +57,16 @@ export const DEFAULT_FORMATION: FormationId = '433';
 
 /* ───────────── position fit ───────────── */
 
+/**
+ * Which player position fills a slot role: the card the game DEALS for that role (a winger for a wide-midfield slot, a full-back for a
+ * wing-back slot). There are no LM, RM, LWB or RWB players in the pool, so these roles can only ever be filled by those cards.
+ */
+export const ROLE_TO_POS: Record<Role, Pos> = {
+  GK: 'GK', LB: 'LB', CB: 'CB', RB: 'RB', LWB: 'LB', RWB: 'RB', CDM: 'CDM', CM: 'CM', CAM: 'CAM',
+  LM: 'LW', RM: 'RW', LW: 'LW', RW: 'RW', ST: 'ST',
+};
+
+
 // [lateral -1..1, depth 0 (defence) .. 1 (attack)]
 const COORD: Record<Role, [number, number]> = {
   GK: [0, -0.2],
@@ -84,9 +94,15 @@ const OVERRIDE: Array<[Role, Role, number]> = [
   ['RB', 'LWB', 0.76],
 ];
 
-/** 1 = natural. Lower = more out of position. */
+/**
+ * 1 = natural. Lower = more out of position.
+ * The card dealt for a role is natural for it. Before, the game dealt a winger for a wide-midfield slot and then took 6 rating points
+ * off him, and took 3 off a full-back at wing-back: 4-4-2 and 3-4-3 started every match 12 points down, 3-5-2 and 5-3-2 six, and
+ * 4-3-3 and 4-2-3-1 (whose roles have natural players) none. That, not the maths of the sim, was the whole formation gap
+ * (docs/balance.md, 2.4).
+ */
 export function fit(pos: Pos, role: Role): number {
-  if (pos === role) return 1;
+  if (pos === role || ROLE_TO_POS[role] === pos) return 1;
   if (pos === 'GK' || role === 'GK') return 0.12;
   for (const [a, b, v] of OVERRIDE) if ((pos === a && role === b) || (pos === b && role === a)) return v;
   const [lx, ld] = COORD[pos];
@@ -115,12 +131,6 @@ export function effectiveOvr(playerId: string, role: Role): number {
   const p = player(playerId);
   return p.ovr - penalty(p.pos, role);
 }
-
-/** Which player position best fills a slot role (used when dealing cards that are "needed"). */
-export const ROLE_TO_POS: Record<Role, Pos> = {
-  GK: 'GK', LB: 'LB', CB: 'CB', RB: 'RB', LWB: 'LB', RWB: 'RB', CDM: 'CDM', CM: 'CM', CAM: 'CAM',
-  LM: 'LW', RM: 'RW', LW: 'LW', RW: 'RW', ST: 'ST',
-};
 
 /* ───────────── chemistry links ───────────── */
 
