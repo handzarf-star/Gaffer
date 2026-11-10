@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FORMATIONS } from '../../shared/formations';
 import { player, shortName } from '../../shared/players';
-import { commentary } from '../../shared/i18n/commentary';
+import { commentary, headlineText, motmReasonText } from '../../shared/i18n/commentary';
 import type { TFn } from '../../shared/i18n';
 import { playbackSchedule, type EventType, type MatchEvent, type MatchResult, type Pace } from '../../shared/sim';
 import { STYLES, profile, type Squad } from '../../shared/squad';
@@ -182,7 +182,7 @@ export function MatchPlayer({ fixtures, startAt, you, onSeen, continueLabel, onC
 
   const fullPanel = fixtureDone && (
     <section className="panel fulltime">
-      <p className="fulltime__head">{fx.result.headline}</p>
+      <p className="fulltime__head">{headlineText(fx.result, lang)}</p>
       <div className="statgrid">
         {([
           [t('Possession'), `${stat.possession[0]}%`, `${stat.possession[1]}%`, stat.possession[0], stat.possession[1]],
@@ -210,7 +210,7 @@ export function MatchPlayer({ fixtures, startAt, you, onSeen, continueLabel, onC
         <div>
           <small>{t('Man of the match')}</small>
           <b>{player(fx.result.motm.player).name}</b>
-          <span>{fx.result.motm.reason}</span>
+          <span>{motmReasonText(fx.result, lang)}</span>
         </div>
       </div>
     </section>
