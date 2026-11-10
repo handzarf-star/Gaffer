@@ -117,37 +117,116 @@ const goalY = (att: 0 | 1) => (att === 0 ? 0 : PH);
 const into = (att: 0 | 1) => (att === 0 ? 1 : -1);
 const other = (t: 0 | 1): 0 | 1 => (t === 0 ? 1 : 0);
 
-/** shape: everyone drifts toward the ball, the side with the ball pushes up */
-function shaped(p: P, ball: Pt, poss: 0 | 1 | null): Pt {
-  const push = poss === p.team && !p.gk ? 2.6 * (p.team === 0 ? -1 : 1) : 0;
+/** shape: everyone drifts toward the ball; w = how hard each team is pushing up (0 to 1, fades after a turnover) */
+function shapedW(p: P, ball: Pt, w: [number, number]): Pt {
+  const push = !p.gk ? 2.6 * w[p.team] * (p.team === 0 ? -1 : 1) : 0;
   return {
     x: clamp(p.bx + (ball.x - CX) * 0.11 * (p.gk ? 0.4 : 1), 1.5, PW - 1.5),
     y: clamp(p.by + (ball.y - PH / 2) * p.k + push, p.gk ? (p.team === 0 ? PH - 6 : 1.5) : 2, p.gk ? (p.team === 0 ? PH - 1.5 : 6) : PH - 2),
   };
 }
+const PUSH_OF: Record<string, [number, number]> = { '0': [1, 0], '1': [0, 1], n: [0, 0] };
+function shaped(p: P, ball: Pt, poss: 0 | 1 | null): Pt {
+  return shapedW(p, ball, PUSH_OF[poss === null ? 'n' : String(poss)]!);
+}
 
 /* ───────────── ambient play (nothing is happening) ───────────── */
+// The ball always sits on a real player or travels between two of them at passing pace, and possession changes through
+// short turnovers. The whole chain is generated from seeded hashes the first time it is needed and then only looked up,
+// so it is identical for both friends and cheap to evaluate every frame. Nothing here depends on the playback speed:
+// when a quiet stretch is fast-forwarded only the match clock speeds up, never the dots.
 
-function ambient(layout: Layout, t: number, fast: boolean, poss0: number, redded: Set<string>): { ball: Pt; rough: Pt; poss: 0 | 1; positions: Map<string, Pt>; lift: number } {
-  const cadence = fast ? 260 : 720;
-  const i = Math.floor(t / cadence);
-  const u = (t % cadence) / cadence;
-  const possOf = (n: number): 0 | 1 => (rnd(`${layout.salt}poss${Math.floor(n / 4)}`) < poss0 ? 0 : 1);
-  const poss = possOf(i);
-  // slow drift of the whole shape toward the side that is attacking
-  const tilt = (0.5 - poss0) * 20;
-  const rough: Pt = { x: CX + 9 * Math.sin(t / 1900), y: PH / 2 + tilt + 10 * Math.sin(t / 2700 + 1) + (poss === 0 ? -5 : 5) };
-  const positions = new Map<string, Pt>();
-  for (const p of layout.players) if (!redded.has(p.key)) positions.set(p.key, shaped(p, rough, poss));
-  const pick = (n: number): P => {
-    const list = layout.teams[possOf(n)].filter((p) => !redded.has(p.key) && !p.gk);
-    return list[Math.floor(rnd(`${layout.salt}pass${n}`) * list.length) % list.length]!;
+interface Hop { t0: number; hold: number; fly: number; from: string; to: string; team: 0 | 1 }
+const PASS_SPEED = 13; // metres per second
+const chains = new WeakMap<Layout, { poss0: number; hops: Hop[] }>();
+
+function nextHop(layout: Layout, prev: Hop | null, n: number, poss0: number): Hop {
+  const salt = `${layout.salt}hop${n}`;
+  let holder: P;
+  if (!prev) {
+    const team: 0 | 1 = rnd(`${salt}t`) < poss0 ? 0 : 1;
+    holder = layout.teams[team].filter((q) => !q.gk).sort((x, y) => Math.abs(x.by - PH / 2) - Math.abs(y.by - PH / 2))[0] ?? layout.teams[team][0]!;
+  } else holder = layout.byKey.get(prev.to)!;
+  const here = pt(holder.bx, holder.by);
+  const share = holder.team === 0 ? poss0 : 1 - poss0;
+  const pTurn = holder.gk ? 0 : clamp(0.2 * (0.5 / Math.max(0.25, share)), 0.08, 0.38);
+  let to: P | undefined;
+  if (rnd(`${salt}x`) < pTurn) {
+    const near = nearest(layout.teams[other(holder.team)], here, 2, new Set());
+    to = near[rnd(`${salt}o`) < 0.65 ? 0 : 1] ?? near[0];
+  } else {
+    const mates = layout.teams[holder.team].filter((q) => q.key !== holder.key && (holder.gk ? q.role === 'CB' || q.role === 'LB' || q.role === 'RB' : !q.gk || rnd(`${salt}gk`) < 0.04));
+    let bestScore = -1e9;
+    for (const q of mates) {
+      const d = Math.hypot(q.bx - here.x, q.by - here.y);
+      const fwd = holder.team === 0 ? here.y - q.by : q.by - here.y;
+      const score = -Math.abs(d - 12) * 0.35 + fwd * 0.1 + rnd(`${salt}s${q.key}`) * 1.8;
+      if (score > bestScore) { bestScore = score; to = q; }
+    }
+  }
+  const dest = to ?? holder;
+  const d = Math.hypot(dest.bx - here.x, dest.by - here.y);
+  return {
+    t0: prev ? prev.t0 + prev.hold + prev.fly : 0,
+    hold: holder.gk ? 1100 : 380 + rnd(`${salt}h`) * 720,
+    fly: clamp(d / PASS_SPEED, 0.5, 1.9) * 1000,
+    from: holder.key, to: dest.key, team: holder.team,
   };
-  const from = positions.get(pick(i).key)!;
-  const to = positions.get(pick(i + 1).key)!;
-  const e = ease(u);
-  const ball = { x: mix(from.x, to.x, e), y: mix(from.y, to.y, e) - Math.sin(Math.PI * u) * 1.1 };
-  return { ball, rough, poss, positions, lift: Math.sin(Math.PI * u) * 0.25 };
+}
+
+function hopsFor(layout: Layout, poss0: number, t: number): Hop[] {
+  let c = chains.get(layout);
+  if (!c || c.poss0 !== poss0) { c = { poss0, hops: [] }; chains.set(layout, c); }
+  const hops = c.hops;
+  for (let guard = 0; guard < 4000; guard++) {
+    const last = hops[hops.length - 1];
+    if (last && last.t0 + last.hold + last.fly >= t + 3000) break;
+    hops.push(nextHop(layout, last ?? null, hops.length, poss0));
+  }
+  return hops;
+}
+
+function hopIndex(hops: Hop[], t: number): number {
+  let lo = 0, hi = hops.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if (hops[mid]!.t0 <= t) lo = mid; else hi = mid - 1;
+  }
+  return lo;
+}
+
+interface Ambient { ball: Pt; rough: Pt; poss: 0 | 1; w: [number, number]; positions: Map<string, Pt>; lift: number }
+
+function ambient(layout: Layout, tt: number, poss0: number, redded: Set<string>): Ambient {
+  const t = Math.max(0, tt);
+  const hops = hopsFor(layout, poss0, t);
+  const idx = hopIndex(hops, t);
+  const h = hops[idx]!;
+  const local = t - h.t0;
+  const holding = local < h.hold;
+  const u = holding ? 0 : clamp((local - h.hold) / h.fly, 0, 1);
+  const A = layout.byKey.get(h.from)!;
+  const B = layout.byKey.get(h.to)!;
+  // the ball on the formation grid drives where the whole team leans
+  const flight = holding ? pt(A.bx, A.by) : lerpPt(pt(A.bx, A.by), pt(B.bx, B.by), ease(u));
+  const rough = pt(
+    CX + (flight.x - CX) * 0.5 + 2.5 * Math.sin(t / 2300),
+    PH / 2 + (flight.y - PH / 2) * 0.55 + (0.5 - poss0) * 14 + 2 * Math.sin(t / 3100 + 1),
+  );
+  // the side with the ball pushes up; after a turnover the push fades over from one side to the other
+  let j = idx;
+  while (j > 0 && hops[j - 1]!.team === hops[j]!.team) j--;
+  const wCur = j === 0 ? 1 : ease((t - hops[j]!.t0) / 1400);
+  const w: [number, number] = [0, 0];
+  w[h.team] = wCur;
+  w[other(h.team)] = 1 - wCur;
+  const positions = new Map<string, Pt>();
+  for (const q of layout.players) if (!redded.has(q.key)) positions.set(q.key, shapedW(q, rough, w));
+  const pa = positions.get(h.from);
+  const pb = positions.get(h.to);
+  const on = holding ? (pa ?? flight) : pa && pb ? lerpPt(pa, pb, ease(u)) : flight;
+  const arc = holding ? 0 : Math.sin(Math.PI * u);
+  return { ball: pt(on.x, on.y - arc * 0.9), rough, poss: h.team, w, positions, lift: arc * 0.25 };
 }
 
 /* ───────────── event choreography ───────────── */
@@ -482,7 +561,8 @@ export interface SceneArgs {
 
 const DEAD_MARK: Partial<Record<MatchEvent['type'], string>> = { kickoff: 'KICK-OFF', half: 'HALF-TIME', full: 'FULL-TIME', et: 'EXTRA TIME', etend: 'END OF EXTRA TIME', shootout: 'PENALTIES' };
 
-export function buildScene({ layout, result, items, quiet, t }: SceneArgs): Scene {
+/** What the picture WANTS at time t: the ambient flow of play, or the active moment's choreography. Not yet speed-limited. */
+function desiredScene({ layout, result, items, quiet, t }: SceneArgs): Scene {
   // what has already happened (cards, sendings off) and what is happening right now
   const redded = new Set<string>();
   const booked = new Set<string>();
@@ -501,16 +581,17 @@ export function buildScene({ layout, result, items, quiet, t }: SceneArgs): Scen
   }
   const fast = !active && quiet.some(([a, b]) => t >= a && t < b);
   const poss0 = result.stats.possession[0] / 100;
-  const amb = ambient(layout, t, fast, poss0, redded);
-  const base: Choreo = { ball: amb.ball, lift: amb.lift, poss: amb.poss, ballRough: amb.rough };
-  let ch: Choreo = base;
-  let positions = amb.positions;
+  const amb = ambient(layout, t, poss0, redded);
+  let ch: Choreo | null = null;
+  const positions = new Map<string, Pt>(amb.positions);
+  let ball: Pt = amb.ball;
+  let lift = amb.lift;
 
   if (active) {
     const e = active.event;
     const p = clamp((t - active.at) / Math.max(1, active.dur), 0, 1);
-    // blend in from wherever the ambient ball was when the moment began
-    const startAmb = ambient(layout, active.at, false, poss0, redded);
+    // every moment starts from where the flow of play was when it began
+    const startAmb = ambient(layout, active.at, poss0, redded);
     const rough = startAmb.rough;
     const startBall = startAmb.ball;
     if (e.type === 'goal' || e.type === 'save' || e.type === 'miss' || e.type === 'post') {
@@ -522,42 +603,113 @@ export function buildScene({ layout, result, items, quiet, t }: SceneArgs): Scen
       const mark = DEAD_MARK[e.type];
       ch = { ball: e.type === 'shootout' ? pt(CX, 52.5) : lerpPt(startBall, pt(CX, PH / 2), ease(p * 2)), tag: mark ? { kind: 'info', text: mark, sub: '', team: 0 } : null, ballRough: pt(CX, PH / 2), poss: null };
     }
-    positions = new Map<string, Pt>();
-    for (const q of layout.players) if (!redded.has(q.key)) positions.set(q.key, shaped(q, ch.ballRough ?? rough, ch.poss ?? null));
+    const lay = inShootout ? shootoutLayout(layout, redded) : null;
+    for (const q of layout.players) {
+      if (redded.has(q.key)) continue;
+      positions.set(q.key, ch.over?.get(q.key) ?? lay?.get(q.key) ?? shaped(q, ch.ballRough ?? rough, ch.poss ?? null));
+    }
+    ball = ch.ball;
+    lift = ch.lift ?? 0;
   } else if (inShootout) {
-    positions = shootoutLayout(layout, redded);
-    ch = { ball: pt(CX, 11), ballRough: pt(CX, 30) };
+    for (const [k, v] of shootoutLayout(layout, redded)) positions.set(k, v);
+    ball = pt(CX, 11);
+    lift = 0;
   }
-  if (ch.over) for (const [key, pos] of ch.over) if (!redded.has(key)) positions.set(key, pos);
 
-  // the player being sent off stays on the pitch until his card has been shown
   const dots: DotS[] = [];
   for (const q of layout.players) {
     const pos = positions.get(q.key);
-    if (!pos) continue;
+    if (!pos || redded.has(q.key)) continue;
     dots.push({
       key: q.key, id: q.id, team: q.team, x: pos.x, y: pos.y, gk: q.gk, label: q.short,
-      hot: !!ch.hot?.has(q.key),
+      hot: !!ch?.hot?.has(q.key),
       booked: booked.has(q.key),
-      carded: ch.card?.key === q.key ? ch.card.color : null,
-      down: !!ch.down?.has(q.key),
-      scale: ch.scale?.get(q.key) ?? 1,
+      carded: ch?.card?.key === q.key ? ch.card.color : null,
+      down: !!ch?.down?.has(q.key),
+      scale: ch?.scale?.get(q.key) ?? 1,
     });
   }
-  // trail: where the ball was a moment ago
-  const trail: Pt[] = [];
   return {
     dots,
-    ball: { x: ch.ball.x, y: ch.ball.y, lift: ch.lift ?? 0, hot: !!ch.shot },
-    trail,
-    tag: ch.tag ?? null,
-    shot: ch.shot ?? null,
-    pulse: ch.pulse ?? null,
-    ref: ch.ref ?? null,
-    ripple: ch.ripple ?? null,
+    ball: { x: ball.x, y: ball.y, lift, hot: !!ch?.shot },
+    trail: [],
+    tag: ch?.tag ?? null,
+    shot: ch?.shot ?? null,
+    pulse: ch?.pulse ?? null,
+    ref: ch?.ref ?? null,
+    ripple: ch?.ripple ?? null,
     fast,
     shootout: inShootout,
   };
+}
+
+/* ───────────── movement: everything follows its target at a believable speed ───────────── */
+// The picture above says where things SHOULD be; this makes them get there like real people and a real ball. Each dot and
+// the ball chase their target with a short lag and a speed limit, simulated once per match at 30 frames a second and
+// cached. A pure function of time cannot remember where a dot was, so without this two moments in a row (free kick,
+// card, shot) would swap formations instantly: that was the "puf". Now nothing can move faster than the limits, by
+// construction, and both friends still see exactly the same movie.
+
+const STEP_MS = 1000 / 30;
+const DOT_SPEED = 9.5; // metres per second: a hard sprint
+const DOT_LAG = 0.22; // seconds
+const BALL_SPEED = 36; // a driven shot
+const BALL_LAG = 0.03;
+
+interface Track { dots: Array<Map<string, Pt>>; ball: Pt[] }
+const tracks = new WeakMap<ScheduledEvent[], WeakMap<Layout, Track>>();
+
+function chase(cur: Pt, want: Pt, lag: number, speed: number): Pt {
+  const k = 1 - Math.exp(-STEP_MS / 1000 / lag);
+  let dx = (want.x - cur.x) * k;
+  let dy = (want.y - cur.y) * k;
+  const m = Math.hypot(dx, dy);
+  const cap = (speed * STEP_MS) / 1000;
+  if (m > cap) { dx *= cap / m; dy *= cap / m; }
+  return { x: cur.x + dx, y: cur.y + dy };
+}
+
+function trackFor(args: SceneArgs): Track {
+  let perLayout = tracks.get(args.items);
+  if (!perLayout) { perLayout = new WeakMap(); tracks.set(args.items, perLayout); }
+  const have = perLayout.get(args.layout);
+  if (have) return have;
+  const end = args.items.reduce((m, it) => Math.max(m, it.at + it.dur), 0) + 6000;
+  const track: Track = { dots: [], ball: [] };
+  let dots = new Map<string, Pt>();
+  let ball: Pt | null = null;
+  for (let t = 0; t <= end; t += STEP_MS) {
+    const want = desiredScene({ ...args, t });
+    const next = new Map<string, Pt>();
+    for (const d of want.dots) {
+      const cur = dots.get(d.key);
+      next.set(d.key, cur ? chase(cur, d, DOT_LAG, DOT_SPEED) : { x: d.x, y: d.y });
+    }
+    ball = ball ? chase(ball, want.ball, BALL_LAG, BALL_SPEED) : { x: want.ball.x, y: want.ball.y };
+    dots = next;
+    track.dots.push(next);
+    track.ball.push(ball);
+  }
+  perLayout.set(args.layout, track);
+  return track;
+}
+
+export function buildScene(args: SceneArgs): Scene {
+  const want = desiredScene(args);
+  const track = trackFor(args);
+  const f = Math.max(0, args.t) / STEP_MS;
+  const i = Math.min(track.dots.length - 1, Math.floor(f));
+  const j = Math.min(track.dots.length - 1, i + 1);
+  const u = clamp(f - i, 0, 1);
+  const dots: DotS[] = [];
+  for (const d of want.dots) {
+    const a = track.dots[i]!.get(d.key);
+    const b = track.dots[j]!.get(d.key) ?? a;
+    const pos = a && b ? lerpPt(a, b, u) : { x: d.x, y: d.y };
+    dots.push({ ...d, x: pos.x, y: pos.y });
+  }
+  const bp = lerpPt(track.ball[i]!, track.ball[j]!, u);
+  return { ...want, dots, ball: { ...want.ball, x: bp.x, y: bp.y } };
 }
 
 /** the scene a few frames ago, for the ball's trail */

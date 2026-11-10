@@ -25,7 +25,7 @@ const noOverflow = async (p, where) => {
   const w = await p.page.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth]);
   if (w[0] > w[1] + 1) throw new Error(`${p.name} horizontal overflow at ${where}: ${w[0]} > ${w[1]}`);
 };
-async function openPack(page) { const s = page.locator('.sealed'); if (await s.count()) { await s.first().click({ timeout: 2500 }).catch(() => {}); await sleep(700); } }
+async function openPack(page) { const s = page.locator('.sealed, .pack'); if (await s.count()) { await s.first().click({ timeout: 2500 }).catch(() => {}); await sleep(700); } }
 
 const results = [];
 const SHOTS = process.env.SHOTS ?? path.join(os.tmpdir(), 'gaffer-e2e');

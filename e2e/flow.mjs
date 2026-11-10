@@ -12,7 +12,7 @@ if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
 const errors = [];
 const log = (...a) => console.log('•', ...a);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-async function openPack(page) { const s = page.locator('.sealed'); if (await s.count()) { await s.first().click({ timeout: 3000 }).catch(() => {}); await new Promise((r) => setTimeout(r, 750)); } }
+async function openPack(page) { const s = page.locator('.sealed, .pack'); if (await s.count()) { await s.first().click({ timeout: 3000 }).catch(() => {}); await new Promise((r) => setTimeout(r, 750)); } }
 
 const browser = await chromium.launch();
 const viewport = MOBILE ? { width: 390, height: 844 } : { width: 1360, height: 900 };
@@ -76,7 +76,8 @@ if (FORMAT === 'turns') {
   await guest.page.getByText(/Sam is picking/).first().waitFor({ timeout: 8000 });
   await guest.page.locator('.draft__board[aria-label="Sam\'s pack"]').waitFor();
   await guest.page.getByRole('tab', { name: /Sam/, selected: true }).waitFor();
-  if ((await guest.page.locator('.board .pcard').count()) < 1) throw new Error('the friend cannot see the pack being drafted');
+  if ((await guest.page.locator('.pack').count()) !== 3) throw new Error('the friend cannot see the packs being chosen from');
+  if ((await guest.page.locator('.pack:not([disabled])').count()) !== 0) throw new Error('the friend must not be able to open the host\'s packs');
   await sleep(500);
   await shot(guest, '03b-watching-guest');
   log('turns: the friend watches the host draft');
@@ -92,6 +93,7 @@ for (let step = 0; step < 80; step++) {
   for (const p of both) {
     const mine = p.page.locator('.turn--you');
     if (await mine.count()) {
+      if (shotsTaken === 0 && (await p.page.locator('.pack').count())) { await sleep(700); await shot(p, '03a-choose-pack'); }
       await openPack(p.page);
       const cards = p.page.locator('.board .pcard:not([disabled])');
       if (await cards.count()) {

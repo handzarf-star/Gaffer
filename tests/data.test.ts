@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { NATIONS } from '../src/shared/nations';
-import { PLAYERS, poolPlayers, shortName, tierOf } from '../src/shared/players';
+import { PLAYERS, shortName, tierOf } from '../src/shared/players';
+import { poolPlayers } from '../src/shared/pools';
 
 describe('player database', () => {
   it('has enough players and unique ids', () => {

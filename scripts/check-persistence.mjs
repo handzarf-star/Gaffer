@@ -49,7 +49,14 @@ const must = (cond, msg) => { if (!cond) throw new Error(msg); };
 
 /** Pick for the one human (packs): try cards and slots until the server accepts one. */
 async function pickNow(st) {
-  const d = st.view.draft;
+  let d = st.view.draft;
+  // packs: choose a sealed pack first (the view only shows clues until one is open)
+  if (d.packs?.length && d.board.length === 0) {
+    const before = st.view.rev;
+    send(st, { t: 'pack', round: d.round, index: 0 });
+    for (let i = 0; i < 25 && st.view.rev === before; i++) await sleep(20);
+    d = st.view.draft;
+  }
   const empty = Object.entries(st.view.squads[st.id].slots).filter(([, p]) => !p).map(([k]) => k);
   const before = st.view.rev;
   for (const card of d.board.slice(0, 5)) {

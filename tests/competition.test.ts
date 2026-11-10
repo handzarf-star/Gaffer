@@ -4,7 +4,7 @@ import {
   COMPETITIONS, circleRounds, completeDay, createCompetition, currentDay, defaultTeams, tableFor, tables, validTeams, winnerOf,
   type CompFixture, type CompState,
 } from '../src/shared/competition';
-import { poolPlayers } from '../src/shared/players';
+import { poolPlayers } from '../src/shared/pools';
 import { isSquadComplete, profile } from '../src/shared/squad';
 
 const ids = (n: number) => Array.from({ length: n }, (_, i) => `t${i + 1}`);

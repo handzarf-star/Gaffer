@@ -4,7 +4,7 @@
 import { aiPick, boardSize, dealBoard, openRoles, placePlayer } from './draft';
 import { FORMATION_IDS, type FormationId } from './formations';
 import { Rng } from './rng';
-import type { PoolId } from './players';
+import type { PoolId } from './pools';
 import { emptySquad, profile, STYLE_IDS, type Squad } from './squad';
 
 export const CUP_STAGES = ['Round of 16', 'Quarter-final', 'Semi-final', 'Final'] as const;

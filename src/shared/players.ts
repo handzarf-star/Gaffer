@@ -13,12 +13,14 @@ export interface Player {
   pos: Pos;
   ovr: number;
   era: Era;
+  /** appears only in this pool (the Balkan extras are not part of Modern Stars, Legends or Everyone) */
+  only?: 'balkan';
 }
 
 type Row = [name: string, nat: string, ovr: number];
-const raw: Array<[string, string, Pos, number, Era]> = [];
-function add(era: Era, pos: Pos, rows: Row[]) {
-  for (const [n, nat, o] of rows) raw.push([n, nat, pos, o, era]);
+const raw: Array<[string, string, Pos, number, Era, 'balkan'?]> = [];
+function add(era: Era, pos: Pos, rows: Row[], only?: 'balkan') {
+  for (const [n, nat, o] of rows) raw.push(only ? [n, nat, pos, o, era, only] : [n, nat, pos, o, era]);
 }
 
 /* ───────────── Goalkeepers ───────────── */
@@ -274,7 +276,35 @@ add('L', 'ST', [['Mario Kempes', 'ARG', 91], ['Pedro Pauleta', 'POR', 85], ['All
 
 /* ───────────────────────────────────────── helpers ───────────────────────────────────────── */
 
-function slug(name: string): string {
+/* ───────────── Balkan extras (Bosnia, Croatia, Serbia): only in the Balkan pool ─────────────
+   Current internationals and a few league players from the region. Ratings are my own rough opinions and the squads are
+   from memory, so check them: the Bosnian league is not here because I could not recall it reliably. */
+const B = 'balkan' as const;
+add('M', 'GK', [['Ivica Ivusic', 'CRO', 76], ['Dominik Kotarski', 'CRO', 75], ['Vanja Milinkovic-Savic', 'SRB', 79], ['Predrag Rajkovic', 'SRB', 76], ['Djordje Petrovic', 'SRB', 75], ['Nikola Vasilj', 'BIH', 78], ['Kenan Piric', 'BIH', 72]], B);
+add('M', 'CB', [
+  ['Josip Sutalo', 'CRO', 80], ['Marin Pongracic', 'CRO', 80], ['Duje Caleta-Car', 'CRO', 79], ['Martin Erlic', 'CRO', 76],
+  ['Nikola Milenkovic', 'SRB', 82], ['Strahinja Pavlovic', 'SRB', 79], ['Milos Veljkovic', 'SRB', 75], ['Srdjan Babic', 'SRB', 72], ['Uros Spajic', 'SRB', 72],
+  ['Anel Ahmedhodzic', 'BIH', 77], ['Dennis Hadzikadunic', 'BIH', 73], ['Tarik Muharemovic', 'BIH', 72],
+], B);
+add('M', 'LB', [['Borna Barisic', 'CRO', 77], ['Borna Sosa', 'CRO', 77], ['Filip Kostic', 'SRB', 80], ['Sead Kolasinac', 'BIH', 80], ['Milan Rodic', 'SRB', 71]], B);
+add('M', 'RB', [['Josip Stanisic', 'CRO', 82], ['Josip Juranovic', 'CRO', 77], ['Amar Dedic', 'BIH', 77], ['Jusuf Gazibegovic', 'BIH', 73]], B);
+add('M', 'CDM', [
+  ['Kristijan Jakic', 'CRO', 77], ['Nikola Moro', 'CRO', 76], ['Nemanja Gudelj', 'SRB', 76], ['Nemanja Maksimovic', 'SRB', 74], ['Marko Grujic', 'SRB', 77],
+  ['Sasa Lukic', 'SRB', 78], ['Uros Racic', 'SRB', 74], ['Amir Hadziahmetovic', 'BIH', 72], ['Benjamin Tahirovic', 'BIH', 74],
+], B);
+add('M', 'CM', [['Mario Pasalic', 'CRO', 83], ['Luka Sucic', 'CRO', 78], ['Petar Sucic', 'CRO', 77], ['Ivan Ilic', 'SRB', 77], ['Rade Krunic', 'BIH', 74]], B);
+add('M', 'CAM', [
+  ['Lovro Majer', 'CRO', 80], ['Nikola Vlasic', 'CRO', 79], ['Martin Baturina', 'CRO', 78], ['Luka Ivanusec', 'CRO', 76], ['Toni Fruk', 'CRO', 73],
+  ['Dusan Tadic', 'SRB', 82], ['Lazar Samardzic', 'SRB', 79], ['Filip Djuricic', 'SRB', 74], ['Mirko Ivanic', 'SRB', 73], ['Mijat Gacinovic', 'SRB', 72],
+], B);
+add('M', 'LW', [['Josip Brekalo', 'CRO', 75], ['Mislav Orsic', 'CRO', 77], ['Nemanja Radonjic', 'SRB', 75], ['Andrija Zivkovic', 'SRB', 75], ['Darko Lazovic', 'SRB', 71], ['Marco Pasalic', 'CRO', 73]], B);
+add('M', 'RW', [['Esmir Bajraktarevic', 'BIH', 76], ['Veljko Birmancevic', 'SRB', 72], ['Miroslav Stevanovic', 'BIH', 72], ['Kerim Alajbegovic', 'BIH', 70]], B);
+add('M', 'ST', [
+  ['Marko Livaja', 'CRO', 79], ['Bruno Petkovic', 'CRO', 78], ['Franjo Ivanovic', 'CRO', 76], ['Igor Matanovic', 'CRO', 74], ['Sandro Kulenovic', 'CRO', 72],
+  ['Edin Dzeko', 'BIH', 82], ['Ermedin Demirovic', 'BIH', 80], ['Smail Prevljak', 'BIH', 71], ['Luka Jovic', 'SRB', 76], ['Milan Pavkov', 'SRB', 70],
+], B);
+
+export function slug(name: string): string {
   return name
     .toLowerCase()
     .normalize('NFD')
@@ -283,13 +313,14 @@ function slug(name: string): string {
     .replace(/^-|-$/g, '');
 }
 
-export const PLAYERS: readonly Player[] = raw.map(([name, nat, pos, ovr, era]) => ({
+export const PLAYERS: readonly Player[] = raw.map(([name, nat, pos, ovr, era, only]) => ({
   id: slug(name),
   name,
   nat,
   pos,
   ovr,
   era,
+  ...(only ? { only } : {}),
 }));
 
 export const PLAYER_BY_ID: ReadonlyMap<string, Player> = new Map(PLAYERS.map((p) => [p.id, p]));
@@ -308,20 +339,6 @@ export function tierOf(ovr: number): Tier {
 }
 
 export const TIER_LABEL: Record<Tier, string> = { bronze: 'Bronze', silver: 'Silver', gold: 'Gold', icon: 'Icon' };
-
-export type PoolId = 'modern' | 'legends' | 'all';
-
-export const POOLS: Record<PoolId, { id: PoolId; name: string; blurb: string }> = {
-  modern: { id: 'modern', name: 'Modern Stars', blurb: 'Players from the last few seasons' },
-  legends: { id: 'legends', name: 'Hall of Legends', blurb: 'Retired greats from every era' },
-  all: { id: 'all', name: 'Everyone', blurb: 'Legends and modern stars in one draft' },
-};
-
-export function poolPlayers(pool: PoolId): Player[] {
-  if (pool === 'all') return PLAYERS.slice();
-  const era: Era = pool === 'modern' ? 'M' : 'L';
-  return PLAYERS.filter((p) => p.era === era);
-}
 
 const PARTICLES = new Set(['van', 'de', 'der', 'den', 'ter', 'ten', 'di', 'da', 'dos', 'do', 'la', 'le', 'von', 'al', 'el', 'bin']);
 

@@ -1,8 +1,9 @@
 import type { BotLevel } from './bots';
 import type { CompetitionKind, CompState } from './competition';
 import type { DraftFormat, RatingsMode } from './draft';
+import type { PackClue, PackOffer } from './packs';
 import type { FormationId } from './formations';
-import type { PoolId } from './players';
+import type { EraId, PoolId } from './pools';
 import type { Pace } from './sim';
 import type { Squad, StyleId } from './squad';
 
@@ -17,6 +18,8 @@ export type Phase = 'lobby' | 'draft' | 'setup' | 'match' | 'hub' | 'result';
 export interface Settings {
   format: DraftFormat;
   pool: PoolId;
+  /** which eras of the pool to draft from; empty means all of them */
+  eras: EraId[];
   ratings: RatingsMode;
   /** seconds per pick; 0 = no timer */
   pickSeconds: 0 | 15 | 25 | 40;
@@ -31,7 +34,7 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  format: 'duel', pool: 'modern', ratings: 'tier', pickSeconds: 25,
+  format: 'duel', pool: 'modern', eras: [], ratings: 'tier', pickSeconds: 25,
   competition: 'match', teams: 2, botLevel: 'normal', pace: 'normal', legs: 1,
 };
 export const PICK_SECONDS = [0, 15, 25, 40] as const;
@@ -66,7 +69,12 @@ export interface DraftState {
   /** Take-turns format: one human drafts all their rounds while the others watch; order[turn] is who is up. */
   turns?: boolean;
   board: string[];
+  /** per seat: the cards of the pack they opened this round (empty until they open one) */
   boards: Record<string, string[]>;
+  /** per seat: the three sealed packs on offer this round. Server only: until a pack is opened nobody sees what is in it. */
+  offers?: Record<string, PackOffer[]>;
+  /** per seat: which pack they opened this round */
+  opened?: Record<string, number>;
   order: string[];
   turn: number;
   picked: string[];
@@ -135,6 +143,10 @@ export interface DraftView {
   deadline: number | null;
   shared: boolean;
   turns?: boolean;
+  /** the clues on the three sealed packs of whoever is choosing (never their contents) */
+  packs?: PackClue[];
+  /** which of those packs has been opened, if any */
+  opened?: number | null;
   /** duel: the shared board. packs: your own pack. turns: the pack of whoever is up, for everyone to watch. */
   board: string[];
   order: string[];
@@ -174,6 +186,7 @@ export type C2S =
   | { t: 'settings'; patch: Partial<Settings> }
   | { t: 'formation'; formation: FormationId }
   | { t: 'start' }
+  | { t: 'pack'; round: number; index: number }
   | { t: 'pick'; round: number; card: string; slot: string }
   | { t: 'swap'; a: string; b: string }
   | { t: 'arrange' }

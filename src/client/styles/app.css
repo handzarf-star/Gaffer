@@ -153,6 +153,7 @@
 .opt:disabled { opacity: .85; cursor: default; }
 .lobby { padding-bottom: 80px; }
 .lobby__cta { position: sticky; bottom: 16px; }
+@media (min-width: 900px) { .lobby__cta { position: static; } } /* on a wide screen a floating bar can sit on top of the controls above it */
 .waitcard { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px; border-radius: var(--r-lg); background: var(--glass); border: 1px solid var(--border); font-weight: 700; }
 
 /* ───────── intro (solo) / how-to ───────── */

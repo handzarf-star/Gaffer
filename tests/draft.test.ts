@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { ROUNDS, autoPick, dealBoard, openRoles, placePlayer } from '../src/shared/draft';
 import { fitKind } from '../src/shared/formations';
-import { PLAYER_BY_ID, poolPlayers } from '../src/shared/players';
+import { PLAYER_BY_ID } from '../src/shared/players';
+import { poolPlayers } from '../src/shared/pools';
 import { emptySquad, isSquadComplete, profile } from '../src/shared/squad';
 
 describe('dealing', () => {

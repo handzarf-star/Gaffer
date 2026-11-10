@@ -1,6 +1,7 @@
 import { FORMATIONS, ROLE_TO_POS, effectiveOvr, type Role } from './formations';
 import { Rng } from './rng';
-import { PLAYERS, player, poolPlayers, tierOf, type Pos, type PoolId, type Tier } from './players';
+import { PLAYERS, player, tierOf, type Pos, type Tier } from './players';
+import { parsePoolKey, poolPlayers, type PoolId, type PoolKey } from './pools';
 import type { Squad } from './squad';
 
 export type DraftFormat = 'duel' | 'packs' | 'turns';
@@ -25,6 +26,8 @@ const TIER_WEIGHT: Record<PoolId, Record<Tier, number>> = {
   modern: { bronze: 0.3, silver: 0.44, gold: 0.21, icon: 0.05 },
   legends: { bronze: 0.02, silver: 0.28, gold: 0.5, icon: 0.2 },
   all: { bronze: 0.18, silver: 0.4, gold: 0.31, icon: 0.11 },
+  epl: { bronze: 0.2, silver: 0.4, gold: 0.29, icon: 0.11 },
+  balkan: { bronze: 0.3, silver: 0.45, gold: 0.2, icon: 0.05 },
 };
 
 export function openRoles(sq: Squad): Array<{ slotId: string; role: Role }> {
@@ -33,7 +36,7 @@ export function openRoles(sq: Squad): Array<{ slotId: string; role: Role }> {
 
 export interface DealInput {
   seed: string;
-  pool: PoolId;
+  pool: PoolKey;
   round: number;
   /** key that makes each seat's pack different in `packs` format; use 'shared' for duel */
   key: string;
@@ -44,8 +47,8 @@ export interface DealInput {
   needs: Role[][];
 }
 
-const poolCache = new Map<PoolId, ReturnType<typeof indexPool>>();
-function indexPool(pool: PoolId) {
+const poolCache = new Map<PoolKey, ReturnType<typeof indexPool>>();
+function indexPool(pool: PoolKey) {
   const all = poolPlayers(pool);
   const byPos = new Map<Pos, typeof all>();
   for (const p of all) {
@@ -55,7 +58,7 @@ function indexPool(pool: PoolId) {
   }
   return { all, byPos };
 }
-function poolIndex(pool: PoolId) {
+function poolIndex(pool: PoolKey) {
   let ix = poolCache.get(pool);
   if (!ix) {
     ix = indexPool(pool);
@@ -70,7 +73,7 @@ export function dealBoard(inp: DealInput): string[] {
   const { all, byPos } = poolIndex(inp.pool);
   const chosen: string[] = [];
   const used = new Set<string>(inp.taken);
-  const tierW = TIER_WEIGHT[inp.pool];
+  const tierW = TIER_WEIGHT[parsePoolKey(inp.pool).pool];
 
   const draw = (pos: Pos | null): string | null => {
     const pickTier = (): Tier => rng.weighted(['bronze', 'silver', 'gold', 'icon'] as Tier[], (t) => tierW[t]);

@@ -31,6 +31,7 @@ const steps = [
   ['reconnect, resume, solo cup, daily', 'e2e/more.mjs', { BASE }],
   ['two phones play a league with CPU teams (iPhone + Pixel emulation)', 'e2e/tournament.mjs', { BASE }],
   ['one phone vs CPU teams at small, large and landscape sizes (+ iOS zoom rule)', 'e2e/devices.mjs', { BASE }],
+  ['themed pools: Premier League, Balkans, era chips, thin-mix guard, pack chooser', 'e2e/pools.mjs', { BASE }],
   ['WCAG audit (axe-core), light + dark, incl. tournament screens', 'e2e/a11y.mjs', { BASE }],
   ['hard kill + restart of the runtime mid-draft and mid-tournament', 'scripts/check-persistence.mjs', {}],
 ];

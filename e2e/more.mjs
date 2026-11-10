@@ -5,7 +5,7 @@ import { chromium } from '@playwright/test';
 const BASE = process.env.BASE ?? 'http://localhost:8787';
 const errors = [];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-async function openPack(page) { const s = page.locator('.sealed'); if (await s.count()) { await s.first().click({ timeout: 3000 }).catch(() => {}); await new Promise((r) => setTimeout(r, 750)); } }
+async function openPack(page) { const s = page.locator('.sealed, .pack'); if (await s.count()) { await s.first().click({ timeout: 3000 }).catch(() => {}); await new Promise((r) => setTimeout(r, 750)); } }
 const browser = await chromium.launch();
 const results = [];
 const ok = (name) => { results.push(name); console.log('✓', name); };

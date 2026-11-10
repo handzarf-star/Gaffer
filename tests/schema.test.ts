@@ -28,6 +28,13 @@ describe('wire schema', () => {
     }
   });
 
+  it('knows the pack message and refuses nonsense for it', () => {
+    expect(parseMessage(JSON.stringify({ t: 'pack', round: 3, index: 2 }))).toEqual({ t: 'pack', round: 3, index: 2 });
+    for (const bad of [{ t: 'pack', round: 1, index: -1 }, { t: 'pack', round: 1, index: 99 }, { t: 'pack', round: 1 }, { t: 'pack', index: 1 }]) {
+      expect(parseMessage(JSON.stringify(bad)), JSON.stringify(bad)).toBeNull();
+    }
+  });
+
   it('rejects junk', () => {
     for (const patch of [{ competition: 'worldcup' }, { teams: 1.5 }, { teams: 999 }, { botLevel: 'god' }, { pace: 'slow' }, { legs: 3 }]) {
       expect(parseMessage(JSON.stringify({ t: 'settings', patch })), JSON.stringify(patch)).toBeNull();

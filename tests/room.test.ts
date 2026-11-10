@@ -28,8 +28,15 @@ function mk(n: number, settings: Partial<Settings> = {}, prefix = 't'): Ctx {
 
 /** make the seat whose turn it is pick the engine's own best card */
 function pickFor(c: Ctx, id: string): ReturnType<RoomEngine['handle']> {
-  const v = c.eng.view(id, c.t);
-  const d = v.draft!;
+  let v = c.eng.view(id, c.t);
+  let d = v.draft!;
+  // packs formats: choose a sealed pack first, then pick from what is inside
+  if (d.board.length === 0 && d.packs?.length) {
+    const r = c.eng.handle(id, { t: 'pack', round: d.round, index: 0 }, c.t);
+    if (!r.ok) return r;
+    v = c.eng.view(id, c.t);
+    d = v.draft!;
+  }
   const choice = autoPick(v.squads[id]!, d.board);
   if (!choice) return { ok: false, code: 'not_your_turn', msg: 'nothing left to pick' };
   return c.eng.handle(id, { t: 'pick', round: d.round, card: choice.cardId, slot: choice.slotId }, c.t);
@@ -198,6 +205,7 @@ describe('packs draft', () => {
   it('everyone picks at the same time from a private pack', () => {
     const c = mk(2, { format: 'packs' });
     c.eng.handle(c.ids[0]!, { t: 'start' }, c.t);
+    for (const id of c.ids) c.eng.handle(id, { t: 'pack', round: 1, index: 0 }, c.t);
     const a = c.eng.view(c.ids[0]!, c.t).draft!;
     const b = c.eng.view(c.ids[1]!, c.t).draft!;
     expect(a.board).toHaveLength(3);
@@ -212,6 +220,7 @@ describe('packs draft', () => {
   it('hides other players\' packs', () => {
     const c = mk(2, { format: 'packs' });
     c.eng.handle(c.ids[0]!, { t: 'start' }, c.t);
+    for (const id of c.ids) c.eng.handle(id, { t: 'pack', round: 1, index: 0 }, c.t);
     const mine = c.eng.view(c.ids[0]!, c.t).draft!.board;
     const theirs = c.eng.s.draft!.boards[c.ids[1]!]!;
     const json = JSON.stringify(c.eng.view(c.ids[0]!, c.t));
@@ -732,6 +741,7 @@ describe('take turns draft', () => {
     expect(d.order).toEqual([a, b]);
     expect(d.order[d.turn]).toBe(a);
     // the one who is not up cannot pick, however hard they try
+    c.eng.handle(a, { t: 'pack', round: 1, index: 0 }, c.t);
     const board = c.eng.view(a, c.t).draft!.board;
     expect(c.eng.handle(b, { t: 'pick', round: 1, card: board[0]!, slot: Object.keys(c.eng.s.squads[b]!.slots)[0]! }, c.t)).toMatchObject({ ok: false, code: 'not_your_turn' });
     draftOne(c, a, 10);
@@ -744,7 +754,7 @@ describe('take turns draft', () => {
     expect(Object.values(c.eng.s.squads[b]!.slots).filter(Boolean)).toHaveLength(0);
     expect(c.eng.s.draft!.order[c.eng.s.draft!.turn]).toBe(b);
     expect(c.eng.s.draft!.round).toBe(1);
-    expect(c.eng.handle(a, { t: 'pick', round: 1, card: c.eng.view(b, c.t).draft!.board[0]!, slot: 'x' }, c.t)).toMatchObject({ ok: false });
+    expect(c.eng.handle(a, { t: 'pick', round: 1, card: 'anything', slot: 'x' }, c.t)).toMatchObject({ ok: false });
     draftOne(c, b);
     // then the CPU teams, all at once, from what is left
     expect(c.eng.s.phase).toBe('setup');
@@ -757,9 +767,13 @@ describe('take turns draft', () => {
     const c = mk(2, { format: 'turns' });
     const [a, b] = c.ids as [string, string];
     c.eng.handle(a, { t: 'start' }, c.t);
+    expect(c.eng.view(b, c.t).draft!.packs).toHaveLength(3); // b sees the three sealed packs a is choosing from
+    expect(c.eng.handle(a, { t: 'pack', round: 1, index: 1 }, c.t).ok).toBe(true);
     const mine = c.eng.view(a, c.t).draft!;
     const theirs = c.eng.view(b, c.t).draft!;
+    expect(mine.board).toHaveLength(3);
     expect(theirs.board).toEqual(mine.board); // b watches a's pack
+    expect(theirs.opened).toBe(1); // and which one a chose
     expect(theirs.turns).toBe(true);
     pickFor(c, a);
     const seen = c.eng.view(b, c.t);
@@ -813,5 +827,92 @@ describe('take turns draft', () => {
     draftOne(c, c.ids[0]!);
     expect(c.eng.s.phase).toBe('setup');
     playToResult(c);
+  });
+});
+
+describe('pick-a-pack in the room', () => {
+  const packsOf = (c: Ctx, id: string) => c.eng.view(id, c.t).draft!;
+
+  it('three sealed packs first, the players only after one is opened', () => {
+    const c = mk(2, { format: 'packs', competition: 'league', teams: 4 });
+    const [a, b] = c.ids as [string, string];
+    c.eng.handle(a, { t: 'start' }, c.t);
+    for (const id of [a, b]) {
+      const d = packsOf(c, id);
+      expect(d.packs).toHaveLength(3);
+      expect(d.board).toEqual([]); // nothing to see yet
+      expect(d.opened).toBeNull();
+    }
+    // picking before opening a pack is refused, with a helpful message
+    expect(c.eng.handle(a, { t: 'pick', round: 1, card: 'lionel-messi', slot: Object.keys(c.eng.s.squads[a]!.slots)[0]! }, c.t)).toMatchObject({ ok: false, code: 'bad_card' });
+    expect(c.eng.handle(a, { t: 'pack', round: 1, index: 2 }, c.t).ok).toBe(true);
+    expect(packsOf(c, a).board).toHaveLength(3);
+    expect(packsOf(c, a).opened).toBe(2);
+    expect(packsOf(c, b).board).toEqual([]); // b has not chosen; in Packs nobody sees anybody's pack
+    // once open, the pick works and the next round deals fresh packs
+    expect(pickFor(c, a).ok).toBe(true);
+    expect(pickFor(c, b).ok).toBe(true);
+    expect(c.eng.s.draft!.round).toBe(2);
+    expect(packsOf(c, a).opened).toBeNull();
+    expect(packsOf(c, a).packs).toHaveLength(3);
+  });
+
+  it('cards in packs that stay sealed never reach any browser', () => {
+    const c = mk(2, { format: 'packs' });
+    const [a, b] = c.ids as [string, string];
+    c.eng.handle(a, { t: 'start' }, c.t);
+    c.eng.handle(a, { t: 'pack', round: 1, index: 0 }, c.t);
+    const d = c.eng.s.draft!;
+    for (const viewer of [a, b]) {
+      const wire = JSON.stringify(c.eng.view(viewer, c.t));
+      for (const id of [a, b]) {
+        d.offers![id]!.forEach((offer, i) => {
+          const visible = id === a && i === 0 && viewer === a; // only a's own opened pack, only to a
+          for (const card of offer.cards) {
+            if (!visible) expect(wire.includes(`"${card}"`), `${viewer} can see ${card} from ${id}'s pack ${i}`).toBe(false);
+          }
+        });
+      }
+    }
+  });
+
+  it('a pack can be opened once, only by the right person, and only if it exists', () => {
+    const c = mk(2, { format: 'turns' });
+    const [a, b] = c.ids as [string, string];
+    c.eng.handle(a, { t: 'start' }, c.t);
+    expect(c.eng.handle(b, { t: 'pack', round: 1, index: 0 }, c.t)).toMatchObject({ ok: false, code: 'not_your_turn' });
+    expect(c.eng.handle(a, { t: 'pack', round: 1, index: 7 }, c.t)).toMatchObject({ ok: false });
+    expect(c.eng.handle(a, { t: 'pack', round: 9, index: 0 }, c.t)).toMatchObject({ ok: false, code: 'stale_round' });
+    expect(c.eng.handle(a, { t: 'pack', round: 1, index: 0 }, c.t).ok).toBe(true);
+    expect(c.eng.handle(a, { t: 'pack', round: 1, index: 1 }, c.t).ok).toBe(false); // no switching after peeking
+  });
+
+  it('duel has no packs: one shared board as before', () => {
+    const c = mk(2, { format: 'duel' });
+    c.eng.handle(c.ids[0]!, { t: 'start' }, c.t);
+    const d = packsOf(c, c.ids[0]!);
+    expect(d.packs).toBeUndefined();
+    expect(d.board.length).toBeGreaterThan(3);
+    expect(c.eng.handle(c.ids[0]!, { t: 'pack', round: 1, index: 0 }, c.t)).toMatchObject({ ok: false, code: 'wrong_phase' });
+  });
+
+  it('out of time before choosing: a pack is opened for you and the best card placed', () => {
+    const c = mk(2, { format: 'packs', pickSeconds: 15 });
+    const [a, b] = c.ids as [string, string];
+    c.eng.handle(a, { t: 'start' }, c.t);
+    c.t = c.eng.s.draft!.deadline! + 1000;
+    c.eng.tick(c.t);
+    expect(c.eng.s.draft!.round).toBe(2); // both were auto-picked, packs opened by the seed
+    const log = c.eng.s.draft!.log;
+    expect(log.map((l) => l.seat).sort()).toEqual([a, b].sort());
+    expect(log.every((l) => l.auto)).toBe(true);
+  });
+
+  it('a whole draft finishes with nobody touching the packs', () => {
+    const c = mk(2, { format: 'packs', competition: 'league', teams: 4, pickSeconds: 15 });
+    c.eng.handle(c.ids[0]!, { t: 'start' }, c.t);
+    for (let i = 0; i < 40 && c.eng.s.phase === 'draft'; i++) { c.t += 20_000; c.eng.tick(c.t); }
+    expect(c.eng.s.phase).toBe('setup');
+    for (const id of c.ids) expect(Object.values(c.eng.s.squads[id]!.slots).filter(Boolean)).toHaveLength(11);
   });
 });

@@ -87,7 +87,7 @@ async function run(size) {
       if (Date.now() - lastBeat > 60_000) throw new Error('stalled for 60s');
       if (await page.locator('.turn--you').count()) {
         await check('draft');
-        const s = page.locator('.sealed');
+        const s = page.locator('.sealed, .pack');
         if (await s.count()) { await s.first().click({ timeout: 2000 }).catch(() => {}); await sleep(600); }
         const cards = page.locator('.board .pcard:not([disabled])');
         if (await cards.count()) { await cards.first().click().catch(() => {}); await page.keyboard.press('Enter'); lastBeat = Date.now(); await sleep(150); }
