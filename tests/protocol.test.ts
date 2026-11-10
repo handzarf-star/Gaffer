@@ -180,3 +180,19 @@ describe('over real WebSockets', () => {
     b.close();
   });
 });
+
+describe('build id handshake', () => {
+  it('health names the build, and the socket welcome carries the very same one', async () => {
+    const health = (await (await fetch(`${base}/api/health`)).json()) as { ok: boolean; build?: string };
+    expect(health.ok).toBe(true);
+    expect(typeof health.build).toBe('string');
+    const { code } = (await (await fetch(`${base}/api/rooms`, { method: 'POST' })).json()) as { code: string };
+    const welcome = await new Promise<S2C>((resolve, reject) => {
+      const ws = new WebSocket(`${base.replace('http', 'ws')}/ws/${code}`);
+      ws.on('open', () => ws.send(JSON.stringify({ t: 'hello', code, name: 'Sam', build: 'client-old-1' } satisfies C2S)));
+      ws.on('message', (d) => { const m = JSON.parse(d.toString()) as S2C; if (m.t === 'welcome') { ws.close(); resolve(m); } });
+      ws.on('error', reject);
+    });
+    expect(welcome.t === 'welcome' && welcome.build).toBe(health.build);
+  });
+});

@@ -1,3 +1,4 @@
+import { MY_BUILD, reportServerBuild } from './build';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import type { C2S, ErrorCode, RoomView, S2C } from '../../shared/protocol';
 import { clearIdentity, getIdentity, getName, setIdentity } from './storage';
@@ -125,6 +126,7 @@ export class RoomConnection {
       const hello: C2S = {
         t: 'hello',
         code: this.code,
+        build: MY_BUILD,
         name: saved?.name || getName() || 'Player',
         ...(saved ? { id: saved.id, secret: saved.secret } : {}),
       };
@@ -191,6 +193,7 @@ export class RoomConnection {
   private handle(msg: S2C) {
     switch (msg.t) {
       case 'welcome': {
+        reportServerBuild(msg.build);
         const name = getIdentity(this.code)?.name || getName() || 'Player';
         setIdentity(this.code, { id: msg.id, secret: msg.secret, name, at: Date.now() });
         this.set({ offset: msg.now - Date.now() });

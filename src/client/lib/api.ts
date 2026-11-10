@@ -4,6 +4,7 @@ import type { MatchResult } from '../../shared/sim';
 import type { Badge } from '../../shared/career/world';
 import type { Squad } from '../../shared/squad';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { reportServerBuild } from './build';
 
 export type ApiError = { code: string; msg: string; status: number };
 export type Out<T> = { ok: true; data: T } | { ok: false; error: ApiError };
@@ -11,6 +12,7 @@ export type Out<T> = { ok: true; data: T } | { ok: false; error: ApiError };
 async function call<T>(method: 'GET' | 'POST', url: string, body?: unknown): Promise<Out<T>> {
   try {
     const res = await fetch(url, { method, credentials: 'same-origin', headers: body === undefined ? undefined : { 'content-type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) });
+    reportServerBuild(res.headers.get('x-build'));
     let data: unknown = null;
     try { data = await res.json(); } catch { /* empty */ }
     const d = (data ?? {}) as Record<string, unknown>;

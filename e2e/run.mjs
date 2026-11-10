@@ -35,6 +35,7 @@ const steps = [
   ['WCAG audit (axe-core), light + dark, incl. tournament screens', 'e2e/a11y.mjs', { BASE }],
   ['career mode: two phones draft, play, switch to Bosnian, use the transfer window and finish a season (+ a11y)', 'e2e/career.mjs', { BASE }],
   ['Google sign-in loads under the real CSP; other origins stay blocked', 'e2e/csp.mjs', {}],
+  ['build id handshake: server, page and socket agree; a newer deploy shows the update banner', 'e2e/update.mjs', {}],
   ['hard kill + restart of the runtime mid-draft and mid-tournament', 'scripts/check-persistence.mjs', {}],
   ['career API on the real runtime: guest sign-in, a league, hard kill + restart keeps cookie and league', 'scripts/check-career-api.mjs', {}],
 ];

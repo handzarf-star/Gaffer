@@ -21,6 +21,8 @@ export interface HostIO {
   persist(state: RoomState): void | Promise<void>;
   schedule(at: number | null): void | Promise<void>;
   destroy(): void | Promise<void>;
+  /** the build id this server is serving ("dev" when unknown) */
+  build?(): string;
 }
 
 interface Bucket {
@@ -73,7 +75,7 @@ export class RoomHost {
         }
       }
       conn.setId(r.id);
-      this.send(conn, { t: 'welcome', id: r.id, secret: r.secret, now });
+      this.send(conn, { t: 'welcome', id: r.id, secret: r.secret, now, build: this.io.build?.() ?? 'dev' });
       await this.changed(now);
       return;
     }

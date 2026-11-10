@@ -1,6 +1,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import { MAX_SEATS, ROOM_CODE_RE, type RoomState } from '../shared/protocol';
 import { RoomEngine } from '../shared/room';
+import { currentBuild } from './build';
 import { RoomHost, type Conn, type HostIO } from './host';
 
 export interface Env {
@@ -20,12 +21,14 @@ export class Room extends DurableObject<Env> {
   private lastComp: RoomState['comp'] | undefined = undefined;
   private alarmAt: number | null = null;
   private conns = new WeakMap<WebSocket, Conn>();
+  private build = 'dev';
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
     // Keep-alive pings are answered by the runtime without waking the object.
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'));
     ctx.blockConcurrencyWhile(async () => {
+      this.build = await currentBuild(env.ASSETS);
       const core = await ctx.storage.get<Omit<RoomState, 'comp'>>('core');
       if (core && (core as { v?: number }).v === 2) {
         const comp = (await ctx.storage.get<RoomState['comp']>('comp')) ?? null;
@@ -61,6 +64,7 @@ export class Room extends DurableObject<Env> {
     return {
       conns: () => this.ctx.getWebSockets().map((ws) => this.conn(ws)),
       now: () => Date.now(),
+      build: () => this.build,
       persist: async (state) => {
         const { comp, ...core } = state;
         const puts: Record<string, unknown> = { core: { ...core, comp: null } };

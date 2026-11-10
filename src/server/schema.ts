@@ -16,6 +16,7 @@ export const C2SSchema = z.discriminatedUnion('t', [
     id: z.string().max(32).optional(),
     secret: z.string().max(64).optional(),
     name: z.string().max(64),
+    build: z.string().max(40).optional(),
   }),
   z.object({ t: z.literal('name'), name: z.string().max(64) }),
   z.object({

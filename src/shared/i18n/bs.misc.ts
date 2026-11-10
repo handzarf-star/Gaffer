@@ -3,6 +3,7 @@
 import { registerDict } from './index';
 
 registerDict('bs', {
+  'A new version is available.': 'Dostupna je nova verzija.',
   // ── Solo Cup and Daily Draft: intro
   'Daily Draft · {date}': 'Dnevni draft · {date}',
   'Daily {date}': 'Dnevni draft {date}',

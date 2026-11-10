@@ -181,7 +181,7 @@ export interface RoomView {
 /* ───────────── wire messages ───────────── */
 
 export type C2S =
-  | { t: 'hello'; code: string; id?: string; secret?: string; name: string }
+  | { t: 'hello'; code: string; id?: string; secret?: string; name: string; /** the build of the app the client is running */ build?: string }
   | { t: 'name'; name: string }
   | { t: 'settings'; patch: Partial<Settings> }
   | { t: 'formation'; formation: FormationId }
@@ -216,7 +216,7 @@ export type ErrorCode =
   | 'kicked';
 
 export type S2C =
-  | { t: 'welcome'; id: string; secret: string; now: number }
+  | { t: 'welcome'; id: string; secret: string; now: number; /** the build the server is serving: a different one means the client is out of date */ build?: string }
   | { t: 'state'; s: RoomView; now: number }
   | { t: 'err'; code: ErrorCode; msg: string }
   | { t: 'fatal'; code: ErrorCode; msg: string }
