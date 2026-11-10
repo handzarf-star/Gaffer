@@ -7,6 +7,7 @@ import { COMPETITIONS, completeDay, createCompetition, defaultTeams, litefy, val
 import { ROUNDS, autoPick, boardSize, dealBoard, openRoles, placePlayer } from './draft';
 import { FORMATIONS, FORMATION_IDS, type FormationId } from './formations';
 import { dealPacks } from './packs';
+import { ERAS, POOLS, poolHealth, poolKey, type EraId, type PoolId, type PoolKey } from './pools';
 import { PLAYER_BY_ID } from './players';
 import { Rng, hashSeed, randomSeed, randomToken } from './rng';
 import { playbackSchedule, simulateMatch } from './sim';
@@ -263,6 +264,8 @@ export class RoomEngine {
         if (n < 1) return fail('need_players', 'Nobody is here to play.');
         s.settings = fitSettings(s.settings, n);
         if (s.settings.teams < 2) return fail('need_players', 'You need at least two teams. Add CPU teams or invite a friend.');
+        const depth = poolHealth(this.pool(), s.settings.teams);
+        if (!depth.ok) return fail('bad_settings', depth.problem!);
         this.startDraft(now);
         return OK;
       }
@@ -359,8 +362,12 @@ export class RoomEngine {
       next.format = p.format;
     }
     if (p.pool !== undefined) {
-      if (p.pool !== 'modern' && p.pool !== 'legends' && p.pool !== 'all') return fail('bad_message', 'Unknown pool.');
-      next.pool = p.pool;
+      if (!(p.pool in POOLS)) return fail('bad_message', 'Unknown pool.');
+      next.pool = p.pool as PoolId;
+    }
+    if (p.eras !== undefined) {
+      if (!Array.isArray(p.eras) || p.eras.length > Object.keys(ERAS).length || p.eras.some((e) => !(e in ERAS))) return fail('bad_message', 'Unknown era.');
+      next.eras = [...new Set(p.eras)] as EraId[];
     }
     if (p.ratings !== undefined) {
       if (p.ratings !== 'hidden' && p.ratings !== 'tier' && p.ratings !== 'full') return fail('bad_message', 'Unknown rating mode.');
@@ -408,6 +415,11 @@ export class RoomEngine {
   }
 
   /* ───────────── draft (humans only; CPU teams draft afterwards) ───────────── */
+
+  /** the pool and era filter as one value for dealing and for the CPU teams */
+  private pool(): PoolKey {
+    return poolKey(this.s.settings.pool, this.s.settings.eras ?? []);
+  }
 
   private startDraft(now: number): void {
     const s = this.s;
@@ -471,7 +483,7 @@ export class RoomEngine {
     const sealed = (id: string) => {
       const sq = s.squads[id]!;
       d.offers![id] = dealPacks({
-        seed: s.seed, pool: s.settings.pool, round, key: id,
+        seed: s.seed, pool: this.pool(), round, key: id,
         size: boardSize('packs', n),
         taken: new Set(Object.values(sq.slots).filter((x): x is string => !!x)),
         needs: [openRoles(sq).map((o) => o.role)],
@@ -485,7 +497,7 @@ export class RoomEngine {
     } else if (d.shared) {
       const needs = ids.map((id) => openRoles(s.squads[id]!).map((o) => o.role));
       d.board = dealBoard({
-        seed: s.seed, pool: s.settings.pool, round, key: 'shared',
+        seed: s.seed, pool: this.pool(), round, key: 'shared',
         size: boardSize('duel', n), taken: new Set(d.taken), needs,
       });
       const rot = (s.game - 1) % n;
@@ -641,7 +653,7 @@ export class RoomEngine {
     // CPU teams draft from whoever the humans left
     const taken = new Set<string>();
     for (const h of this.humans()) for (const p of Object.values(s.squads[h.id]!.slots)) if (p) taken.add(p);
-    for (const b of s.seats.filter((x) => x.bot)) s.squads[b.id] = buildBotSquad(s.seed, s.settings.pool, s.settings.botLevel, taken, b.id);
+    for (const b of s.seats.filter((x) => x.bot)) s.squads[b.id] = buildBotSquad(s.seed, this.pool(), s.settings.botLevel, taken, b.id);
     s.setup = { deadline: now + SETUP_SECONDS * 1000, ready: {} };
   }
 

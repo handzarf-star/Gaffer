@@ -3,7 +3,7 @@ import type { CompetitionKind, CompState } from './competition';
 import type { DraftFormat, RatingsMode } from './draft';
 import type { PackClue, PackOffer } from './packs';
 import type { FormationId } from './formations';
-import type { PoolId } from './players';
+import type { EraId, PoolId } from './pools';
 import type { Pace } from './sim';
 import type { Squad, StyleId } from './squad';
 
@@ -18,6 +18,8 @@ export type Phase = 'lobby' | 'draft' | 'setup' | 'match' | 'hub' | 'result';
 export interface Settings {
   format: DraftFormat;
   pool: PoolId;
+  /** which eras of the pool to draft from; empty means all of them */
+  eras: EraId[];
   ratings: RatingsMode;
   /** seconds per pick; 0 = no timer */
   pickSeconds: 0 | 15 | 25 | 40;
@@ -32,7 +34,7 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  format: 'duel', pool: 'modern', ratings: 'tier', pickSeconds: 25,
+  format: 'duel', pool: 'modern', eras: [], ratings: 'tier', pickSeconds: 25,
   competition: 'match', teams: 2, botLevel: 'normal', pace: 'normal', legs: 1,
 };
 export const PICK_SECONDS = [0, 15, 25, 40] as const;

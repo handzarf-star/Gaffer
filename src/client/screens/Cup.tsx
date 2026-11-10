@@ -3,7 +3,8 @@ import { BRAND } from '../../shared/brand';
 import { CUP_STAGES, buildOpponent, cupBoard, dailyLabel, dailySeed } from '../../shared/cup';
 import { ROUNDS, placePlayer, type RatingsMode } from '../../shared/draft';
 import { FORMATIONS, FORMATION_IDS, type FormationId } from '../../shared/formations';
-import { POOLS, player, type PoolId } from '../../shared/players';
+import { player } from '../../shared/players';
+import { BASE_POOL_IDS, POOLS, type PoolId } from '../../shared/pools';
 import { hashSeed, randomSeed } from '../../shared/rng';
 import { simulateMatch } from '../../shared/sim';
 import { autoArrange, changeFormation, emptySquad, profile, swapSlots, type Squad, type StyleId } from '../../shared/squad';
@@ -44,7 +45,7 @@ interface Save {
   matchStartedAt: number | null;
 }
 
-const POOL_IDS: PoolId[] = ['modern', 'legends', 'all'];
+const POOL_IDS: PoolId[] = BASE_POOL_IDS;
 const keyFor = (mode: Mode, seed: string) => (mode === 'daily' ? `daily:${seed}` : 'cup:current');
 
 function fresh(mode: Mode): Save {

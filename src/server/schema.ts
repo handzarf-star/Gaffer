@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ROOM_CODE_RE, type C2S } from '../shared/protocol';
 import { COMPETITIONS } from '../shared/competition';
+import { ERAS, POOLS } from '../shared/pools';
 import { BOT_LEVELS } from '../shared/bots';
 
 const formation = z.enum(['433', '442', '4231', '352', '343', '532']);
@@ -21,7 +22,8 @@ export const C2SSchema = z.discriminatedUnion('t', [
     t: z.literal('settings'),
     patch: z.object({
       format: z.enum(['duel', 'packs', 'turns']).optional(),
-      pool: z.enum(['modern', 'legends', 'all']).optional(),
+      pool: enumOf(POOLS).optional(),
+      eras: z.array(enumOf(ERAS)).max(6).optional(),
       ratings: z.enum(['hidden', 'tier', 'full']).optional(),
       pickSeconds: z.union([z.literal(0), z.literal(15), z.literal(25), z.literal(40)]).optional(),
       competition: enumOf(COMPETITIONS).optional(),

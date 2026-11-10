@@ -5,7 +5,7 @@
 import { aiPick, dealBoard, openRoles, placePlayer, suggestSlot } from './draft';
 import { FORMATION_IDS, type FormationId } from './formations';
 import { Rng } from './rng';
-import { poolPlayers, type PoolId } from './players';
+import { poolPlayers, type PoolKey } from './pools';
 import { STYLE_IDS, autoArrange, changeFormation, emptySquad, profile, type Squad } from './squad';
 
 export type BotLevel = 'easy' | 'normal' | 'hard';
@@ -26,7 +26,7 @@ export function botNames(seed: string, count: number): string[] {
   return Array.from({ length: count }, (_, i) => `${prefixes[i % prefixes.length]} ${rng.pick(SUFFIX)}`);
 }
 
-export function buildBotSquad(seed: string, pool: PoolId, level: BotLevel, taken: Set<string>, key: string): Squad {
+export function buildBotSquad(seed: string, pool: PoolKey, level: BotLevel, taken: Set<string>, key: string): Squad {
   const rng = new Rng(`${seed}/bot/${key}`);
   const cfg = BOT_LEVELS[level];
   const formation: FormationId = rng.pick(FORMATION_IDS);

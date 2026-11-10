@@ -530,3 +530,13 @@
   .pack__chips { justify-content: center; }
 }
 @media (prefers-reduced-motion: reduce) { .pack, .pack__foil { animation: none; } .pack:hover:not(:disabled) { transform: none; } }
+
+/* ═════════════ lobby: eras ═════════════ */
+.eras { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.era { display: inline-flex; align-items: baseline; gap: 6px; min-height: 40px; padding: 0 14px; border-radius: 99px; border: 1.5px solid var(--border-input); background: var(--surface); color: var(--text-2); font: 700 14px/1 var(--font-sans); cursor: pointer; }
+.era small { font-weight: 600; opacity: .7; }
+.era.is-on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.era:disabled { opacity: .45; cursor: not-allowed; }
+.era:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.pool__note { margin-top: 8px; font-size: 14px; color: var(--muted); }
+.pool__note.is-warn { color: var(--danger); font-weight: 600; }

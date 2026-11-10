@@ -5,7 +5,8 @@ import { BOT_LEVELS, type BotLevel } from '../../shared/bots';
 import { COMPETITIONS, currentDay, isAlive, roundsInfo, type CompFixture, type CompetitionKind } from '../../shared/competition';
 import { FORMAT_INFO, type DraftFormat, type RatingsMode } from '../../shared/draft';
 import { FORMATIONS, FORMATION_IDS } from '../../shared/formations';
-import { POOLS, player, type PoolId } from '../../shared/players';
+import { player } from '../../shared/players';
+import { ERAS, ERA_IDS, POOLS, POOL_IDS, eraCounts, poolHealth, poolKey, type EraId } from '../../shared/pools';
 import { EMOTES, MAX_SEATS, PICK_SECONDS, type ErrorCode, type RoomView, type Seat } from '../../shared/protocol';
 import { HUB_SECONDS, SETUP_SECONDS } from '../../shared/room';
 import type { Pace } from '../../shared/sim';
@@ -213,7 +214,17 @@ function Lobby({ conn, view }: { conn: RoomConnection; view: RoomView }) {
   const connected = humans.filter((s) => s.connected).length;
   const set = view.settings;
   const cpus = Math.max(0, set.teams - humans.length);
-  const canStart = isHost && connected >= 1 && set.teams >= 2;
+  const depth = useMemo(() => poolHealth(poolKey(set.pool, set.eras ?? []), set.teams), [set.pool, set.eras, set.teams]);
+  const eraTotals = useMemo(() => eraCounts(set.pool), [set.pool]);
+  const toggleEra = (e: EraId) => {
+    const cur = new Set<EraId>(set.eras.length ? set.eras : ERA_IDS);
+    if (cur.has(e)) {
+      if (cur.size === 1) return; // never leave the pool empty
+      cur.delete(e);
+    } else cur.add(e);
+    patch({ eras: cur.size === ERA_IDS.length ? [] : ERA_IDS.filter((x) => cur.has(x)) });
+  };
+  const canStart = isHost && connected >= 1 && set.teams >= 2 && depth.ok;
   const patch = (p: Partial<RoomView['settings']>) => conn.send({ t: 'settings', patch: p });
   const hostName = view.seats.find((s) => s.id === view.hostId)?.name ?? 'the host';
   const wins = view.series.wins;
@@ -337,13 +348,27 @@ function Lobby({ conn, view }: { conn: RoomConnection; view: RoomView }) {
         <div className="setting">
           <label>Player pool</label>
           <div className="opts opts--3">
-            {(Object.keys(POOLS) as PoolId[]).map((id) => (
-              <button key={id} disabled={!isHost} className={cx('opt', set.pool === id && 'is-on')} onClick={() => patch({ pool: id })} aria-pressed={set.pool === id}>
+            {POOL_IDS.map((id) => (
+              <button key={id} disabled={!isHost} className={cx('opt', set.pool === id && 'is-on')} onClick={() => patch({ pool: id, eras: [] })} aria-pressed={set.pool === id}>
                 <b>{POOLS[id].name}</b>
                 <span>{POOLS[id].blurb}</span>
               </button>
             ))}
           </div>
+        </div>
+        <div className="setting">
+          <label>Eras <span className="muted tiny">tap to leave one out; all are on by default</span></label>
+          <div className="eras" role="group" aria-label="Eras">
+            {ERA_IDS.map((e) => {
+              const on = set.eras.length === 0 || set.eras.includes(e);
+              return (
+                <button key={e} type="button" disabled={!isHost || eraTotals[e] === 0} className={cx('era', on && eraTotals[e] > 0 && 'is-on')} aria-pressed={on && eraTotals[e] > 0} onClick={() => toggleEra(e)}>
+                  {ERAS[e].name} <small>{eraTotals[e]}</small>
+                </button>
+              );
+            })}
+          </div>
+          <p className={cx('pool__note', !depth.ok && 'is-warn')} role={depth.ok ? undefined : 'alert'}>{depth.ok ? `${depth.players} players in the mix.` : depth.problem}</p>
         </div>
         <div className="setting setting--inline">
           <div>
@@ -369,7 +394,7 @@ function Lobby({ conn, view }: { conn: RoomConnection; view: RoomView }) {
       <div className="lobby__cta">
         {isHost ? (
           <Button variant="primary" size="lg" block icon="whistle" disabled={!canStart} onClick={() => { sfx.whistle(); conn.send({ t: 'start' }); }}>
-            {!canStart ? 'Add a CPU team or invite a friend' : connected === 1 && cpus > 0 ? `Start: you vs ${cpus} CPU team${cpus === 1 ? '' : 's'}` : 'Start the draft'}
+            {!depth.ok ? 'Too few players: add an era' : !canStart ? 'Add a CPU team or invite a friend' : connected === 1 && cpus > 0 ? `Start: you vs ${cpus} CPU team${cpus === 1 ? '' : 's'}` : 'Start the draft'}
           </Button>
         ) : (
           <div className="waitcard"><Spinner size={22} /> Waiting for {hostName} to start…</div>
