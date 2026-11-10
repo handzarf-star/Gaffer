@@ -1,8 +1,10 @@
 import { ROOM_CODE_RE } from '../shared/protocol';
 import { randomRoomCode } from '../shared/rng';
-import { Room, type Env } from './room-do';
+import { Room } from './room-do';
+import { Account, CareerRoom, type Env } from './career-do';
+import { handleApi } from './api';
 
-export { Room };
+export { Room, CareerRoom, Account };
 
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
@@ -13,6 +15,9 @@ export default {
     const path = url.pathname;
 
     if (path === '/api/health') return json({ ok: true, t: Date.now() });
+
+    const api = await handleApi(request, env);
+    if (api) return api;
 
     if (path === '/api/rooms' && request.method === 'POST') {
       const origin = request.headers.get('origin');

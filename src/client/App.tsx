@@ -2,10 +2,27 @@ import { Component, type ReactNode } from 'react';
 import { ROOM_CODE_RE } from '../shared/protocol';
 import { SoundToggle, ThemeToggle, Toasts, Wordmark, Button } from './components/ui';
 import { navigate, usePath } from './lib/hooks';
+import { CareerHome } from './career/CareerHome';
+import { LeaguePage } from './career/League';
+import { LangToggle, useI18n } from './lib/i18n';
 import { CupPage } from './screens/Cup';
 import { Home } from './screens/Home';
 import { HowTo } from './screens/HowTo';
 import { RoomPage } from './screens/RoomPage';
+
+function Fallback({ onReset }: { onReset: () => void }) {
+  const { t } = useI18n();
+  return (
+    <div className="gate panel">
+      <h1>{t('Something tripped up')}</h1>
+      <p>{t('The game hit an unexpected problem. Your seat in a room is saved, so reloading is safe.')}</p>
+      <div className="row">
+        <Button variant="primary" onClick={() => location.reload()}>{t('Reload')}</Button>
+        <Button variant="ghost" onClick={() => { onReset(); navigate('/'); }}>{t('Go home')}</Button>
+      </div>
+    </div>
+  );
+}
 
 class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   override state = { failed: false };
@@ -17,16 +34,7 @@ class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   }
   override render() {
     if (!this.state.failed) return this.props.children;
-    return (
-      <div className="gate panel">
-        <h1>Something tripped up</h1>
-        <p>The game hit an unexpected problem. Your seat in a room is saved, so reloading is safe.</p>
-        <div className="row">
-          <Button variant="primary" onClick={() => location.reload()}>Reload</Button>
-          <Button variant="ghost" onClick={() => { this.setState({ failed: false }); navigate('/'); }}>Go home</Button>
-        </div>
-      </div>
-    );
+    return <Fallback onReset={() => this.setState({ failed: false })} />;
   }
 }
 
@@ -39,20 +47,26 @@ function Route({ path }: { path: string }) {
   if (path === '/cup') return <CupPage key="cup" mode="cup" />;
   if (path === '/daily') return <CupPage key="daily" mode="daily" />;
   if (path === '/how-to-play') return <HowTo />;
+  if (path === '/career') return <CareerHome />;
+  const lg = path.match(/^\/c\/([A-Za-z]{4})\/?$/);
+  if (lg && ROOM_CODE_RE.test(lg[1]!.toUpperCase())) return <LeaguePage key={lg[1]!.toUpperCase()} code={lg[1]!.toUpperCase()} />;
   return <Home />;
 }
 
 export default function App() {
   const path = usePath();
+  const { t } = useI18n();
   return (
     <div className="app">
       <div className="app__bg" aria-hidden="true"><i /><i /><i /></div>
-      <a className="skip" href="#main">Skip to content</a>
+      <a className="skip" href="#main">{t('Skip to content')}</a>
       <header className="topbar">
         <Wordmark onClick={() => navigate('/')} />
-        <nav className="topbar__nav" aria-label="Main">
-          <a href="/how-to-play" onClick={(e) => { e.preventDefault(); navigate('/how-to-play'); }}>How to play</a>
+        <nav className="topbar__nav" aria-label={t('Main')}>
+          <a href="/career" onClick={(e) => { e.preventDefault(); navigate('/career'); }}>{t('Career')}</a>
+          <a href="/how-to-play" onClick={(e) => { e.preventDefault(); navigate('/how-to-play'); }}>{t('How to play')}</a>
           <span id="topbar-slot" className="topbar__slot" />
+          <LangToggle />
           <ThemeToggle />
           <SoundToggle />
         </nav>
@@ -63,7 +77,7 @@ export default function App() {
         </Boundary>
       </main>
       <footer className="foot">
-        <span>An independent fan game. Names only: no photos, badges or kits. Ratings are our own opinions.</span>
+        <span>{t('An independent fan game. Names only: no photos, badges or kits. Ratings are our own opinions.')}</span>
       </footer>
       <div id="live-region" className="sr-only" aria-live="polite" role="status" />
       <Toasts />

@@ -9,3 +9,6 @@ playwright-report/
 # Reference screenshots of the original app: kept locally for diffing, never committed or shipped (Replica rules)
 replica/screens/
 replica/clone-screens/
+
+# Untouched source downloads for the squad data (re-creatable with scripts/data/*); only the derived dataset is committed
+data/raw/

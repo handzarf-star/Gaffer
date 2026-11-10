@@ -325,8 +325,39 @@ export const PLAYERS: readonly Player[] = raw.map(([name, nat, pos, ovr, era, on
 
 export const PLAYER_BY_ID: ReadonlyMap<string, Player> = new Map(PLAYERS.map((p) => [p.id, p]));
 
+/* ───────────── runtime additions (career mode) ─────────────
+   The career squads are not part of the draft pools (they are not in PLAYERS), but the match engine, chemistry and fit
+   logic all read players through player(id). So career players are registered here, and a league can lay its own current
+   ratings over the top (ageing, settling-in) for the length of one synchronous call, without touching global data. */
+const EXTRA = new Map<string, Player>();
+let overlay: ReadonlyMap<string, Player> | null = null;
+
+/** Make extra players known to player(). Ids must not clash with the built-in pool. */
+export function registerPlayers(list: readonly Player[]): void {
+  for (const p of list) {
+    if (PLAYER_BY_ID.has(p.id)) throw new Error(`Career player id clashes with the draft pool: ${p.id}`);
+    EXTRA.set(p.id, p);
+  }
+}
+
+/** Run `fn` with some players' ratings replaced. Synchronous only: the override is gone when `fn` returns. */
+export function withRatings<T>(ovr: Readonly<Record<string, number>>, fn: () => T): T {
+  const prev = overlay;
+  const next = new Map<string, Player>(prev ?? []);
+  for (const [id, o] of Object.entries(ovr)) {
+    const base = prev?.get(id) ?? PLAYER_BY_ID.get(id) ?? EXTRA.get(id);
+    if (base) next.set(id, { ...base, ovr: o });
+  }
+  overlay = next;
+  try {
+    return fn();
+  } finally {
+    overlay = prev;
+  }
+}
+
 export function player(id: string): Player {
-  const p = PLAYER_BY_ID.get(id);
+  const p = overlay?.get(id) ?? PLAYER_BY_ID.get(id) ?? EXTRA.get(id);
   if (!p) throw new Error(`Unknown player id: ${id}`);
   return p;
 }

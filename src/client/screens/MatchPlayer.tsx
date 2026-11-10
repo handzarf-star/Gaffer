@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FORMATIONS } from '../../shared/formations';
 import { player, shortName } from '../../shared/players';
+import { commentary } from '../../shared/i18n/commentary';
+import type { TFn } from '../../shared/i18n';
 import { playbackSchedule, type EventType, type MatchEvent, type MatchResult, type Pace } from '../../shared/sim';
 import { STYLES, profile, type Squad } from '../../shared/squad';
 import { Confetti } from '../components/Confetti';
@@ -9,6 +11,7 @@ import { PlayerCard } from '../components/PlayerCard';
 import { Avatar, Button, Icon, cx } from '../components/ui';
 import { announce, useFrameClock } from '../lib/hooks';
 import { ballTrail, buildScene, makeLayout } from '../lib/scene';
+import { useI18n, useStyleName } from '../lib/i18n';
 import { buzz, sfx } from '../lib/sfx';
 
 export interface MatchSide {
@@ -50,15 +53,15 @@ function minuteAt(items: ReturnType<typeof playbackSchedule>['items'], t: number
   return Math.floor(prev.event.t + (next.event.t - prev.event.t) * frac);
 }
 
-function phaseLabel(last: MatchEvent | undefined, minute: number, went: MatchResult['went']): string {
-  if (!last) return 'Kick-off';
+function phaseLabel(last: MatchEvent | undefined, minute: number, went: MatchResult['went'], t: TFn): string {
+  if (!last) return t('Kick-off');
   switch (last.type) {
-    case 'half': return 'Half-time';
-    case 'full': return went === 'ft' ? 'Full-time' : 'Level after 90';
-    case 'et': return 'Extra time';
-    case 'etend': return went === 'et' ? 'Full-time (aet)' : 'End of extra time';
-    case 'shootout': case 'pen_goal': case 'pen_miss': return 'Penalties';
-    default: return minute <= 45 ? 'First half' : minute <= 90 ? 'Second half' : 'Extra time';
+    case 'half': return t('Half-time');
+    case 'full': return went === 'ft' ? t('Full-time') : t('Level after 90');
+    case 'et': return t('Extra time');
+    case 'etend': return went === 'et' ? t('Full-time (aet)') : t('End of extra time');
+    case 'shootout': case 'pen_goal': case 'pen_miss': return t('Penalties');
+    default: return minute <= 45 ? t('First half') : minute <= 90 ? t('Second half') : t('Extra time');
   }
 }
 
@@ -79,6 +82,9 @@ export interface MatchPlayerProps {
 }
 
 export function MatchPlayer({ fixtures, startAt, you, onSeen, continueLabel, onContinue, waitingFor, pace = 'normal' }: MatchPlayerProps) {
+  const { lang, t } = useI18n();
+  const styleName = useStyleName();
+  const tapeLabel = (id: string): string => (id === 'Overall' ? t('Overall') : id === 'Attack' ? t('Attack') : id === 'Midfield' ? t('Midfield') : id === 'Defence' ? t('Defence') : id === 'Keeper' ? t('Keeper') : t('Chemistry'));
   const [skipped, setSkipped] = useState(false);
   const [viewIdx, setViewIdx] = useState<number | null>(null);
   const [burst, setBurst] = useState(0);
@@ -179,13 +185,13 @@ export function MatchPlayer({ fixtures, startAt, you, onSeen, continueLabel, onC
       <p className="fulltime__head">{fx.result.headline}</p>
       <div className="statgrid">
         {([
-          ['Possession', `${stat.possession[0]}%`, `${stat.possession[1]}%`, stat.possession[0], stat.possession[1]],
-          ['Shots', stat.shots[0], stat.shots[1], stat.shots[0], stat.shots[1]],
-          ['On target', stat.onTarget[0], stat.onTarget[1], stat.onTarget[0], stat.onTarget[1]],
-          ['Expected goals', stat.xg[0].toFixed(2), stat.xg[1].toFixed(2), stat.xg[0], stat.xg[1]],
-          ['Fouls', stat.fouls[0], stat.fouls[1], stat.fouls[0], stat.fouls[1]],
-          ['Corners', stat.corners[0], stat.corners[1], stat.corners[0], stat.corners[1]],
-          ['Cards', `${stat.yellows[0]}🟨 ${stat.reds[0]}🟥`, `${stat.yellows[1]}🟨 ${stat.reds[1]}🟥`, 0, 0],
+          [t('Possession'), `${stat.possession[0]}%`, `${stat.possession[1]}%`, stat.possession[0], stat.possession[1]],
+          [t('Shots'), stat.shots[0], stat.shots[1], stat.shots[0], stat.shots[1]],
+          [t('On target'), stat.onTarget[0], stat.onTarget[1], stat.onTarget[0], stat.onTarget[1]],
+          [t('Expected goals'), stat.xg[0].toFixed(2), stat.xg[1].toFixed(2), stat.xg[0], stat.xg[1]],
+          [t('Fouls'), stat.fouls[0], stat.fouls[1], stat.fouls[0], stat.fouls[1]],
+          [t('Corners'), stat.corners[0], stat.corners[1], stat.corners[0], stat.corners[1]],
+          [t('Cards'), `${stat.yellows[0]}🟨 ${stat.reds[0]}🟥`, `${stat.yellows[1]}🟨 ${stat.reds[1]}🟥`, 0, 0],
         ] as Array<[string, string | number, string | number, number, number]>).map(([label, x, y, nx, ny]) => (
           <div className="statrow" key={label}>
             <b>{x}</b>
@@ -202,7 +208,7 @@ export function MatchPlayer({ fixtures, startAt, you, onSeen, continueLabel, onC
       <div className="motm">
         <PlayerCard id={fx.result.motm.player} mode="full" size="sm" />
         <div>
-          <small>Man of the match</small>
+          <small>{t('Man of the match')}</small>
           <b>{player(fx.result.motm.player).name}</b>
           <span>{fx.result.motm.reason}</span>
         </div>
@@ -229,10 +235,10 @@ export function MatchPlayer({ fixtures, startAt, you, onSeen, continueLabel, onC
         <div className={cx('sb__team', w === 0 && fixtureDone && 'is-win', mySide === 0 && 'is-me')}>
           <Avatar name={fx.a.name} hue={fx.a.hue} color={fx.a.color} size={40} />
           <b>{fx.a.name}</b>
-          <small>{FORMATIONS[fx.a.squad.formation].name} · {STYLES[fx.a.squad.style].name}</small>
+          <small>{FORMATIONS[fx.a.squad.formation].name} · {styleName(fx.a.squad.style)}</small>
         </div>
         <div className="sb__mid">
-          <div className="sb__phase">{countdown ? 'Kick-off in…' : phaseLabel(lastEv, minute, fx.result.went)}</div>
+          <div className="sb__phase">{countdown ? t('Kick-off in…') : phaseLabel(lastEv, minute, fx.result.went, t)}</div>
           {countdown ? (
             <div className="sb__count">{Math.max(1, Math.ceil(-elapsed / 1000))}</div>
           ) : (
@@ -260,7 +266,7 @@ export function MatchPlayer({ fixtures, startAt, you, onSeen, continueLabel, onC
         <div className={cx('sb__team', w === 1 && fixtureDone && 'is-win', mySide === 1 && 'is-me')}>
           <Avatar name={fx.b.name} hue={fx.b.hue} color={fx.b.color} size={40} />
           <b>{fx.b.name}</b>
-          <small>{FORMATIONS[fx.b.squad.formation].name} · {STYLES[fx.b.squad.style].name}</small>
+          <small>{FORMATIONS[fx.b.squad.formation].name} · {styleName(fx.b.squad.style)}</small>
         </div>
       </div>
 
@@ -268,20 +274,20 @@ export function MatchPlayer({ fixtures, startAt, you, onSeen, continueLabel, onC
 
       <div className="match__stage">
         <div className="mwrap">
-          <MatchPitch scene={scene} trail={trail} colors={[fx.a.color, fx.b.color]} tagKey={`${k}-${shown.length}`} />
+          <MatchPitch scene={scene} trail={trail} colors={[fx.a.color, fx.b.color]} names={[fx.a.name, fx.b.name]} tagKey={`${k}-${shown.length}`} />
           {!finished && !countdown && (
-            <button type="button" className="mskip" onClick={skip} aria-label="Skip to the end of the match"><Icon name="skip" size={16} /> Skip</button>
+            <button type="button" className="mskip" onClick={skip} aria-label={t('Skip to the end of the match')}><Icon name="skip" size={16} /> {t('Skip')}</button>
           )}
         </div>
 
         <div className="match__side">
           {countdown && (
-            <section className="panel tape" aria-label="Tale of the tape">
-              <h2 className="panel__title">Tale of the tape</h2>
+            <section className="panel tape" aria-label={t('Tale of the tape')}>
+              <h2 className="panel__title">{t('Tale of the tape')}</h2>
               {([['Overall', pa.overall, pb.overall], ['Attack', pa.att, pb.att], ['Midfield', pa.mid, pb.mid], ['Defence', pa.def, pb.def], ['Keeper', pa.gk, pb.gk], ['Chemistry', pa.chem.score, pb.chem.score]] as Array<[string, number, number]>).map(([label, x, y]) => (
                 <div className="tape__row" key={label}>
                   <b className={x >= y ? 'lead' : ''}>{Number(x).toFixed(label === 'Overall' ? 1 : 0)}</b>
-                  <span>{label}</span>
+                  <span>{tapeLabel(label)}</span>
                   <b className={y >= x ? 'lead' : ''}>{Number(y).toFixed(label === 'Overall' ? 1 : 0)}</b>
                 </div>
               ))}
@@ -289,7 +295,7 @@ export function MatchPlayer({ fixtures, startAt, you, onSeen, continueLabel, onC
           )}
           {fullPanel}
           {!countdown && (
-            <section className="feed" role="log" aria-label="Match events" tabIndex={0}>
+            <section className="feed" role="log" aria-label={t('Match events')} tabIndex={0}>
               {shown.map((s, idx) => ({ s, idx })).reverse().map(({ s, idx }) => {
                 const e = s.event;
                 const side = e.team === 0 ? fx.a : fx.b;
@@ -301,7 +307,7 @@ export function MatchPlayer({ fixtures, startAt, you, onSeen, continueLabel, onC
                     <span className="feed__ico" aria-hidden="true">{ICON[e.type] ?? '•'}</span>
                     <span className="feed__txt">
                       {!mark && <i className="feed__dot" style={{ background: side.color }} />}
-                      {e.text}
+                      {commentary(e, lang)}
                     </span>
                   </div>
                 );

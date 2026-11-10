@@ -8,7 +8,7 @@ import { FORMATIONS, type Role } from '../../shared/formations';
 import { player, shortName } from '../../shared/players';
 import { hashSeed } from '../../shared/rng';
 import { traits } from '../../shared/playerstats';
-import type { MatchEvent, MatchResult, ScheduledEvent } from '../../shared/sim';
+import { isHighlight, type EventType, type MatchEvent, type MatchResult, type ScheduledEvent } from '../../shared/sim';
 import type { Squad } from '../../shared/squad';
 
 export const PW = 68;
@@ -32,7 +32,24 @@ export interface DotS {
   scale: number;
 }
 
+export type FlowLabel = 'attack' | 'danger' | 'chance';
+
+/** The big arrow that shows quiet play: who is attacking whom, and how dangerous it is. One entry per team. */
+export interface Flow {
+  /** how visible each team's arrow is, 0 to 1 (they swap smoothly, so the two add up to about 1) */
+  show: [number, number];
+  /** how dangerous the attack is, 0 to 1 */
+  level: [number, number];
+  /** sideways position of the arrow, metres */
+  lane: [number, number];
+  label: [FlowLabel, FlowLabel];
+}
+
 export interface Scene {
+  /** the picture of quiet play: an arrow, no players and no ball. Null while a highlight or a banner is showing. */
+  flow: Flow | null;
+  /** how visible the players and the ball are, 0 to 1: they appear only for highlights */
+  live: number;
   dots: DotS[];
   ball: { x: number; y: number; lift: number; hot: boolean };
   trail: Array<{ x: number; y: number }>;
@@ -195,9 +212,42 @@ function hopIndex(hops: Hop[], t: number): number {
   return lo;
 }
 
-interface Ambient { ball: Pt; rough: Pt; poss: 0 | 1; w: [number, number]; positions: Map<string, Pt>; lift: number }
+/** half-time and full-time are just a banner on an empty pitch */
+const BANNER = new Set<EventType>(['half', 'full', 'et', 'etend']);
+/** moments a team builds up to, so the arrow can warn about them */
+const BUILDS_UP = new Set<EventType>(['goal', 'save', 'miss', 'post', 'freekick', 'penalty', 'corner']);
+const FADE_IN = 700;
+const FADE_OUT = 600;
+const LEAD_MS = 3200;
 
-function ambient(layout: Layout, tt: number, poss0: number, redded: Set<string>): Ambient {
+/** how big the chance is, as the arrow shows it: from the engine's own chance quality, so it never overstates */
+function chanceLevel(e: MatchEvent): number {
+  if (e.src === 'penalty' || e.type === 'penalty') return 1;
+  if (e.type === 'freekick' || e.type === 'corner') return 0.5;
+  const p = e.xg ?? 0.08; // the chance of scoring, as the engine rolled it
+  if (p < 0.08) return 0.2 + (p / 0.08) * 0.13; // a speculative effort
+  if (p < 0.25) return 0.36 + ((p - 0.08) / 0.17) * 0.24; // a good chance
+  return 0.66 + Math.min(1, (p - 0.25) / 0.4) * 0.32; // a clear-cut chance
+}
+const labelOf = (level: number): FlowLabel => (level < 0.34 ? 'attack' : level < 0.62 ? 'danger' : 'chance');
+
+/** an attack that is about to become a highlight: for the last few seconds the team pushes up and the arrow warns */
+interface Lead { team: 0 | 1; w: number; level: number; focus: Pt }
+function leadFor(items: ScheduledEvent[], t: number): Lead | null {
+  for (const it of items) {
+    if (it.at < t - 1) continue;
+    if (it.at - t > LEAD_MS) return null;
+    const e = it.event;
+    if (!BUILDS_UP.has(e.type)) continue;
+    const set = e.type === 'freekick' || e.type === 'penalty' || e.type === 'corner' || (!!e.src && e.src !== 'play');
+    return { team: e.team, w: ease(1 - (it.at - t) / LEAD_MS), level: chanceLevel(e), focus: pt(CX, goalY(e.team) + into(e.team) * (set ? 20 : 25)) };
+  }
+  return null;
+}
+
+interface Ambient { ball: Pt; /** the ball on the formation grid, before the team leans toward it */ base: Pt; rough: Pt; poss: 0 | 1; w: [number, number]; positions: Map<string, Pt>; lift: number }
+
+function ambient(layout: Layout, tt: number, poss0: number, redded: Set<string>, lead: Lead | null = null): Ambient {
   const t = Math.max(0, tt);
   const hops = hopsFor(layout, poss0, t);
   const idx = hopIndex(hops, t);
@@ -209,10 +259,12 @@ function ambient(layout: Layout, tt: number, poss0: number, redded: Set<string>)
   const B = layout.byKey.get(h.to)!;
   // the ball on the formation grid drives where the whole team leans
   const flight = holding ? pt(A.bx, A.by) : lerpPt(pt(A.bx, A.by), pt(B.bx, B.by), ease(u));
-  const rough = pt(
+  let rough = pt(
     CX + (flight.x - CX) * 0.5 + 2.5 * Math.sin(t / 2300),
     PH / 2 + (flight.y - PH / 2) * 0.55 + (0.5 - poss0) * 14 + 2 * Math.sin(t / 3100 + 1),
   );
+  // a chance is coming: the whole team leans toward where it will happen, so nobody has far to run when the camera cuts in
+  if (lead) rough = lerpPt(rough, lead.focus, lead.w * 0.9);
   // the side with the ball pushes up; after a turnover the push fades over from one side to the other
   let j = idx;
   while (j > 0 && hops[j - 1]!.team === hops[j]!.team) j--;
@@ -220,13 +272,18 @@ function ambient(layout: Layout, tt: number, poss0: number, redded: Set<string>)
   const w: [number, number] = [0, 0];
   w[h.team] = wCur;
   w[other(h.team)] = 1 - wCur;
+  if (lead) {
+    const lw = Math.min(1, lead.w * 1.35);
+    w[lead.team] = Math.max(w[lead.team], lw);
+    w[other(lead.team)] = Math.min(w[other(lead.team)], 1 - lw);
+  }
   const positions = new Map<string, Pt>();
   for (const q of layout.players) if (!redded.has(q.key)) positions.set(q.key, shapedW(q, rough, w));
   const pa = positions.get(h.from);
   const pb = positions.get(h.to);
   const on = holding ? (pa ?? flight) : pa && pb ? lerpPt(pa, pb, ease(u)) : flight;
   const arc = holding ? 0 : Math.sin(Math.PI * u);
-  return { ball: pt(on.x, on.y - arc * 0.9), rough, poss: h.team, w, positions, lift: arc * 0.25 };
+  return { ball: pt(on.x, on.y - arc * 0.9), base: flight, rough, poss: h.team, w, positions, lift: arc * 0.25 };
 }
 
 /* ───────────── event choreography ───────────── */
@@ -581,17 +638,24 @@ function desiredScene({ layout, result, items, quiet, t }: SceneArgs): Scene {
   }
   const fast = !active && quiet.some(([a, b]) => t >= a && t < b);
   const poss0 = result.stats.possession[0] / 100;
-  const amb = ambient(layout, t, poss0, redded);
+  const lead = leadFor(items, t);
+  const amb = ambient(layout, t, poss0, redded, lead);
   let ch: Choreo | null = null;
   const positions = new Map<string, Pt>(amb.positions);
   let ball: Pt = amb.ball;
   let lift = amb.lift;
 
-  if (active) {
+  if (active && !isHighlight(active.event) && !BANNER.has(active.event.type)) {
+    // a minor moment (a yellow card, a speculative shot, a routine free kick or corner): a label over the arrow, nothing moves
+    const e = active.event;
+    const who = e.p ? layout.byKey.get(dotKey(e.team, e.p))?.short ?? '' : '';
+    const kind: TagKind = e.type === 'yellow' ? 'yellow' : e.type === 'save' ? 'save' : e.type === 'post' ? 'post' : e.type === 'miss' ? 'miss' : e.type === 'freekick' ? 'freekick' : 'corner';
+    ch = { ball: amb.ball, tag: { kind, text: TAG_TEXT[kind]!, sub: who, team: e.team }, poss: amb.poss };
+  } else if (active) {
     const e = active.event;
     const p = clamp((t - active.at) / Math.max(1, active.dur), 0, 1);
     // every moment starts from where the flow of play was when it began
-    const startAmb = ambient(layout, active.at, poss0, redded);
+    const startAmb = ambient(layout, active.at, poss0, redded, leadFor(items, active.at));
     const rough = startAmb.rough;
     const startBall = startAmb.ball;
     if (e.type === 'goal' || e.type === 'save' || e.type === 'miss' || e.type === 'post') {
@@ -616,6 +680,34 @@ function desiredScene({ layout, result, items, quiet, t }: SceneArgs): Scene {
     lift = 0;
   }
 
+  // the camera cuts to highlights only: players and ball fade in just before one and out just after it. Banners (half-time,
+  // full-time) are shown on an empty pitch. Everything else is the arrow.
+  let live = 0;
+  let banner = false;
+  for (const it of items) {
+    if (it.at - FADE_IN > t) break;
+    const end = it.at + it.dur;
+    if (t > end + FADE_OUT) continue;
+    const e = it.event;
+    if (BANNER.has(e.type)) { if (t >= it.at && t <= end) banner = true; continue; }
+    if (!isHighlight(e)) continue;
+    const a = t < it.at ? ease((t - (it.at - FADE_IN)) / FADE_IN) : t <= end ? 1 : 1 - ease((t - end) / FADE_OUT);
+    live = Math.max(live, a);
+  }
+  if (inShootout) live = 1;
+  // before kick-off the players stand in formation; there is no attack to show an arrow for yet
+  if (items.length && t < items[0]!.at) live = 1;
+  const calm = banner || inShootout ? 0 : 1 - live;
+  let flow: Flow | null = null;
+  if (calm > 0.01) {
+    // how far up the pitch the (unseen) attack has got decides how dangerous it looks; a coming chance overrides it
+    const adv: [number, number] = [clamp((PH - amb.base.y) / PH, 0, 1), clamp(amb.base.y / PH, 0, 1)];
+    const level: [number, number] = [0, 1].map((k) => clamp(0.1 + 0.5 * Math.pow(adv[k]!, 1.6) + 0.05 * Math.sin(t / 1700 + k * 2), 0.06, 0.6)) as [number, number];
+    if (lead) level[lead.team] = mix(level[lead.team], lead.level, lead.w);
+    const lane = clamp(amb.rough.x, 14, PW - 14);
+    flow = { show: [amb.w[0] * calm, amb.w[1] * calm], level, lane: [lane, lane], label: [labelOf(level[0]), labelOf(level[1])] };
+  }
+
   const dots: DotS[] = [];
   for (const q of layout.players) {
     const pos = positions.get(q.key);
@@ -630,6 +722,8 @@ function desiredScene({ layout, result, items, quiet, t }: SceneArgs): Scene {
     });
   }
   return {
+    flow,
+    live,
     dots,
     ball: { x: ball.x, y: ball.y, lift, hot: !!ch?.shot },
     trail: [],

@@ -37,9 +37,14 @@ export interface MatchEvent {
   /** the other player involved: the player who was fouled */
   v?: string;
   src?: Source;
+  /** the chance of this shot scoring, 0 to 1 (shots only), exactly as the engine rolled it: the live view's arrow uses it so it never overstates a chance */
+  xg?: number;
   /** score after this event; for pen_* the shootout score */
   s: [number, number];
   text: string;
+  /** which commentary template produced `text` ("group:index", or a fixed key like "kickoff") and the names it was filled with, so a client can write the same line in another language */
+  tk?: string;
+  tv?: Record<string, string>;
 }
 
 export interface MatchStats {
@@ -129,7 +134,7 @@ interface Side {
   form: number;
 }
 
-const T = {
+export const T = {
   goal: [
     '{p} finishes it. {t} score.',
     'GOAL! {p} puts {t} ahead of the argument.',
@@ -178,6 +183,12 @@ export function simulateMatch(
   opts: SimOptions,
 ): MatchResult {
   const rng = new Rng(seed);
+  /** pick a commentary line (same single random draw as before) and remember which one it was */
+  const say = (group: string, vars: Record<string, string>): { text: string; tk: string; tv: Record<string, string> } => {
+    const list = (T as unknown as Record<string, string[]>)[group]!;
+    const tpl = rng.pick(list);
+    return { text: fill(tpl, vars), tk: `${group}:${list.indexOf(tpl)}`, tv: vars };
+  };
   const profs: [Profile, Profile] = [profile(sqA), profile(sqB)];
   const sides: [Side, Side] = [0, 1].map((i) => {
     const sq = i === 0 ? sqA : sqB;
@@ -239,17 +250,17 @@ export function simulateMatch(
       score[att]++;
       scorers[shooter.id] = (scorers[shooter.id] ?? 0) + 1;
       let assistId: string | undefined;
-      let text: string;
+      let said: ReturnType<typeof say>;
       if (src === 'play' && rng.chance(0.78)) {
         const as = pickBy(sides[att], (u) => ROLE_ASSIST_W[u.role] * Math.pow(Math.max(u.eff, 30) / 80, 2), shooter.id);
         assistId = as.id;
         assists[as.id] = (assists[as.id] ?? 0) + 1;
-        text = fill(rng.pick(T.goalAssist), { p: pn, a: sn(as.id) });
-      } else if (src === 'freekick') text = fill(rng.pick(T.goalFk), { p: pn });
-      else if (src === 'penalty') text = fill(rng.pick(T.goalPen), { p: pn });
-      else if (src === 'corner') text = fill(rng.pick(T.goalCorner), { p: pn });
-      else text = fill(rng.pick(T.goal), { p: pn, t: tName });
-      push({ t: label, type: 'goal', team: att, p: shooter.id, a: assistId, src, text });
+        said = say('goalAssist', { p: pn, a: sn(as.id) });
+      } else if (src === 'freekick') said = say('goalFk', { p: pn });
+      else if (src === 'penalty') said = say('goalPen', { p: pn });
+      else if (src === 'corner') said = say('goalCorner', { p: pn });
+      else said = say('goal', { p: pn, t: tName });
+      push({ t: label, type: 'goal', team: att, p: shooter.id, a: assistId, src, xg: Math.round(pGoal * 100) / 100, ...said });
       return;
     }
 
@@ -279,8 +290,7 @@ export function simulateMatch(
       if (gk) saves[gk.id] = (saves[gk.id] ?? 0) + 1;
     }
     const key = (outcome + (src === 'play' ? '' : src === 'freekick' ? 'Fk' : src === 'penalty' ? 'Pen' : 'Corner')) as keyof typeof T;
-    const pool = (T[key] ?? T[outcome]) as string[];
-    push({ t: label, type: outcome, team: att, p: shooter.id, src, text: fill(rng.pick(pool), { p: pn, k }) });
+    push({ t: label, type: outcome, team: att, p: shooter.id, src, xg: Math.round(pGoal * 100) / 100, ...say(key in T ? key : outcome, { p: pn, k }) });
   };
 
   const sendOff = (i: 0 | 1, u: Unit, label: number, second: boolean, victim?: string) => {
@@ -291,7 +301,7 @@ export function simulateMatch(
     redded.add(u.id);
     push({
       t: label, type: 'red', team: i, p: u.id, v: victim,
-      text: fill(rng.pick(second ? T.red2 : T.red), { p: sn(u.id), t: names[i] }),
+      ...say(second ? 'red2' : 'red', { p: sn(u.id), t: names[i] }),
     });
   };
 
@@ -305,7 +315,7 @@ export function simulateMatch(
     }
     side.yellowed.add(u.id);
     stats.yellows[i]++;
-    push({ t: label, type: 'yellow', team: i, p: u.id, v: victim, text: fill(rng.pick(T.yellow), { p: sn(u.id), v: victim ? sn(victim) : 'an opponent' }) });
+    push({ t: label, type: 'yellow', team: i, p: u.id, v: victim, ...say('yellow', { p: sn(u.id), v: victim ? sn(victim) : 'an opponent' }) });
   };
 
   /** A foul by team `i`. Real tendencies decide who commits it and whether it is booked. */
@@ -325,7 +335,7 @@ export function simulateMatch(
       const takers = opp.onPitch.filter((u) => u.role !== 'GK');
       const taker = rng.weighted(takers, (u) => Math.pow(u.tr.pk, 6));
       stats.penalties[j]++;
-      push({ t: label, type: 'penalty', team: j, p: taker.id, v: victim.id, src: 'penalty', text: fill(rng.pick(T.pen), { v: sn(victim.id), t: names[j] }) });
+      push({ t: label, type: 'penalty', team: j, p: taker.id, v: victim.id, src: 'penalty', ...say('pen', { v: sn(victim.id), t: names[j] }) });
       card(i, fouler, 0.3, 0.05, label, victim.id);
       const gk = gkOf(side);
       const pGoal = clamp(PEN_CONVERSION + (taker.tr.pk - 0.55) * 0.3 - ((gk?.tr.pks ?? 0.2) - 0.2) * 0.3, 0.5, 0.95);
@@ -334,7 +344,7 @@ export function simulateMatch(
       const takers = opp.onPitch.filter((u) => u.role !== 'GK');
       const taker = rng.weighted(takers, (u) => Math.pow(0.05 + u.tr.fk, 3) * (u.eff / 80));
       stats.freeKicks[j]++;
-      push({ t: label, type: 'freekick', team: j, p: taker.id, v: victim.id, src: 'freekick', text: fill(rng.pick(T.fk), { p: sn(taker.id), v: sn(victim.id), t: names[j] }) });
+      push({ t: label, type: 'freekick', team: j, p: taker.id, v: victim.id, src: 'freekick', ...say('fk', { p: sn(taker.id), v: sn(victim.id), t: names[j] }) });
       card(i, fouler, YELLOW_PER_FOUL * 1.1, RED_PER_FOUL, label, victim.id);
       const gk = gkOf(side);
       const gkF = clamp(1 - ((gk?.eff ?? 40) - 80) / 140, 0.55, 1.5);
@@ -379,7 +389,7 @@ export function simulateMatch(
         const gkF = clamp(1 - ((gk?.eff ?? 40) - 80) / 140, 0.55, 1.5);
         const pGoal = clamp(0.085 * (1 + (header.eff - 80) / 110) * gkF, 0.01, 0.4);
         stats.corners[att]++;
-        push({ t: label, type: 'corner', team: att, p: header.id, src: 'corner', text: fill(rng.pick(T.corner), { t: names[att] }) });
+        push({ t: label, type: 'corner', team: att, p: header.id, src: 'corner', ...say('corner', { t: names[att] }) });
         shot(att, header, 'corner', pGoal, pGoal, label);
       }
       return;
@@ -388,20 +398,24 @@ export function simulateMatch(
     const shooter = pickBy(atkSide, (u) => ROLE_SCORE_W[u.role] * Math.pow(Math.max(u.eff, 30) / 80, 4));
     const gk = gkOf(dfnSide);
     const gkEff = gk ? gk.eff : 40;
-    const quality = clamp(OPEN_QUALITY + (atk.att - dfn.def) / 560 + rng.normal() * 0.022, 0.025, 0.4);
+    const base = clamp(OPEN_QUALITY + (atk.att - dfn.def) / 560 + rng.normal() * 0.022, 0.025, 0.4);
+    // chances are not all alike: most are speculative, some are good, a few are clear-cut. The average is unchanged, so goals
+    // per match are too; what changes is that the live view can honestly say "big chance".
+    const kind = rng.next();
+    const quality = clamp(base * (kind < 0.7 ? 0.55 : kind < 0.94 ? 1.6 : 4), 0.02, 0.62);
     const shooterF = 1 + (shooter.eff - 80) / 110;
     const gkF = clamp(1 - (gkEff - 80) / 140, 0.55, 1.5);
     const pGoal = clamp(quality * shooterF * gkF, 0.01, 0.65);
     shot(att, shooter, 'play', pGoal, quality * shooterF, label);
   };
 
-  push({ t: 0, type: 'kickoff', team: 0, text: `Kick-off: ${names[0]} v ${names[1]}.` });
+  push({ t: 0, type: 'kickoff', team: 0, text: `Kick-off: ${names[0]} v ${names[1]}.`, tk: 'kickoff', tv: { a: names[0], b: names[1] } });
   const stoppage1 = 1 + rng.int(3);
   const stoppage2 = 2 + rng.int(4);
   for (let m = 1; m <= 45 + stoppage1; m++) playMinute(m > 45 ? 45 : m, 1);
-  push({ t: 45, type: 'half', team: 0, text: `Half-time: ${names[0]} ${score[0]}-${score[1]} ${names[1]}.` });
+  push({ t: 45, type: 'half', team: 0, text: `Half-time: ${names[0]} ${score[0]}-${score[1]} ${names[1]}.`, tk: 'half', tv: { a: names[0], b: names[1], x: String(score[0]), y: String(score[1]) } });
   for (let m = 46; m <= 90 + stoppage2; m++) playMinute(m > 90 ? 90 : m, 1);
-  push({ t: 90, type: 'full', team: 0, text: `Full-time: ${names[0]} ${score[0]}-${score[1]} ${names[1]}.` });
+  push({ t: 90, type: 'full', team: 0, text: `Full-time: ${names[0]} ${score[0]}-${score[1]} ${names[1]}.`, tk: 'full', tv: { a: names[0], b: names[1], x: String(score[0]), y: String(score[1]) } });
 
   let went: MatchResult['went'] = 'ft';
   let pens: [number, number] | null = null;
@@ -409,14 +423,14 @@ export function simulateMatch(
 
   if (winner === null && opts.knockout) {
     went = 'et';
-    push({ t: 91, type: 'et', team: 0, text: 'Level after 90. Extra time.' });
+    push({ t: 91, type: 'et', team: 0, text: 'Level after 90. Extra time.', tk: 'et', tv: {} });
     for (let m = 91; m <= 120; m++) playMinute(m, 0.78);
-    push({ t: 120, type: 'etend', team: 0, text: `After extra time: ${score[0]}-${score[1]}.` });
+    push({ t: 120, type: 'etend', team: 0, text: `After extra time: ${score[0]}-${score[1]}.`, tk: 'etend', tv: { x: String(score[0]), y: String(score[1]) } });
     winner = score[0] > score[1] ? 0 : score[1] > score[0] ? 1 : null;
     if (winner === null) {
       went = 'pens';
       const sh: [number, number] = [0, 0];
-      push({ t: 121, type: 'shootout', team: 0, s: [0, 0], text: 'Penalties. Nerves of steel required.' });
+      push({ t: 121, type: 'shootout', team: 0, s: [0, 0], text: 'Penalties. Nerves of steel required.', tk: 'shootout', tv: {} });
       // best penalty takers first (outfield before the keeper)
       const takers = ([0, 1] as const).map((i) =>
         sides[i].onPitch.slice().sort((a, b) => (a.role === 'GK' ? 1 : 0) - (b.role === 'GK' ? 1 : 0) || b.tr.pk - a.tr.pk || b.eff - a.eff),
@@ -431,6 +445,7 @@ export function simulateMatch(
         push({
           t: 121 + n, type: scored ? 'pen_goal' : 'pen_miss', team: i, p: taker.id, s: [sh[0], sh[1]],
           text: scored ? `${sn(taker.id)} scores. ${sh[0]}-${sh[1]}.` : `${sn(taker.id)} misses! ${sh[0]}-${sh[1]}.`,
+          tk: scored ? 'pen_goal' : 'pen_miss', tv: { p: sn(taker.id), x: String(sh[0]), y: String(sh[1]) },
         });
       };
       let round = 0;
@@ -557,6 +572,24 @@ export interface ScheduledEvent {
   event: MatchEvent;
 }
 
+/**
+ * The live view cuts to the players and the ball only for these: goals, penalties, red cards and real chances. Everything
+ * else (a yellow card, a speculative shot, a routine free kick or corner) is told on the arrow with a short label, so quiet
+ * play stays quiet and the highlights mean something.
+ */
+export function isHighlight(e: MatchEvent): boolean {
+  switch (e.type) {
+    case 'goal': case 'penalty': case 'red': case 'kickoff': case 'shootout': case 'pen_goal': case 'pen_miss':
+      return true;
+    case 'save': case 'miss': case 'post':
+      return e.src === 'penalty' || (e.xg ?? 0.1) >= 0.12;
+    default:
+      return false; // yellow cards, free-kick and corner awards, half-time, full-time
+  }
+}
+/** how long a minor moment's label stays up */
+const MINOR_DUR: Partial<Record<EventType, number>> = { yellow: 1900, freekick: 1200, corner: 1100, save: 1500, miss: 1400, post: 1500 };
+
 const DUR: Partial<Record<EventType, number>> = {
   kickoff: 1500, half: 2000, full: 2000, et: 2000, etend: 1600, shootout: 2400,
   goal: 5600, red: 3400, yellow: 2200, save: 3000, miss: 2500, post: 2800,
@@ -589,7 +622,7 @@ export function playbackSchedule(result: MatchResult, pace: Pace = 'normal'): { 
       gapSum += g;
       if (g > 400 * k) quiet.push([prevEnd, prevEnd + g]);
       at = prevEnd + g;
-      const dur = ((DUR[e.type] ?? 1500) + (e.src ? SRC_BONUS[e.src] : 0)) * k * durScale;
+      const dur = ((isHighlight(e) || !(e.type in MINOR_DUR) ? (DUR[e.type] ?? 1500) + (e.src ? SRC_BONUS[e.src] : 0) : MINOR_DUR[e.type]!) * k * durScale);
       items.push({ at, dur, event: e });
       prevEnd = at + dur;
       if (e.t <= 120) prevT = e.t;
