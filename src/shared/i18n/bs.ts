@@ -1,6 +1,10 @@
 // Bosnian (bosanski, ijekavski). English text -> Bosnian. Plural entries are [one, few, other] keyed by the English "one" form.
 // Informal "ti" throughout. Football terms follow Bosnian usage: utakmica, kolo, postava, klupa, prelazni rok, ocjena.
 import { registerDict, type Dict } from './index';
+import './bs.rooms';
+import './bs.draft';
+import './bs.misc';
+import './bs.result';
 
 export const BS: Dict = {
   "Kick-off": "Početak",
