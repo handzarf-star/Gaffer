@@ -17,6 +17,7 @@
     "test:all": "npm run typecheck && npm test && npm run build && npm run test:e2e && npm run check:brand",
     "icons": "node scripts/make-icons.mjs",
     "check:persistence": "node scripts/check-persistence.mjs",
+    "check:career": "node scripts/check-career-api.mjs",
     "data:build": "node scripts/data/fetch-wikipedia.mjs && node scripts/data/parse-wikipedia.mjs && node scripts/data/fetch-wikidata.mjs && node scripts/data/merge.mjs && node scripts/data/fetch-players.mjs && node scripts/data/build-career.mjs",
     "predev": "node -e \"require('node:fs').mkdirSync('dist/client',{recursive:true})\"",
     "predev:node": "node -e \"require('node:fs').mkdirSync('dist/client',{recursive:true})\""

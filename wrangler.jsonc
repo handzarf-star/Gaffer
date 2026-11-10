@@ -9,7 +9,18 @@
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*", "/ws/*"]
   },
-  "durable_objects": { "bindings": [{ "name": "ROOMS", "class_name": "Room" }] },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Room"] }],
+  "durable_objects": {
+    "bindings": [
+      { "name": "ROOMS", "class_name": "Room" },
+      { "name": "CAREERS", "class_name": "CareerRoom" },
+      { "name": "ACCOUNTS", "class_name": "Account" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["Room"] },
+    { "tag": "v2", "new_sqlite_classes": ["CareerRoom", "Account"] }
+  ],
+  // Public OAuth client id for "Sign in with Google" (not a secret). Leave empty to play as a guest only. See DEPLOY.md.
+  "vars": { "GOOGLE_CLIENT_ID": "" },
   "observability": { "enabled": true }
 }
