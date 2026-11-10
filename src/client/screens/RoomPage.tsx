@@ -45,6 +45,7 @@ function friendly(code: ErrorCode, msg: string, t: TFn): string {
     case 'need_players': return t('You need at least two teams to start. Add CPU teams or invite a friend.');
     case 'bad_settings': return t('That combination does not work. Try a different number of teams.');
     case 'rate_limited': return t('Easy there. Slow down a little.');
+    case 'internal': return t('Something went wrong on our side. That move was not applied; try again.');
     case 'kicked': return t('You were removed from the room.');
     default: return t(msg);
   }

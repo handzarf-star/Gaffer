@@ -213,6 +213,7 @@ export type ErrorCode =
   | 'need_players'
   | 'bad_settings'
   | 'rate_limited'
+  | 'internal'
   | 'kicked';
 
 export type S2C =

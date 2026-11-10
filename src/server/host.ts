@@ -89,7 +89,15 @@ export class RoomHost {
       if ((EMOTES as readonly string[]).includes(msg.e)) this.broadcast({ t: 'emote', from: id, e: msg.e });
       return;
     }
-    const res = this.engine.handle(id, msg, now);
+    const done = this.transact(() => this.engine.handle(id, msg, now));
+    if (!done.ok) {
+      // a bug in one move must not leave half of it behind or take the room down: the room is back exactly as it was
+      console.error(`room ${this.engine.s.code}: "${msg.t}" threw and was rolled back`, done.error);
+      this.send(conn, { t: 'err', code: 'internal', msg: 'Something went wrong on our side. That move was not applied; try again.' });
+      await this.changed(now);
+      return;
+    }
+    const res = done.value;
     if (!res.ok) this.send(conn, { t: 'err', code: res.code, msg: res.msg });
     await this.changed(now);
   }
@@ -113,11 +121,31 @@ export class RoomHost {
       await this.io.destroy();
       return;
     }
-    this.engine.tick(now);
+    this.safeTick(now);
     await this.changed(now);
   }
 
   /* ───────────── internals ───────────── */
+
+  /**
+   * Run something that mutates the room. If it throws, the room is put back exactly as it was before it started, so a bug in one
+   * move (or one timer) can never leave half a move in memory, to be saved by the next message.
+   */
+  private transact<T>(fn: () => T): { ok: true; value: T } | { ok: false; error: unknown } {
+    const before = structuredClone(this.engine.s);
+    try {
+      return { ok: true, value: fn() };
+    } catch (error) {
+      this.engine.s = before;
+      return { ok: false, error };
+    }
+  }
+
+  private safeTick(now: number): boolean {
+    const r = this.transact(() => this.engine.tick(now));
+    if (!r.ok) console.error(`room ${this.engine.s.code}: a timer threw and was rolled back`, r.error);
+    return r.ok && r.value;
+  }
 
   /** Make the seats' connected flags agree with the sockets that actually exist. */
   reconcile(now: number): void {
@@ -128,7 +156,7 @@ export class RoomHost {
   }
 
   async changed(now: number): Promise<void> {
-    this.engine.tick(now);
+    this.safeTick(now);
     await this.io.persist(this.engine.s);
     await this.io.schedule(this.engine.nextWake(now));
     this.broadcastState(now);

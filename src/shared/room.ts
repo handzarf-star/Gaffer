@@ -621,7 +621,7 @@ export class RoomEngine {
     const d = s.draft!;
     // somebody who ran out of time before choosing a pack gets one chosen for them, by the seed, so it is never a leak
     const mine = d.offers?.[id];
-    if (!d.shared && mine && (d.boards[id] ?? []).length === 0) this.openOffer(id, hashSeed(`${s.seed}/open/${d.round}/${id}`) % mine.length);
+    if (!d.shared && mine && mine.length > 0 && (d.boards[id] ?? []).length === 0) this.openOffer(id, hashSeed(`${s.seed}/open/${d.round}/${id}`) % mine.length);
     const board = d.shared ? d.board : (d.boards[id] ?? []);
     const sq = s.squads[id]!;
     let choice = autoPick(sq, board);
@@ -795,6 +795,11 @@ export class RoomEngine {
         const d = s.draft;
         if (!d) return false;
         for (const seat of this.owing()) {
+          // nothing left to choose from (a pool spent down to nothing): skip the seat now, do not wait for a timer that may be off
+          if (!d.shared && d.offers?.[seat.id]?.length === 0 && (d.boards[seat.id] ?? []).length === 0) {
+            this.autoPickFor(seat.id, now);
+            return true;
+          }
           const dl = this.seatDeadline(seat.id);
           if (dl !== null && now >= dl + GRACE_MS) {
             this.autoPickFor(seat.id, now);

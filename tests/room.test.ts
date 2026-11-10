@@ -916,3 +916,30 @@ describe('pick-a-pack in the room', () => {
     for (const id of c.ids) expect(Object.values(c.eng.s.squads[id]!.slots).filter(Boolean)).toHaveLength(11);
   });
 });
+
+describe('a packs draft with nothing left to choose from', () => {
+  it('skips the seat at once instead of waiting for a timer, and never throws', () => {
+    const c = mk(2, { format: 'packs', pickSeconds: 0 }); // no timer at all: only the guard can move this on
+    const [a, b] = c.ids as [string, string];
+    c.eng.handle(a, { t: 'start' }, c.t);
+    const d = c.eng.s.draft!;
+    d.offers![a] = []; d.boards[a] = [];
+    expect(() => c.eng.tick(c.t)).not.toThrow();
+    expect(d.picked).toContain(a);      // a was skipped
+    expect(d.picked).not.toContain(b);  // b still has a real choice and the round waits for them
+    expect(c.eng.s.draft!.round).toBe(1);
+    expect(pickFor(c, b).ok).toBe(true);
+    expect(c.eng.s.draft!.round).toBe(2);
+  });
+  it('an out-of-time seat with no packs is skipped, not turned into a NaN index', () => {
+    const c = mk(2, { format: 'packs', pickSeconds: 15 });
+    const [a, b] = c.ids as [string, string];
+    c.eng.handle(a, { t: 'start' }, c.t);
+    const d = c.eng.s.draft!;
+    d.offers![a] = []; d.boards[a] = []; d.offers![b] = []; d.boards[b] = [];
+    c.t = d.deadline! + 1000;
+    expect(() => c.eng.tick(c.t)).not.toThrow();
+    expect(c.eng.s.draft?.round ?? 99).toBeGreaterThanOrEqual(2); // everyone was skipped, the round moved on
+    expect(JSON.stringify(c.eng.s)).not.toContain('NaN');
+  });
+});
