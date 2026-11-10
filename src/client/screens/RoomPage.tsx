@@ -309,7 +309,7 @@ function Lobby({ conn, view }: { conn: RoomConnection; view: RoomView }) {
         <div className="setting setting--inline">
           <div>
             <label>Match speed</label>
-            <Seg<Pace> label="Match speed" disabled={!isHost} value={set.pace} onChange={(v) => patch({ pace: v })} options={[{ value: 'quick', label: 'Quick', hint: 'About 30 seconds a match' }, { value: 'normal', label: 'Normal', hint: 'About 50 seconds a match' }]} />
+            <Seg<Pace> label="Match speed" disabled={!isHost} value={set.pace} onChange={(v) => patch({ pace: v })} options={[{ value: 'quick', label: 'Quick', hint: 'About 55 seconds a match' }, { value: 'normal', label: 'Normal', hint: 'About 90 seconds a match' }]} />
           </div>
           {set.competition === 'league' && (
             <div>

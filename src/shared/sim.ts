@@ -558,35 +558,53 @@ export interface ScheduledEvent {
 }
 
 const DUR: Partial<Record<EventType, number>> = {
-  kickoff: 900, half: 1100, full: 1100, et: 1200, etend: 1000, shootout: 1500,
-  goal: 3200, red: 2000, yellow: 1200, save: 1700, miss: 1400, post: 1600,
-  freekick: 1300, penalty: 1900, corner: 1100, pen_goal: 1900, pen_miss: 1900,
+  kickoff: 1500, half: 2000, full: 2000, et: 2000, etend: 1600, shootout: 2400,
+  goal: 5600, red: 3400, yellow: 2200, save: 3000, miss: 2500, post: 2800,
+  freekick: 2400, penalty: 3200, corner: 2000, pen_goal: 2800, pen_miss: 2800,
 };
-const SRC_BONUS: Record<Source, number> = { play: 0, freekick: 150, penalty: 250, corner: 100 };
+const SRC_BONUS: Record<Source, number> = { play: 0, freekick: 300, penalty: 400, corner: 200 };
 
-/** quiet stretches fly by: 1 minute is ~0.2s, a long quiet spell is capped so a 90 minute match stays short */
+/** quiet stretches pass faster than real time, but the ball keeps moving at a calm pace: 1 minute ~0.45s, capped */
 function gapMs(minutes: number): number {
   if (minutes <= 0) return 0;
-  if (minutes <= 1) return 200 * minutes;
-  return Math.min(1200, 200 + 45 * (minutes - 1));
+  if (minutes <= 1) return 450 * minutes;
+  return Math.min(3000, 450 + 150 * (minutes - 1));
 }
+
+/** A match should take about a minute and a half to watch, however many events it had. */
+const TARGET_MS = { min: 74_000, max: 100_000 };
 
 export function playbackSchedule(result: MatchResult, pace: Pace = 'normal'): { items: ScheduledEvent[]; totalMs: number; quiet: Array<[number, number]> } {
   const k = pace === 'quick' ? 0.62 : 1;
-  const items: ScheduledEvent[] = [];
-  const quiet: Array<[number, number]> = [];
-  let at = 500 * k;
-  let prevT = 0;
-  let prevEnd = at;
-  for (const e of result.events) {
-    const shootout = e.type.startsWith('pen_') || e.type === 'shootout';
-    const g = shootout ? 0 : gapMs(Math.max(0, e.t - prevT)) * k;
-    if (g > 240) quiet.push([prevEnd, prevEnd + g]);
-    at = prevEnd + g;
-    const dur = ((DUR[e.type] ?? 1200) + (e.src ? SRC_BONUS[e.src] : 0)) * k;
-    items.push({ at, dur, event: e });
-    prevEnd = at + dur;
-    if (e.t <= 120) prevT = e.t;
+  const build = (gapScale: number, durScale = 1) => {
+    const items: ScheduledEvent[] = [];
+    const quiet: Array<[number, number]> = [];
+    let at = 700 * k;
+    let prevT = 0;
+    let prevEnd = at;
+    let gapSum = 0;
+    for (const e of result.events) {
+      const shootout = e.type.startsWith('pen_') || e.type === 'shootout';
+      const g = shootout ? 0 : gapMs(Math.max(0, e.t - prevT)) * k * gapScale;
+      gapSum += g;
+      if (g > 400 * k) quiet.push([prevEnd, prevEnd + g]);
+      at = prevEnd + g;
+      const dur = ((DUR[e.type] ?? 1500) + (e.src ? SRC_BONUS[e.src] : 0)) * k * durScale;
+      items.push({ at, dur, event: e });
+      prevEnd = at + dur;
+      if (e.t <= 120) prevT = e.t;
+    }
+    return { items, quiet, gapSum, totalMs: prevEnd + 2200 * k };
+  };
+  let r = build(1);
+  if (r.gapSum > 0) {
+    if (r.totalMs < TARGET_MS.min * k) r = build(Math.min(4, 1 + (TARGET_MS.min * k - r.totalMs) / r.gapSum));
+    else if (r.totalMs > TARGET_MS.max * k) r = build(Math.max(0.35, 1 - (r.totalMs - TARGET_MS.max * k) / r.gapSum));
   }
-  return { items, totalMs: prevEnd + 1500 * k, quiet };
+  // a very busy match: even with the shortest gaps the moments add up, so trim them a little too (never below 70%)
+  if (r.totalMs > TARGET_MS.max * k * 1.04) {
+    const gs = r.gapSum > 0 ? Math.max(0.35, 1 - (r.totalMs - TARGET_MS.max * k) / r.gapSum) : 1;
+    r = build(Math.min(1, gs), Math.max(0.7, (TARGET_MS.max * k) / r.totalMs));
+  }
+  return { items: r.items, totalMs: r.totalMs, quiet: r.quiet };
 }

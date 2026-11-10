@@ -127,7 +127,7 @@ describe('live pitch scene', () => {
     expect(q).toBeTruthy();
     expect(at(s, (q![0] + q![1]) / 2).fast).toBe(true);
     const total = (r: MatchResult) => playbackSchedule(r, 'normal').totalMs;
-    expect(total(s.result)).toBeLessThan(90_000);
+    expect(total(s.result)).toBeLessThan(105_000);
     expect(playbackSchedule(s.result, 'quick').totalMs).toBeLessThan(total(s.result) * 0.75);
   });
 });
