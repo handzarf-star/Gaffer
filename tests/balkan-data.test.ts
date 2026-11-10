@@ -11,8 +11,8 @@ const data = JSON.parse(fs.readFileSync(new URL('../data/derived/merged.json', i
 const clubs = Object.entries(data.clubs);
 
 describe('Balkan squad data (sourced)', () => {
-  it('covers the sixteen planned clubs, six of them the ones the game must have', () => {
-    expect(clubs).toHaveLength(16);
+  it('covers all 32 planned clubs (two leagues of 16), including the six the game must have', () => {
+    expect(clubs).toHaveLength(32);
     for (const id of ['crvena-zvezda', 'partizan', 'dinamo-zagreb', 'hajduk', 'zeljeznicar', 'sarajevo']) expect(data.clubs[id], id).toBeDefined();
   });
 
@@ -25,7 +25,7 @@ describe('Balkan squad data (sourced)', () => {
 
   it.each(clubs)('%s: a playable squad (enough players, enough keepers, no duplicates)', (_id, c) => {
     const squad = c.players.filter((p) => p.section === 'squad');
-    expect(squad.length).toBeGreaterThanOrEqual(22);
+    expect(squad.length).toBeGreaterThanOrEqual(20); // Istra 1961 lists exactly 20 first-team players
     expect(squad.filter((p) => p.pos === 'GK').length).toBeGreaterThanOrEqual(2);
     expect(squad.filter((p) => p.pos === 'DF').length).toBeGreaterThanOrEqual(5);
     expect(squad.filter((p) => p.pos === 'MF').length).toBeGreaterThanOrEqual(5);
@@ -49,7 +49,7 @@ describe('Balkan squad data (sourced)', () => {
   });
 
   it('players without a verified identity carry no Wikidata facts at all', () => {
-    for (const [, c] of clubs) for (const p of c.players) if (!p.wikidata) { expect(p.born, p.name).toBeNull(); expect(['no-match', 'ambiguous', 'link-unresolved']).toContain(p.identity); }
+    for (const [, c] of clubs) for (const p of c.players) if (!p.wikidata) { expect(p.born, p.name).toBeNull(); expect(['no-match', 'ambiguous', 'link-unresolved', 'link-not-a-person']).toContain(p.identity); }
   });
 
   it('only known position and nationality codes are present', () => {

@@ -45,7 +45,7 @@ export async function get(url, { label = 'get', ext = 'json', accept, fresh = fa
       fs.writeFileSync(meta, JSON.stringify({ url, fetchedAt, status: res.status }, null, 2));
       return { body, status: res.status, fetchedAt, fromCache: false, file };
     }
-    if (res.status === 429 || res.status === 503) {
+    if (res.status === 429 || res.status >= 500) {
       const ra = Number(res.headers.get('retry-after'));
       const wait = (Number.isFinite(ra) && ra > 0 ? ra : 5 * i) * 1000 + 600;
       lastNote = `HTTP ${res.status}, retry-after ${res.headers.get('retry-after')}`;

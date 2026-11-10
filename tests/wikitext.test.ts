@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cleanName, findTemplates, fold, parseFsPlayer, parseSquad, plainNote, splitArgs } from '../scripts/data/wikitext.mjs';
+import { cleanName, findTemplates, fold, parseFsPlayer, parseInfobox, parseSquad, plainNote, splitArgs } from '../scripts/data/wikitext.mjs';
 
 // Fixtures are trimmed copies of real Wikipedia markup (CC BY-SA), including the awkward bits.
 const PAGE = `
@@ -96,5 +96,62 @@ describe('parseSquad', () => {
   it('accepts a level-2 "Current squad" heading as well', () => {
     const r = parseSquad('==Current squad==\n===First team===\n{{Fs player|no=1|pos=GK|nat=SRB|name=A B}}\n==Notable players==\n{{Fs player|no=2|pos=DF|nat=SRB|name=Old Timer}}');
     expect(r.rows.map((x) => x.name)).toEqual(['A B']);
+  });
+});
+
+describe('parseInfobox', () => {
+  const BOX = `{{Short description|Croatian footballer}}
+{{Infobox football biography
+| name                 = Mislav Oršić
+| birth_date           = {{Birth date and age|1992|12|29|df=yes}}<ref>{{Cite web |title=Mislav Oršić {{En dash}} Croatia {{!}} Qualifiers|url=https://example.org/}}</ref>
+| height               = 1.79 m <!-- <ref>{{Cite web|title=x}} comment</ref> -->
+| position             = [[Midfielder#Winger|Left winger]]
+| current_club         = [[GNK Dinamo Zagreb|Dinamo Zagreb]]
+| youth_clubs1         = [[NK Zagreb|Zagreb]]
+| years1               = 2009–2013
+| clubs1               = [[NK Inter Zaprešić|Inter Zaprešić]]
+| caps1                = 90
+| goals1               = 21
+| years2               = 2014
+| clubs2               = → [[NK Celje|Celje]] (loan)
+| caps2                = 13
+| goals2               = 2
+| years3               = 2019–
+| clubs3               = [[GNK Dinamo Zagreb|Dinamo Zagreb]]
+| caps3                = 250<ref name=a>{{cite web|url=x}}</ref>
+| goals3               = 80
+| national_years1      = 2011–2013
+| national_team1       = [[Croatia national under-20 football team|Croatia U20]]
+| national_caps1       = 9
+| national_goals1      = 0
+| national_team2       = [[Croatia national football team|Croatia]]
+| national_caps2       = 49
+| national_goals2      = 15
+}}
+'''Mislav Oršić''' is a footballer.`;
+  const r = parseInfobox(BOX)!;
+  it('reads birth date past the nested citation templates', () => { expect(r.born).toBe('1992-12-29'); });
+  it('sums senior club appearances, loans included, and ignores comments and refs', () => {
+    expect(r.clubApps).toBe(90 + 13 + 250);
+    expect(r.clubGoals).toBe(21 + 2 + 80);
+  });
+  it('counts senior national-team caps only, never youth sides', () => {
+    expect(r.intlCaps).toBe(49);
+    expect(r.intlGoals).toBe(15);
+    expect(r.nationalTeams).toEqual(['Croatia']);
+  });
+  it('keeps position and current club as written', () => {
+    expect(r.position).toBe('Left winger');
+    expect(r.currentClub).toBe('GNK Dinamo Zagreb');
+  });
+  it('still reads the older spelling of the national-team fields', () => {
+    const old = parseInfobox('{{Infobox football biography\n| name = A\n| nationalteam1 = [[Serbia national football team|Serbia]]\n| nationalcaps1 = 12\n| nationalgoals1 = 3\n}}')!;
+    expect([old.intlCaps, old.intlGoals]).toEqual([12, 3]);
+  });
+  it('returns null for an article without the infobox, and null (not zero) for unlisted numbers', () => {
+    expect(parseInfobox('Just text')).toBeNull();
+    const none = parseInfobox('{{Infobox football biography\n| name = A\n| clubs1 = [[B]]\n}}')!;
+    expect(none.clubApps).toBeNull();
+    expect(none.intlCaps).toBe(0);
   });
 });

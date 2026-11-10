@@ -12,3 +12,9 @@ export function parseSquad(wikitext: string): {
   skipped: { section: string; name: string }[];
 };
 export function fold(s: string): string;
+export interface Infobox {
+  born: string | null; bornPrecision: 'day' | null; position: string | null; currentClub: string | null;
+  clubApps: number | null; clubGoals: number | null; clubLines: number;
+  intlCaps: number | null; intlGoals: number | null; nationalTeams: string[];
+}
+export function parseInfobox(wikitext: string): Infobox | null;

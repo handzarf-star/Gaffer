@@ -122,3 +122,62 @@ export function parseSquad(wikitext) {
 
 /** Compare names without accents/case/punctuation. Only exact folded equality counts ("Đorđe" is NOT guessed to be "Djordje"). */
 export const fold = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').replace(/ø/gi, 'o').replace(/ł/gi, 'l').replace(/ß/g, 'ss').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+/* ───────────── player articles: the football infobox ───────────── */
+
+const stripNoise = (s) => (s ?? '').replace(/<!--[\s\S]*?-->/g, '').replace(/<ref[^>]*\/>/gi, '').replace(/<ref[\s\S]*?<\/ref>/gi, '').trim();
+const digits = (s) => { const m = stripNoise(s).match(/\d+/); return m ? Number(m[0]) : null; };
+const YOUTH = /\bU-?\d{2}\b|olympic|youth|under-?\d|\bB team\b/i;
+
+/**
+ * Read the facts we use from an "Infobox football biography": senior national-team caps/goals, senior club appearances
+ * (loan spells included, listed separately on Wikipedia so there is no double count), birth date and the current club.
+ * Returns null when the article has no such infobox. Missing numbers stay null: nothing is guessed.
+ */
+export function parseInfobox(wikitext) {
+  const box = findTemplates(wikitext, 'infobox football biography|infobox footballer|infobox soccer biography')[0];
+  if (!box) return null;
+  const args = {};
+  for (const part of splitArgs(box.raw).slice(1)) {
+    const eq = part.indexOf('=');
+    if (eq < 0) continue;
+    args[part.slice(0, eq).trim().toLowerCase().replace(/ /g, '_')] = stripNoise(part.slice(eq + 1));
+  }
+  const clubs = [];
+  for (let i = 1; i <= 40; i++) {
+    const c = args[`clubs${i}`];
+    if (c === undefined) continue;
+    const loan = /^→|\(loan\)/i.test(c) || /loan/i.test(c);
+    const { name, link } = cleanName(c.replace(/^→\s*/, '').replace(/\(loan\)/i, '').trim());
+    const years = (args[`years${i}`] ?? '').replace(/\s+/g, ' ').trim();
+    clubs.push({ name, link, loan, years, apps: digits(args[`caps${i}`]), goals: digits(args[`goals${i}`]) });
+  }
+  const national = [];
+  for (let i = 1; i <= 12; i++) {
+    // current articles write national_team1 / national_caps1; older ones nationalteam1 / nationalcaps1
+    const t = args[`national_team${i}`] ?? args[`nationalteam${i}`];
+    if (t === undefined) continue;
+    const { name } = cleanName(t);
+    national.push({
+      team: name, youth: YOUTH.test(t) || YOUTH.test(name),
+      caps: digits(args[`national_caps${i}`] ?? args[`nationalcaps${i}`]), goals: digits(args[`national_goals${i}`] ?? args[`nationalgoals${i}`]),
+    });
+  }
+  let born = null, bornPrecision = null;
+  const bd = (args.birth_date ?? '').match(/\{\{\s*(?:birth[ _]date(?:[ _]and[ _]age)?|bda|dob)\s*\|\s*(?:df=\w+\|\s*)?(\d{4})\s*\|\s*(\d{1,2})\s*\|\s*(\d{1,2})/i);
+  if (bd) { born = `${bd[1]}-${bd[2].padStart(2, '0')}-${bd[3].padStart(2, '0')}`; bornPrecision = 'day'; }
+  const sum = (arr, k) => arr.reduce((a, x) => a + (x[k] ?? 0), 0);
+  const senior = clubs.filter((c) => c.apps != null);
+  const intl = national.filter((n) => !n.youth && n.caps != null);
+  return {
+    born, bornPrecision,
+    position: plainNote(args.position) || null,
+    currentClub: cleanName(args.current_club ?? args.currentclub ?? '').link ?? (cleanName(args.current_club ?? '').name || null),
+    clubApps: senior.length ? sum(senior, 'apps') : null,
+    clubGoals: senior.length ? sum(senior, 'goals') : null,
+    clubLines: clubs.length,
+    intlCaps: intl.length ? sum(intl, 'caps') : (national.some((n) => !n.youth) ? null : 0),
+    intlGoals: intl.length ? sum(intl, 'goals') : null,
+    nationalTeams: national.filter((n) => !n.youth).map((n) => n.team),
+  };
+}

@@ -53,7 +53,7 @@ const shape = (b) => ({
   qid: qidOf(b.p.value), label: b.pl?.value ?? null,
   dob: b.dob?.value?.slice(0, 10) ?? null, dobPrecision: b.prec ? Number(b.prec.value) : null, // 11 = exact day, 9 = year only
   positions: b.poss?.value ? b.poss.value.split('|') : [], codes: [...new Set([...(b.iocs?.value ? b.iocs.value.split('|') : []), ...(b.isos?.value ? b.isos.value.split('|') : [])])],
-  currentClubs: b.clubs?.value ? b.clubs.value.split('|').map(qidOf) : [], human: (b.insts?.value ?? '').includes('Q5'), modified: b.mod?.value ?? null,
+  currentClubs: b.clubs?.value ? b.clubs.value.split('|').map(qidOf) : [], human: (b.insts?.value ?? '').split('|').some((u) => u.endsWith('/Q5')), modified: b.mod?.value ?? null,
 });
 
 // ---- 3. facts for every linked item

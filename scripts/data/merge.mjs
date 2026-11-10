@@ -26,7 +26,12 @@ for (const c of CLUBS) {
   for (const r of s.players) {
     stat.rows++; stat[r.section === 'squad' ? 'squad' : 'loanedOut']++;
     let item = null, how = null;
-    if (r.link && wd.titleToQid[r.link] && wd.items[wd.titleToQid[r.link]]) { item = wd.items[wd.titleToQid[r.link]]; how = 'wikipedia-link'; stat.viaLink++; }
+    if (r.link && wd.titleToQid[r.link] && wd.items[wd.titleToQid[r.link]]) {
+      const cand = wd.items[wd.titleToQid[r.link]];
+      // a link that lands on something that is not a person is a wrong link: keep the Wikipedia facts, take nothing from Wikidata
+      if (cand.human === false) { how = 'link-not-a-person'; stat.notHuman++; problems.push(`${c.id}: ${r.name} -> ${cand.qid} is not a human item (facts discarded)`); stat.noMatch++; }
+      else { item = cand; how = 'wikipedia-link'; stat.viaLink++; }
+    }
     else if (!r.link) {
       const cands = byName.get(fold(r.name)) ?? [];
       if (cands.length === 1) { item = cands[0]; how = 'club-membership+exact-name'; stat.viaClubName++; }
@@ -48,7 +53,6 @@ for (const c of CLUBS) {
       row.checks.club = item.currentClubs.length ? (clubQ ? item.currentClubs.includes(clubQ) : null) : null;
       const year = row.born ? Number(row.born.slice(0, 4)) : null;
       row.checks.age = year ? (new Date().getFullYear() - year >= 15 && new Date().getFullYear() - year <= 45) : null;
-      if (row.checks.human === false) { stat.notHuman++; problems.push(`${c.id}: ${r.name} -> ${item.qid} is not a human item`); }
       if (row.checks.nat === false) { stat.natConflict++; problems.push(`${c.id}: ${r.name} [${r.nat}] wikidata citizenship/sport country ${item.codes.join('/')} (${item.qid})`); }
       if (row.checks.club === false && how === 'wikipedia-link') stat.clubMismatch++;
       if (row.checks.age === false) { stat.ageOdd++; problems.push(`${c.id}: ${r.name} born ${row.born} looks implausible (${item.qid})`); }
