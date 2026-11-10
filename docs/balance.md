@@ -122,3 +122,114 @@ An elite keeper (95) now stops about a quarter of the shots that an 85 would con
 about 1.5 times as many (clamped).
 
 The golden table in `tests/result-text.test.ts` (40 seeded matches) follows the engine and was re-recorded on purpose.
+
+### 2.3 Tactics: zero-sum, plus rock, paper, scissors (`squad.ts`, `sim.ts`)
+
+**What was wrong.** Every tactic added 0.3 to 0.95 points of `overall` for free, the CPU picked the tactic with the highest `overall`
+(so always Possession), Possession was the best choice against all five tactics, Counter lost 0.06 ppm to the mean, and Fortress's
+"+2 keeper" was shown but never used (the match reads the keeper on the pitch, not the profile).
+
+**What changed.**
+
+| tactic | before (att / mid / def / gk) | after | tempo | aggression |
+|---|---|---|---|---|
+| Possession | 0 / +4 / -1 / 0 | -2 / +3 / -1.5 / 0 | 0.9 | 1 |
+| High Press | +2 / +3 / -3 / 0 | +2 / +3 / -5.5 / 0 | 1.1 | 1.4 -> 1.15 |
+| Wide Attack | +3 / -1 / 0 / 0 (else +1/-1) | +3 / 0 / -3.5 / 0 (else +1 / 0 / -1) | 1.05 | 1 |
+| Fortress | -3 / 0 / +5 / +2 (dead) | -3 / -2 / +5 / +1 (real) | 0.8 | 0.9 -> 1.05 |
+| Counter | +3 / -2 / 0 / 0, +2 attack as the underdog | +3 / -3 / 0 / 0 | 0.95 | 1 -> 0.9 |
+
+* Every vector changes `overall` by at most 0.125 (was 0.3 to 0.95); `tests/styles.test.ts` holds it to 0.15.
+* **Rock, paper, scissors** (`sim.ts`, `MATCHUP_EDGE = 1.3` rating points on two sectors, what one side gains the other gives up):
+  High Press beats Possession (wins the ball back in midfield), Possession beats Fortress (takes the low block apart: attack up, their
+  defence down), Fortress beats Counter (no space behind: their attack down), Counter beats High Press (runs past the high line).
+  **Wide Attack is the neutral tactic**: the codebase has no "Balanced" tactic, so the fifth tactic plays that part.
+  Measured, a winning matchup is worth 0.075 to 0.109 ppm on top of the draft (about 0.6 of an overall point).
+* The tactic text on the Setup screen now says who it beats and who beats it; the how-to says so too (and a test keeps the text honest).
+* **The CPU no longer picks by `overall`**: a rival's choice is hidden, so a random pick is also the best mixed strategy. In a career
+  league each computer club plays one tactic all season (chosen from club and season); a manager's own tactic is never overridden,
+  including by the Best eleven button.
+* **Removed: Counter's "+2 attack when you are the underdog".** It is the one tactic bonus that is not zero-sum, and the harness
+  cannot see it (it measures near-equal pairs). Say if you want an underdog mechanic back; it would be a separate, gated lever.
+* Aggression is a real cost, not flavour: High Press at 1.4 cost about 0.058 ppm in cards and free kicks, so it is now 1.15 and its
+  defence penalty is -5.5 instead of -6 to keep it neutral. Counter and Fortress's aggression were tuned the same way.
+
+| 5x5 style matrix (ppm of the row against the column) | before | after |
+|---|---|---|
+| worst row vs the mean of all rows | **0.088** (Possession +0.088, Counter -0.061) | **0.009** |
+| best choice against all five opponents | Possession (dominant) | none |
+| never the best choice | Press, Wings, Counter | Wings (neutral by design) |
+
+After (full run):
+
+```
+[2] TACTICAL STYLES  (40 pairs x 50 matches, mirrored; cell = ppm of the ROW tactic against the COLUMN tactic)
+                possess   press   wings fortres counter  |  avg v 5  vs mean |  avg v 4  vs mean
+    possession    1.383   1.307   1.439   1.443   1.370  |    1.388   -0.008 |    1.390   -0.009
+    press         1.540   1.401   1.401   1.359   1.321  |    1.404   +0.007 |    1.405   +0.007
+    wings         1.394   1.398   1.408   1.387   1.424  |    1.402   +0.005 |    1.401   +0.002
+    fortress      1.312   1.419   1.413   1.348   1.473  |    1.393   -0.004 |    1.404   +0.006
+    counter       1.384   1.502   1.415   1.270   1.410  |    1.396   -0.001 |    1.393   -0.006
+    best choice    press counter possess possess fortres   (column maxima: 1.540 1.502 1.439 1.443 1.473)
+    dominant style (best choice against all five): none    never the best choice: wings
+
+[3] FORMATIONS  figures are "ppm minus the mean of the six formations" (0.000 = fair).
+    S0 equal      all 11 effective ratings = 80, natural players, no chemistry; round robin of 2000 matches per pair. Only the sim's arithmetic can differ: hypothesis A.
+    S1 fit rules  the same, but the fit table applies (the dealt card for LM/RM is a winger, for a wing-back a full-back). A plus the fit rules.
+    N native      400 squads drafted FOR each formation by the CPU draft v the population (14400 matches each, ±SE shown); "equal-ovr" removes the overall gap (0.132 ppm per overall point).
+    R switch-in   300 squads drafted for another formation re-seated into this one by Auto-arrange, paired with their own result: ppm lost by switching in (ovr lost in brackets).
+                    |      S0      S1 role pen |   N raw    ±SE equal-ovr  own ovr |  R switch   (ovr) |  goals
+    3-4-3   3-back  |  +0.012  -0.118      -12 |  -0.047  0.021    +0.010     85.4 |    -0.057  (-1.3) |   2.64
+    3-5-2   3-back  |  +0.015  +0.025       -6 |  -0.012  0.022    +0.002     85.7 |    -0.041  (-1.1) |   2.67
+    4-3-3   4-back  |  +0.021  +0.096       -0 |  +0.088  0.022    +0.002     86.5 |    +0.115  (-0.2) |   2.70
+    4-4-2   4-back  |  -0.027  -0.116      -12 |  -0.076  0.022    -0.014     85.4 |    -0.027  (-1.1) |   2.61
+    5-3-2   5-back  |  +0.011  +0.038       -6 |  -0.015  0.022    +0.002     85.7 |    -0.063  (-1.3) |   2.70
+    4-2-3-1 4-back  |  -0.031  +0.076       -0 |  +0.063  0.021    -0.001     86.3 |    +0.073  (-0.4) |   2.70
+    by back line   S0: 4-back -0.012  3-back +0.013  5-back +0.011
+                   S1: 4-back +0.019  3-back -0.047  5-back +0.038
+                   N raw: 4-back +0.025  3-back -0.030  5-back -0.015    N equal-ovr: 4-back -0.004  3-back +0.006  5-back +0.002
+                   R switch-in: 4-back +0.053  3-back -0.049  5-back -0.063
+    WHERE A 3-BACK / 5-BACK GAP COMES FROM  (each line is a direct measurement; "A" is hypothesis A, the rest is hypothesis B):
+      3-back  A sim maths +0.013   B1 fit table (roles with no natural player) -0.060   B2 switching in from another formation -0.049   drafted-for, lower overall -0.035
+      5-back  A sim maths +0.011   B1 fit table (roles with no natural player) +0.027   B2 switching in from another formation -0.063   drafted-for, lower overall -0.017
+
+[4] CAREER LEAGUE (real data: 942 players, mean keeper 64.3, keeper pivot 69.8)  6 seasons x 14 matchdays = 1344 matches
+    goals a match 2.61   (before Sprint 2: 2.60. With the draft game's pivot of 85 it was 3.49: every career keeper looked poor.)
+    +5 rating on the keeper: +0.096 ppm (±0.004)   (draft game: see [1])
+
+GATES
+  PASS  keeper: +5 GK                            target 0.09..0.12 ppm got +0.099
+  PASS  styles: every row within the mean        target ±0.03 ppm      got worst 0.009
+  PASS  styles: no dominant style                target none           got none
+  FAIL  formations S0 equal ratings (maths)      target ±0.03 ppm      got worst 0.031
+  FAIL  formations S1 with the fit rules         target ±0.03 ppm      got worst 0.118
+  PASS  formations N drafted-for, equal overall  target ±0.03 ppm      got worst 0.014
+  FAIL  formations N drafted-for, raw            target ±0.03 ppm (or 2 SE) got worst 0.088 (SE ~0.022)
+  FAIL  formations R cost of switching in        target ±0.03 ppm      got worst 0.115
+  PASS  goals a match, every formation           target 2.4..3.2       got 2.61..2.89
+  PASS  career: goals a match (real data)        target 2.4..2.9       got 2.61
+  PASS  career: +5 GK                            target 0.09..0.12 ppm got +0.096
+
+384,400 matches simulated. Fixed seeds: the numbers above repeat exactly.
+
+BALANCE: 4 gate(s) failing (--report: exit code 0)
+```
+
+#### A correction to 2.2 that the harness could not see, found while fixing 2.3
+
+Step 2.2 centred the keeper curve on 85, the mean keeper of a *drafted* squad. A **career league** is a different world: its keepers
+average **64.3**. With the pivot at 85 every career keeper looked poor, and real-data career goals per match went from **2.60 to 3.49
+(+33%)**. The draft-game harness measured only the draft game, so it passed. The career realism test caught the knock-on from 2.3
+(the CPU all playing Press), which is how it surfaced.
+
+* The pivot is now a property of the competition: `simulateMatch` takes `gkPivot` (default 85, the draft game), and a career league
+  derives it from its own keepers, `IndexedWorld.gkPivot = mean keeper + 5.5` (= 69.8 on the real data; 5.5 keeps goals at their old 2.60).
+* `GK_DIVISOR` 38 -> 36, because the new tactics moved the sector baseline and the keeper had slid to the edge of its band.
+* The harness has a new section **[4] career league** (real data, six seasons of 14 matchdays) with two gates: goals per match in
+  2.4..2.9 and +5 on the keeper in 0.09..0.12.
+
+| | before Sprint 2 | 2.2 as first committed | now |
+|---|---|---|---|
+| career goals a match (real data) | 2.60 | 3.49 | **2.61** |
+| career +5 keeper (ppm) | +0.027 (est.) | not measured | **+0.096** |
+| draft game +5 keeper (ppm) | +0.027 | +0.101 | **+0.099** |

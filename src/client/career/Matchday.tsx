@@ -63,7 +63,7 @@ export function Matchday({ ctx, onWatch }: { ctx: LeagueCtx; onWatch: () => void
   };
   const best = () => {
     const pool = mine.roster.filter(fit);
-    const sq = withRatings(v.ratings, () => bestSquad(pool.length >= 11 ? pool : mine.roster));
+    const sq = withRatings(v.ratings, () => bestSquad(pool.length >= 11 ? pool : mine.roster, lineup.style)); // the manager's own tactic stays
     setSel(null);
     void save(sq);
   };

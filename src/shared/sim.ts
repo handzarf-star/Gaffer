@@ -2,7 +2,7 @@ import { FORMATIONS, ROLE_TO_POS, effectiveOvr, type Role } from './formations';
 import { Rng } from './rng';
 import { player, shortName } from './players';
 import { YELLOW_PER_90, traits, type Traits } from './playerstats';
-import { profile, type Profile, type Squad } from './squad';
+import { matchup, profile, type Profile, type Squad, type StyleId } from './squad';
 
 export type EventType =
   | 'kickoff'
@@ -81,6 +81,8 @@ export interface MatchResult {
 export interface SimOptions {
   /** true = must produce a winner (extra time + shootout). */
   knockout: boolean;
+  /** the keeper rating that stops exactly the average share of shots in this competition (default: GK_PIVOT, the drafted-stars level) */
+  gkPivot?: number;
 }
 
 const ROLE_SCORE_W: Record<Role, number> = {
@@ -214,15 +216,36 @@ export const REASONS: Record<string, string> = {
   saves: '{n} saves',
 };
 
+/** Rating points a winning style gains where two styles meet, and the loser gives up. Calibrated with `npm run check:balance`. */
+export const MATCHUP_EDGE = 1.3;
+type Sectors = { att: number; mid: number; def: number };
+/** What each rule of STYLE_BEATS does to the sectors where the two styles meet (+1 / -1 times MATCHUP_EDGE). */
+const BEAT_EFFECT: Partial<Record<StyleId, { winner: Partial<Sectors>; loser: Partial<Sectors> }>> = {
+  press: { winner: { mid: 1 }, loser: { mid: -1 } },      // wins the ball back from a team building from the back
+  possession: { winner: { att: 1 }, loser: { def: -1 } }, // takes a low block apart
+  fortress: { winner: { def: 1 }, loser: { att: -1 } },   // leaves a counter-attack no space behind
+  counter: { winner: { att: 1 }, loser: { def: -1 } },    // runs straight past a high line
+};
+/** The rating points style `a` gains or loses against style `b`. Antisymmetric in the sense that what one side gains, the other side's rule takes. */
+export function matchupMods(a: StyleId, b: StyleId): Sectors {
+  const out: Sectors = { att: 0, mid: 0, def: 0 };
+  const m = matchup(a, b);
+  const eff = m === 1 ? BEAT_EFFECT[a]?.winner : m === -1 ? BEAT_EFFECT[b]?.loser : undefined;
+  for (const k of ['att', 'mid', 'def'] as const) out[k] = (eff?.[k] ?? 0) * MATCHUP_EDGE;
+  return out;
+}
+
 /**
  * How much the keeper changes the odds that a shot goes in: 1.00 for an average drafted keeper, fewer goals above that, more below.
  * Calibrated with `npm run check:balance`: +5 on the keeper has to be worth about its 15% share of the squad's overall, which is
  * +0.09 to +0.12 points a match (it was +0.03 with a divisor of 140, 4% of the team's worth). The pivot is the mean keeper of a drafted
  * squad (86.6 in the harness), so steepening the curve moves the odds between teams and leaves goals per match where they were.
+ * The pivot belongs to the COMPETITION, not to the game: a career league's keepers average 64, and judged against 85 every one of them
+ * would be a poor keeper and goals per match would jump by a third. A career therefore passes its own pivot (`IndexedWorld.gkPivot`).
  */
 export const GK_PIVOT = 85;
-export const GK_DIVISOR = 38;
-export const gkFactor = (eff: number): number => clamp(1 - (eff - GK_PIVOT) / GK_DIVISOR, 0.55, 1.5);
+export const GK_DIVISOR = 36;
+export const gkFactor = (eff: number, pivot: number = GK_PIVOT): number => clamp(1 - (eff - pivot) / GK_DIVISOR, 0.55, 1.5);
 
 /** Pure, deterministic match simulation. */
 export function simulateMatch(
@@ -233,6 +256,7 @@ export function simulateMatch(
   opts: SimOptions,
 ): MatchResult {
   const rng = new Rng(seed);
+  const gkPivot = opts.gkPivot ?? GK_PIVOT;
   /** pick a commentary line (same single random draw as before) and remember which one it was */
   const say = (group: string, vars: Record<string, string>): { text: string; tk: string; tv: Record<string, string> } => {
     const list = (T as unknown as Record<string, string[]>)[group]!;
@@ -246,12 +270,8 @@ export function simulateMatch(
     return { prof: profs[i as 0 | 1], units: u, onPitch: u.slice(), reds: 0, yellowed: new Set<string>(), form: rng.normal() };
   }) as [Side, Side];
 
-  // Counter: +2 attack when you are clearly the underdog
-  const attMod: [number, number] = [0, 0];
-  for (const i of [0, 1] as const) {
-    const me = i === 0 ? sqA : sqB;
-    if (me.style === 'counter' && profs[1 - i]!.overall - profs[i]!.overall >= 3) attMod[i] = 2;
-  }
+  // rock, paper, scissors: where the two styles meet, one side gains and the other gives up the same
+  const edge: [Sectors, Sectors] = [matchupMods(sqA.style, sqB.style), matchupMods(sqB.style, sqA.style)];
 
   const score: [number, number] = [0, 0];
   const events: MatchEvent[] = [];
@@ -274,13 +294,15 @@ export function simulateMatch(
     return rng.weighted(pool.length ? pool : side.onPitch, weight);
   };
   const gkOf = (side: Side): Unit | undefined => side.onPitch.find((u) => u.role === 'GK');
+  /** the keeper's rating as the match sees it: his own plus what the side's style adds (Fortress: +2). Before, that bonus was shown but never used. */
+  const gkEffOf = (side: Side): number => (gkOf(side)?.eff ?? 40) + (side.prof.gk - side.prof.base.gk);
 
   const strength = (side: Side, i: 0 | 1) => {
     const k = 1 - 0.06 * side.reds;
     return {
-      att: (side.prof.att + attMod[i] + side.form * FORM_SD * 1.0) * k,
-      mid: (side.prof.mid + side.form * FORM_SD * 0.7) * k,
-      def: (side.prof.def + side.form * FORM_SD * 0.6) * k,
+      att: (side.prof.att + edge[i].att + side.form * FORM_SD * 1.0) * k,
+      mid: (side.prof.mid + edge[i].mid + side.form * FORM_SD * 0.7) * k,
+      def: (side.prof.def + edge[i].def + side.form * FORM_SD * 0.6) * k,
       gk: side.prof.gk,
     };
   };
@@ -397,7 +419,7 @@ export function simulateMatch(
       push({ t: label, type: 'freekick', team: j, p: taker.id, v: victim.id, src: 'freekick', ...say('fk', { p: sn(taker.id), v: sn(victim.id), t: names[j] }) });
       card(i, fouler, YELLOW_PER_FOUL * 1.1, RED_PER_FOUL, label, victim.id);
       const gk = gkOf(side);
-      const gkF = gkFactor(gk?.eff ?? 40);
+      const gkF = gkFactor(gkEffOf(side), gkPivot);
       const pGoal = clamp(0.055 * (0.4 + taker.tr.fk * 1.1) * gkF, 0.01, 0.2);
       shot(j, taker, 'freekick', pGoal, pGoal, label);
     } else {
@@ -435,8 +457,7 @@ export function simulateMatch(
     if (!rng.chance(pChance)) {
       if (rng.chance(CORNER_SHOT_PER_ATTACK)) {
         const header = pickBy(atkSide, (u) => ROLE_HEAD_W[u.role] * Math.pow(Math.max(u.eff, 30) / 80, 3));
-        const gk = gkOf(dfnSide);
-        const gkF = gkFactor(gk?.eff ?? 40);
+        const gkF = gkFactor(gkEffOf(dfnSide), gkPivot);
         const pGoal = clamp(0.085 * (1 + (header.eff - 80) / 110) * gkF, 0.01, 0.4);
         stats.corners[att]++;
         push({ t: label, type: 'corner', team: att, p: header.id, src: 'corner', ...say('corner', { t: names[att] }) });
@@ -446,15 +467,14 @@ export function simulateMatch(
     }
 
     const shooter = pickBy(atkSide, (u) => ROLE_SCORE_W[u.role] * Math.pow(Math.max(u.eff, 30) / 80, 4));
-    const gk = gkOf(dfnSide);
-    const gkEff = gk ? gk.eff : 40;
+    const gkEff = gkEffOf(dfnSide);
     const base = clamp(OPEN_QUALITY + (atk.att - dfn.def) / 560 + rng.normal() * 0.022, 0.025, 0.4);
     // chances are not all alike: most are speculative, some are good, a few are clear-cut. The average is unchanged, so goals
     // per match are too; what changes is that the live view can honestly say "big chance".
     const kind = rng.next();
     const quality = clamp(base * (kind < 0.7 ? 0.55 : kind < 0.94 ? 1.6 : 4), 0.02, 0.62);
     const shooterF = 1 + (shooter.eff - 80) / 110;
-    const gkF = gkFactor(gkEff);
+    const gkF = gkFactor(gkEff, gkPivot);
     const pGoal = clamp(quality * shooterF * gkF, 0.01, 0.65);
     shot(att, shooter, 'play', pGoal, quality * shooterF, label);
   };

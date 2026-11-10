@@ -12,12 +12,43 @@ export interface Style {
 }
 
 export const STYLES: Record<StyleId, Style> = {
-  possession: { id: 'possession', name: 'Possession', blurb: 'Own the ball and the tempo.', tradeoff: '+4 midfield, -1 defence. Fewer, cleaner chances.' },
-  press: { id: 'press', name: 'High Press', blurb: 'Suffocate them high up the pitch.', tradeoff: '+2 attack, +3 midfield, -3 defence. More cards, more chaos.' },
-  wings: { id: 'wings', name: 'Wide Attack', blurb: 'Stretch them and get the ball out wide.', tradeoff: '+3 attack with two wide forwards (else +1), -1 midfield.' },
-  fortress: { id: 'fortress', name: 'Fortress', blurb: 'Low block. Frustrate them.', tradeoff: '+5 defence, +2 keeper, -3 attack. Low-scoring games.' },
-  counter: { id: 'counter', name: 'Counter', blurb: 'Absorb it, then hit them on the break.', tradeoff: '+3 attack, -2 midfield, and +2 attack more when you are the underdog.' },
+  possession: { id: 'possession', name: 'Possession', blurb: 'Own the ball and the tempo.', tradeoff: '+3 midfield, -2 attack, -1.5 defence. Fewer, cleaner chances.' },
+  press: { id: 'press', name: 'High Press', blurb: 'Suffocate them high up the pitch.', tradeoff: '+2 attack, +3 midfield, -5.5 defence. More cards, more chaos.' },
+  wings: { id: 'wings', name: 'Wide Attack', blurb: 'Stretch them and get the ball out wide.', tradeoff: '+3 attack, -3.5 defence with two wide forwards (else +1 and -1).' },
+  fortress: { id: 'fortress', name: 'Fortress', blurb: 'Low block. Frustrate them.', tradeoff: '+5 defence, +1 keeper, -3 attack, -2 midfield. Low-scoring games.' },
+  counter: { id: 'counter', name: 'Counter', blurb: 'Absorb it, then hit them on the break.', tradeoff: '+3 attack, -3 midfield. Fewer cards.' },
 };
+
+/** What a style does to the squad's sectors (rating points) and to the pace of the game. */
+export interface StyleMod { att: number; mid: number; def: number; gk: number; tempo: number; aggression: number }
+
+/**
+ * Every style is ZERO-SUM under the sector weights of `overall` (0.30 attack, 0.30 midfield, 0.25 defence, 0.15 keeper): choosing a
+ * style moves strength between sectors, it never adds any. (Before, each style added 0.3 to 0.95 points of `overall` for free, and the
+ * CPU, which picked the style with the highest `overall`, always chose Possession.) tests/squad.test.ts holds this to |change| <= 0.15,
+ * and `npm run check:balance` holds the playing strength of all five to within 0.03 points a match of each other. Tempo and
+ * aggression are not sectors, so they are tuned by that harness: aggression is a real cost (press 1.15: about -0.02 points a match from
+ * the cards and free kicks it concedes; counter 0.9 is worth about +0.02), which the sector numbers above already allow for.
+ */
+export const STYLE_MOD: Record<StyleId, StyleMod> = {
+  possession: { att: -2, mid: 3, def: -1.5, gk: 0, tempo: 0.9, aggression: 1 },
+  press: { att: 2, mid: 3, def: -5.5, gk: 0, tempo: 1.1, aggression: 1.15 },
+  wings: { att: 3, mid: 0, def: -3.5, gk: 0, tempo: 1.05, aggression: 1 },
+  fortress: { att: -3, mid: -2, def: 5, gk: 1, tempo: 0.8, aggression: 1.05 },
+  counter: { att: 3, mid: -3, def: 0, gk: 0, tempo: 0.95, aggression: 0.9 },
+};
+/** Wide Attack needs two wide forwards; with fewer the width is not there and the trade is smaller. */
+const WINGS_NARROW: StyleMod = { ...STYLE_MOD.wings, att: 1, def: -1 };
+export const styleMod = (style: StyleId, wide: number): StyleMod => (style === 'wings' && wide < 2 ? WINGS_NARROW : STYLE_MOD[style]);
+
+/**
+ * Rock, paper, scissors, from how the game is really played: a high press wins the ball back from a team that builds from the back;
+ * a team on the ball takes a low block apart; a low block gives a counter-attack no space behind; and a counter-attack runs
+ * straight past a high line. Wide Attack is the neutral style: it neither beats nor loses to anything.
+ */
+export const STYLE_BEATS: Record<StyleId, StyleId | null> = { press: 'possession', possession: 'fortress', fortress: 'counter', counter: 'press', wings: null };
+/** +1 if style `a` beats style `b`, -1 if `b` beats `a`, otherwise 0. */
+export const matchup = (a: StyleId, b: StyleId): -1 | 0 | 1 => (STYLE_BEATS[a] === b ? 1 : STYLE_BEATS[b] === a ? -1 : 0);
 export const STYLE_IDS = Object.keys(STYLES) as StyleId[];
 
 export interface Squad {
@@ -160,17 +191,12 @@ export function profile(sq: Squad): Profile {
     def: defW ? defS / defW : 50,
     gk,
   };
-  let { att, mid, def } = base;
-  let gkv = base.gk;
-  let tempo = 1;
-  let aggression = 1;
-  switch (sq.style) {
-    case 'possession': mid += 4; def -= 1; tempo = 0.9; break;
-    case 'press': att += 2; mid += 3; def -= 3; tempo = 1.1; aggression = 1.4; break;
-    case 'wings': att += wide >= 2 ? 3 : 1; mid -= 1; tempo = 1.05; break;
-    case 'fortress': def += 5; gkv += 2; att -= 3; tempo = 0.8; aggression = 0.9; break;
-    case 'counter': att += 3; mid -= 2; tempo = 0.95; break;
-  }
+  const mod = styleMod(sq.style, wide);
+  const att = base.att + mod.att;
+  const mid = base.mid + mod.mid;
+  const def = base.def + mod.def;
+  const gkv = base.gk + mod.gk;
+  const { tempo, aggression } = mod;
   const overall = OVERALL_W.att * att + OVERALL_W.mid * mid + OVERALL_W.def * def + OVERALL_W.gk * gkv;
   return {
     att: r1(att),

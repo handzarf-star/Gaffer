@@ -5,15 +5,19 @@
 //   [2] tactical styles      5x5 matrix (squads mirrored so quality cancels): row averages, best reply per column, dominant styles
 //   [3] formations           synthetic equal-rated squads / the same drafted squads re-seated / squads drafted for the formation,
 //                            and how much of any gap is sector maths (A) versus fit geometry and draft pool (B)
+//   [4] career league        real-data career seasons: goals per match, and the keeper's worth. The career pool rates 64 where the draft game's
+//                            stars rate 87, so a curve that is right for one can be badly wrong for the other.
 //
 // Every gate prints PASS or FAIL; the process exits 1 if any fail (use --report to always exit 0). --quick uses a quarter of the
 // matches for iterating: noisier, so only the full run counts. "ppm" = league points per match (win 3, draw 1, loss 0).
 //
 //   npm run check:balance            full run (about two minutes)
 //   npm run check:balance -- --quick
-//   npm run check:balance -- --only=styles   (sectors | styles | formations)
+//   npm run check:balance -- --only=styles   (sectors | styles | formations | career)
 
 import { buildBotSquad, type BotLevel } from '../src/shared/bots';
+import { autoLineup, createCareer, joinCareer, setReady, startCareer, tick } from '../src/shared/career/engine';
+import { getWorld } from '../src/shared/career/data';
 import { FORMATIONS, FORMATION_IDS, ROLE_TO_POS, penalty, type FormationId, type Role } from '../src/shared/formations';
 import { PLAYERS, player, withRatings } from '../src/shared/players';
 import { Rng } from '../src/shared/rng';
@@ -37,6 +41,8 @@ const GATE = {
   formationTol: 0.03,
   /** goals per match in any formation: a 5-back must not become a 0-0 machine, and nothing should become a goal-fest */
   goals: [2.4, 3.2] as const,
+  /** goals per match in a career league on the real data (2.60 before Sprint 2; real leagues are 2.5 to 2.9) */
+  careerGoals: [2.4, 2.9] as const,
 };
 
 /* ───────────── plumbing ───────────── */
@@ -70,6 +76,7 @@ const pairs: Array<[number, number]> = [];
 
 const t0 = Date.now();
 let matches = 0;
+let careerGk = { d: 0, se: 0 };
 
 /* ───────────── [1] sector sensitivity ───────────── */
 
@@ -287,6 +294,53 @@ if (want('formations')) {
   gate('formations R cost of switching in', `±${tol} ppm`, `worst ${f3(worst(rowR, GR))}`, worst(rowR, GR) <= tol);
   gate('goals a match, every formation', `${GATE.goals[0]}..${GATE.goals[1]}`, `${Math.min(...goalsAll).toFixed(2)}..${Math.max(...goalsAll).toFixed(2)}`, Math.min(...goalsAll) >= GATE.goals[0] && Math.max(...goalsAll) <= GATE.goals[1]);
   void GO;
+  console.log('');
+}
+
+/* ───────────── [4] a career league on the real data ───────────── */
+
+if (want('career')) {
+  const W = getWorld();
+  const HOUR = 3_600_000, T0 = 1_700_000_000_000;
+  const keepers = W.players.filter((p) => p.pos === 'GK').map((p) => p.ovr);
+  let G = 0, N = 0;
+  const seeds = QUICK ? 2 : 6;
+  for (let k = 1; k <= seeds; k++) {
+    const st = createCareer(W, 'ABCD', `r${k}`, T0);
+    joinCareer(W, st, { memberId: 'm0-xxxxxxxx', name: 'Man 0', choice: { kind: 'real', id: W.clubs.find((c) => c.league === 1)!.id } });
+    let now = T0;
+    startCareer(W, st, now);
+    while (st.phase === 'draft') { now += st.settings.pickHours * HOUR + 1; tick(W, st, now); }
+    let t = now;
+    for (let i = 0; i < 14; i++) {
+      t += 10; setReady(W, st, st.members[0]!.id, true, t);
+      for (const lid of ['1', '2'] as const) for (const f of st.leagues[lid].days[i]!) { G += f.r![0] + f.r![1]; N++; }
+    }
+    if (k === 1) {
+      // the keeper's worth in this league: every First League club against every other, +5 on A's keeper, same seeds
+      const ids = st.leagues['1'].clubs;
+      const lineups = Object.fromEntries(ids.map((id) => [id, autoLineup(W, st, st.clubs[id]!)]));
+      const d: number[] = [];
+      for (const a of ids) for (const b of ids) {
+        if (a === b) continue;
+        const gk = FORMATIONS[lineups[a]!.formation].slots.filter((s) => s.role === 'GK').map((s) => lineups[a]!.slots[s.id]!);
+        const ov = Object.fromEntries(gk.map((id) => [id, player(id).ovr + 5]));
+        for (let m = 0; m < scale(40); m++) {
+          const o = { knockout: false, gkPivot: W.gkPivot };
+          const r0 = simulateMatch(lineups[a]!, lineups[b]!, ['A', 'B'], `ck/${a}/${b}/${m}`, o);
+          const r1 = withRatings(ov, () => simulateMatch(lineups[a]!, lineups[b]!, ['A', 'B'], `ck/${a}/${b}/${m}`, o));
+          matches += 2; d.push(pts(r1.score) - pts(r0.score));
+        }
+      }
+      careerGk = { d: mean(d), se: sd(d) / Math.sqrt(d.length) };
+    }
+  }
+  const gpm = G / N;
+  console.log(`[4] CAREER LEAGUE (real data: ${W.players.length} players, mean keeper ${mean(keepers).toFixed(1)}, keeper pivot ${W.gkPivot})  ${seeds} seasons x 14 matchdays = ${N} matches`);
+  console.log(`    goals a match ${gpm.toFixed(2)}   (before Sprint 2: 2.60. With the draft game's pivot of 85 it was 3.49: every career keeper looked poor.)`);
+  console.log(`    +5 rating on the keeper: ${sgn(careerGk.d)} ppm (±${careerGk.se.toFixed(3)})   (draft game: see [1])`);
+  gate('career: goals a match (real data)', `${GATE.careerGoals[0]}..${GATE.careerGoals[1]}`, gpm.toFixed(2), gpm >= GATE.careerGoals[0] && gpm <= GATE.careerGoals[1]);
+  gate('career: +5 GK', `${GATE.gkPlus5[0]}..${GATE.gkPlus5[1]} ppm`, sgn(careerGk.d), careerGk.d >= GATE.gkPlus5[0] && careerGk.d <= GATE.gkPlus5[1]);
   console.log('');
 }
 

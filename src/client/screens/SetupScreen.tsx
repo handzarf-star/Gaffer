@@ -3,11 +3,11 @@ import type { RatingsMode } from '../../shared/draft';
 import type { TFn } from '../../shared/i18n';
 import { FORMATIONS, FORMATION_IDS, fitKind, penalty, type FormationId } from '../../shared/formations';
 import { player, shortName } from '../../shared/players';
-import { STYLES, STYLE_IDS, profile, type Squad, type StyleId } from '../../shared/squad';
+import { STYLES, STYLE_BEATS, STYLE_IDS, profile, type Squad, type StyleId } from '../../shared/squad';
 import { Pitch } from '../components/Pitch';
 import { Timer } from '../components/Timer';
 import { Avatar, Button, Icon, cx } from '../components/ui';
-import { useI18n } from '../lib/i18n';
+import { useI18n, useStyleName } from '../lib/i18n';
 import { sfx } from '../lib/sfx';
 
 export interface SetupRival {
@@ -52,6 +52,13 @@ function sectorLabel(t: TFn, key: SectorKey): string {
 
 export function SetupScreen(p: SetupProps) {
   const { t } = useI18n();
+  const styleName = useStyleName();
+  /** rock, paper, scissors: who this tactic beats and who beats it */
+  const edgeText = (id: StyleId): string => {
+    const beats = STYLE_BEATS[id];
+    const loses = STYLE_IDS.find((x) => STYLE_BEATS[x] === id);
+    return beats && loses ? t('Beats {a}. Loses to {b}.', { a: styleName(beats), b: styleName(loses) }) : t('The neutral tactic: no edge either way.');
+  };
   const [sel, setSel] = useState<string | null>(null);
   const prof = useMemo(() => profile(p.squad), [p.squad]);
   const f = FORMATIONS[p.squad.formation];
@@ -171,6 +178,7 @@ export function SetupScreen(p: SetupProps) {
                     <b>{t(s.name)}</b>
                     <span>{t(s.blurb)}</span>
                     <small>{t(s.tradeoff)}</small>
+                    <small className="style__edge">{edgeText(id)}</small>
                   </button>
                 );
               })}

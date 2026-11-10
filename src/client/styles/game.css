@@ -205,6 +205,7 @@
 .style b { font: 800 15px var(--font-display); }
 .style span { font-size: 13px; color: var(--text-2); }
 .style small { font-size: 12px; color: var(--muted); }
+.style small.style__edge { color: var(--text-2); font-weight: 600; }
 .style.is-on { border-color: var(--accent); background: var(--accent-soft); }
 .readybar { display: grid; gap: 12px; }
 .readybar__who { display: flex; flex-wrap: wrap; gap: 8px; }

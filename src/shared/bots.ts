@@ -62,13 +62,8 @@ export function buildBotSquad(seed: string, pool: PoolKey, level: BotLevel, take
     }
     sq = best;
   }
-  let style = rng.pick(STYLE_IDS);
-  if (level !== 'easy' && rng.chance(cfg.skill)) {
-    let bestOvr = -1;
-    for (const st of STYLE_IDS) {
-      const o = profile({ ...sq, style: st }).overall;
-      if (o > bestOvr) { bestOvr = o; style = st; }
-    }
-  }
+  // Styles are zero-sum and the rival's choice is hidden (rock, paper, scissors), so no style is "best": a CPU picks one at random,
+  // which is also the best mixed strategy. (It used to take the style with the highest `overall`, which was always Possession.)
+  const style = rng.pick(STYLE_IDS);
   return { ...sq, style };
 }
