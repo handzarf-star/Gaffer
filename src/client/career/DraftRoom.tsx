@@ -23,13 +23,17 @@ export function DraftRoom({ ctx }: { ctx: LeagueCtx }) {
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
 
+  const rosterIds = v.mine?.roster ?? [];
+  const legalFor = (id: string) => !me || legalAfter(W, [...rosterIds, id]);
+
   const pool = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return d.available
       .map((id) => W.player(id))
       .filter((p) => (line === 'ALL' || lineOf(p.pos) === line) && (!needle || p.name.toLowerCase().includes(needle)))
-      .sort((a, b) => ovrNow(v, b.id) - ovrNow(v, a.id) || a.name.localeCompare(b.name));
-  }, [d.available, line, q, v]);
+      // players the squad rules allow come first, so the one you need is never buried under blocked names late in the draft
+      .sort((a, b) => Number(legalFor(b.id)) - Number(legalFor(a.id)) || ovrNow(v, b.id) - ovrNow(v, a.id) || a.name.localeCompare(b.name));
+  }, [d.available, line, q, v]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const roster = v.mine?.roster ?? [];
   const counts = useMemo(() => {
@@ -39,7 +43,7 @@ export function DraftRoom({ ctx }: { ctx: LeagueCtx }) {
   }, [roster]);
 
   // the squad rules, checked here too so a player who cannot be taken is greyed out instead of failing when tapped
-  const legal = (id: string) => legalAfter(W, [...roster, id]);
+  const legal = legalFor;
 
   const pick = async (id: string) => {
     setBusy(id); setErr('');

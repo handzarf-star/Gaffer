@@ -17,6 +17,8 @@
 
 ## What you can do
 
+- **Career mode (new).** Pick a real Balkan club (or invent one) and manage it season after season, alone or with up to three friends. Every club, yours and the computer's, **drafts 20 real players from all sixteen First League squads** in a snake order; then 30 matchdays with a **bench, injuries and bans**, a **mid-season transfer window** (three changes are free; more and your new players need time to settle and the whole team loses sharpness, never points), a season-end window, **promotion and relegation** between a First and a Second League, and players who age. Squads come from Wikipedia and Wikidata (see `data/README.md`); **the ratings are estimates and say how they were made**. Sign in with Google or play as a guest. Matchdays work together or apart: they play when every manager is ready, or at a deadline with your saved line-up, and you can watch your match any time afterwards.
+- **Bosnian version.** EN | BS in the top bar. Career mode, the home page, the app shell and the whole match screen, including the match commentary, are in Bosnian; the older room, cup and daily screens are still English only.
 - **Play a friend, or the CPU, or both.** One button makes a room: a 4-letter code and a link. 1 to 4 people. Add CPU teams at three levels and one phone is enough.
 - **Run a tournament.** Single match, **league** (everyone plays everyone, once or home and away), **groups then knockout**, or straight **knockout** with extra time and penalties. 2 to 16 teams. CPU teams draft after you from what is left.
 - **Only watch your own games.** Two friends side by side each see their own match. Games between CPU teams are just a result: they appear in the table between matchdays and nobody sits through them.
@@ -54,10 +56,11 @@ That is the whole deploy: it builds the client and publishes one Worker that ser
 ## Test it
 
 ```bash
-npm test                   # 185 unit, simulation, tournament, room-machine, chaos, socket and data tests
+npm test                   # 296 unit, simulation, tournament, room-machine, chaos, socket, career, sign-in, data and translation tests
 npm run test:e2e           # real browsers: two-player games, two phones in a league, one phone at five sizes,
                            # reconnects, accessibility audit, and a hard kill-and-restart of the runtime
 npm run check:persistence  # just the kill-and-restart check (boots its own copy of the runtime)
+npm run check:career       # career API on the real runtime: sign-in, a league, SIGKILL and restart
 npm run test:all           # typecheck + unit + build + e2e + brand sweep
 ```
 
