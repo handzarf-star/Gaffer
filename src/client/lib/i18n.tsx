@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { DEFAULT_LANG, LANGS, LANG_IDS, detectLang, makeT, type Lang, type TFn, type TnFn } from '../../shared/i18n';
 import '../../shared/i18n/bs';
+import type { StyleId } from '../../shared/squad';
 import { lsGet, lsSet } from './storage';
 
 interface Ctx { lang: Lang; setLang: (l: Lang) => void; t: TFn; tn: TnFn }
@@ -30,4 +31,18 @@ export function LangToggle() {
       ))}
     </div>
   );
+}
+
+/** Tactic names in the reader's language (the English names live in shared/squad.ts, next to their numbers). */
+export function useStyleName() {
+  const { t } = useI18n();
+  return (id: StyleId): string => {
+    switch (id) {
+      case 'possession': return t('Possession');
+      case 'press': return t('High press');
+      case 'wings': return t('Wide attack');
+      case 'fortress': return t('Fortress');
+      default: return t('Counter');
+    }
+  };
 }

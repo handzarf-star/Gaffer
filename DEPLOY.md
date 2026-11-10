@@ -84,6 +84,28 @@ npx wrangler rollback        # back to the previous version
 - A room saved by an older build of the game cannot be resumed (the stored format changed with tournaments), so it is dropped on deploy. Rooms last an evening, so this only matters for a game that is mid-draft at the moment you deploy.
 - **Name clashes with your other Cloudflare projects.** Two things can collide: the Worker name (`gaffer` in `wrangler.jsonc`) and a custom domain or route. A different Worker with a different name and no shared route cannot interfere. If another project already uses the name `gaffer`, or the hostname or route you attach, change `name` in `wrangler.jsonc` (and never reuse a Durable Object class name across Workers you want to keep separate) before deploying. Check **Workers & Pages** in the dashboard first; nothing here deletes or touches another project.
 
+## 8. Career mode: accounts, leagues and Google sign-in
+
+**Nothing is required.** Career mode works the moment this deploys: guests sign in with just a name, and the new storage (one Durable Object per league, one per account) is created by the `v2` migration in `wrangler.jsonc` on the first deploy. There is no database to create and no secret to set; the server makes and keeps its own signing secret.
+
+**Optional: "Continue with Google"** (so a league follows you across phones and survives clearing your browser). You can do all of this on an iPhone:
+
+1. Open `console.cloud.google.com` in Safari, create a project (any name).
+2. *APIs & Services → OAuth consent screen*: choose *External*, give it an app name and your email, save. While the app is in *Testing*, only the Google accounts you add under *Test users* can sign in. Press *Publish app* when you want anybody to be able to.
+3. *APIs & Services → Credentials → Create credentials → OAuth client ID → Web application.* Under *Authorized JavaScript origins* add your site exactly as it appears in the address bar, for example `https://gaffer.yourname.workers.dev` (and your own domain if you add one). Leave *redirect URIs* empty. Create it and copy the **Client ID**. You do not need the client secret and should not paste it anywhere.
+4. In your GitHub repository open `wrangler.jsonc`, put the Client ID in `"vars": { "GOOGLE_CLIENT_ID": "…" }` and commit. Cloudflare redeploys by itself. (Set it in `wrangler.jsonc`, not only in the Cloudflare dashboard: a deploy from Git makes the file the source of truth and would overwrite a dashboard-only value.)
+5. Open `/career`. The Google button appears above the guest option. If it does not, `GET /api/me` returns `"googleClientId": null`, which means the variable did not reach the deploy.
+
+What is safe, and what is not:
+
+* **(Certain)** We never see a Google password. The browser sends us a signed Google ID token; the server checks its signature against Google's public keys, the issuer, that it was minted for *your* client id, that it has not expired, and a one-time-looking value only this server could have issued (so a copied token cannot be replayed). Tests cover the classic attacks (unsigned `alg: none` tokens, the wrong audience, an old token).
+* **(Certain)** We keep a one-way hash of your Google user id, a name you can change, and the list of leagues you are in. No email address, no photo. Other players only ever see your display name.
+* **(Certain)** The sign-in cookie is `HttpOnly` (scripts cannot read it), `SameSite=Lax`, and `Secure` on https. Anything that changes data also checks the request came from this site.
+* **(Likely)** A guest account is exactly as private, but it lives only in that browser's cookie. Clear it and the leagues are unreachable. Use Google for a league you care about.
+* **(Guessing)** I could not test the Google button itself here (no Google account, no network). Everything around it is tested; the first real sign-in is the first end-to-end check, so try it once before you rely on it.
+
+Leagues nobody has opened for 120 days are deleted automatically.
+
 ## Prefer your own server?
 
 ```bash

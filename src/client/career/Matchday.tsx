@@ -6,7 +6,7 @@ import { withRatings } from '../../shared/players';
 import { STYLE_IDS, changeFormation, type Squad, type StyleId } from '../../shared/squad';
 import { Pitch } from '../components/Pitch';
 import { Banner, Button, Seg, cx } from '../components/ui';
-import { useI18n } from '../lib/i18n';
+import { useI18n, useStyleName } from '../lib/i18n';
 import type { LeagueCtx } from './ctx';
 import { ClubTag, NewsLine, PlayerRow, Section, Standings, W, WhyRating, clubName, ovrNow, useCountdown, useLineLabel } from './parts';
 import { shortName } from '../../shared/players';
@@ -14,19 +14,6 @@ import { shortName } from '../../shared/players';
 type Tab = 'match' | 'squad' | 'table' | 'news';
 const isSlot = (s: string) => /^s\d+$/.test(s);
 const LINES: Line[] = ['GK', 'DF', 'MF', 'FW'];
-
-function useStyleName() {
-  const { t } = useI18n();
-  return (id: StyleId): string => {
-    switch (id) {
-      case 'possession': return t('Possession');
-      case 'press': return t('High press');
-      case 'wings': return t('Wide attack');
-      case 'fortress': return t('Fortress');
-      default: return t('Counter');
-    }
-  };
-}
 
 export function Matchday({ ctx, onWatch }: { ctx: LeagueCtx; onWatch: () => void }) {
   const { t, tn } = useI18n();

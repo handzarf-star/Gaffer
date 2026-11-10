@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { MAX_LINE, MIN_LINE, ROSTER } from '../../shared/career/engine';
+import { MAX_LINE, MIN_LINE, ROSTER, legalAfter } from '../../shared/career/engine';
 import { lineOf, type Line } from '../../shared/career/world';
 import { Button, Seg } from '../components/ui';
 import { useI18n } from '../lib/i18n';
@@ -37,6 +37,9 @@ export function DraftRoom({ ctx }: { ctx: LeagueCtx }) {
     for (const id of roster) c[lineOf(W.player(id).pos)]++;
     return c;
   }, [roster]);
+
+  // the squad rules, checked here too so a player who cannot be taken is greyed out instead of failing when tapped
+  const legal = (id: string) => legalAfter(W, [...roster, id]);
 
   const pick = async (id: string) => {
     setBusy(id); setErr('');
@@ -76,8 +79,11 @@ export function DraftRoom({ ctx }: { ctx: LeagueCtx }) {
         <ul className="plist">
           {pool.slice(0, limit).map((p) => (
             <li key={p.id}>
-              <PlayerRow v={v} id={p.id} note={<span className="muted small">{W.club(p.club).name}</span>} right={
-                me ? <Button size="sm" variant={myTurn ? 'primary' : 'soft'} disabled={!myTurn || !!busy} loading={busy === p.id} onClick={() => pick(p.id)}>{t('Pick')}</Button> : undefined
+              <PlayerRow v={v} id={p.id} note={<>
+                <span className="muted small">{W.club(p.club).name}</span>
+                {me && !legal(p.id) && <span className="tag tag--warn">{t('Would unbalance your squad')}</span>}
+              </>} right={
+                me ? <Button size="sm" variant={myTurn ? 'primary' : 'soft'} disabled={!myTurn || !!busy || !legal(p.id)} loading={busy === p.id} onClick={() => pick(p.id)}>{t('Pick')}</Button> : undefined
               }>
                 <WhyRating id={p.id} />
               </PlayerRow>

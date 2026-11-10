@@ -75,7 +75,10 @@ describe('Bosnian coverage', () => {
     }
   });
   it('has no leftover English keys that the code no longer uses (dictionary stays honest)', () => {
-    const used = new Set([...keys, ...plurals]);
+    // data such as the brand tagline is translated through t(variable), so a key also counts as used if its exact text is a string in the source
+    const literals = new Set<string>();
+    for (const f of src) for (const m of fs.readFileSync(f, 'utf8').matchAll(new RegExp(STR, 'g'))) literals.add(unq(m[1] ?? m[2] ?? ''));
+    const used = new Set([...keys, ...plurals, ...literals]);
     const dead = Object.keys(bs).filter((k) => !used.has(k) && !k.startsWith('@'));
     expect(dead.slice(0, 5), 'unused dictionary entries (first 5)').toEqual([]);
   });
