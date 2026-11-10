@@ -12,7 +12,7 @@ if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
 const errors = [];
 const log = (...a) => console.log('•', ...a);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-async function openPack(page) { const s = page.locator('.sealed'); if (await s.count()) { await s.first().click({ timeout: 3000 }).catch(() => {}); await new Promise((r) => setTimeout(r, 750)); } }
+async function openPack(page) { const s = page.locator('.sealed, .pack'); if (await s.count()) { await s.first().click({ timeout: 3000 }).catch(() => {}); await new Promise((r) => setTimeout(r, 750)); } }
 
 const browser = await chromium.launch();
 const viewport = MOBILE ? { width: 390, height: 844 } : { width: 1360, height: 900 };
@@ -92,6 +92,7 @@ for (let step = 0; step < 80; step++) {
   for (const p of both) {
     const mine = p.page.locator('.turn--you');
     if (await mine.count()) {
+      if (shotsTaken === 0 && (await p.page.locator('.pack').count())) { await sleep(700); await shot(p, '03a-choose-pack'); }
       await openPack(p.page);
       const cards = p.page.locator('.board .pcard:not([disabled])');
       if (await cards.count()) {

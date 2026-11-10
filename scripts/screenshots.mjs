@@ -7,7 +7,7 @@ const browser = await chromium.launch();
 async function ctx(scheme, mobile = false) {
   return browser.newContext({ viewport: mobile ? { width: 390, height: 844 } : { width: 1360, height: 900 }, colorScheme: scheme, isMobile: mobile, hasTouch: mobile, deviceScaleFactor: 1 });
 }
-async function openPack(page) { const s = page.locator('.sealed'); if (await s.count()) { await s.first().click({ timeout: 3000 }).catch(() => {}); await sleep(900); } }
+async function openPack(page) { const s = page.locator('.sealed, .pack'); if (await s.count()) { await s.first().click({ timeout: 3000 }).catch(() => {}); await sleep(900); } }
 
 // light desktop: home + selected card
 let c = await ctx('light'); let p = await c.newPage();

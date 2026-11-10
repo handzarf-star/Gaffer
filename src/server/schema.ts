@@ -33,6 +33,7 @@ export const C2SSchema = z.discriminatedUnion('t', [
   }),
   z.object({ t: z.literal('formation'), formation }),
   z.object({ t: z.literal('start') }),
+  z.object({ t: z.literal('pack'), round: z.number().int().min(0).max(99), index: z.number().int().min(0).max(8) }),
   z.object({ t: z.literal('pick'), round: z.number().int().min(0).max(99), card: z.string().max(80), slot: slotId }),
   z.object({ t: z.literal('swap'), a: slotId, b: slotId }),
   z.object({ t: z.literal('arrange') }),

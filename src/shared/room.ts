@@ -6,8 +6,9 @@ import { BOT_LEVELS, botNames, buildBotSquad } from './bots';
 import { COMPETITIONS, completeDay, createCompetition, defaultTeams, litefy, validTeams, type CompetitionKind, type Matchday } from './competition';
 import { ROUNDS, autoPick, boardSize, dealBoard, openRoles, placePlayer } from './draft';
 import { FORMATIONS, FORMATION_IDS, type FormationId } from './formations';
+import { dealPacks } from './packs';
 import { PLAYER_BY_ID } from './players';
-import { Rng, randomSeed, randomToken } from './rng';
+import { Rng, hashSeed, randomSeed, randomToken } from './rng';
 import { playbackSchedule, simulateMatch } from './sim';
 import { STYLES, autoArrange, changeFormation, emptySquad, swapSlots } from './squad';
 import {
@@ -265,6 +266,8 @@ export class RoomEngine {
         this.startDraft(now);
         return OK;
       }
+      case 'pack':
+        return this.openPack(id, msg.round, msg.index, now);
       case 'pick':
         return this.pick(id, msg.round, msg.card, msg.slot, now);
       case 'swap': {
@@ -462,17 +465,23 @@ export class RoomEngine {
     d.round = round;
     d.picked = [];
     if (!d.turns) d.turn = 0; // in take-turns, turn is whose draft it is and only moves when they are done
-    if (d.turns) {
-      const id = d.order[d.turn]!;
+    d.offers = undefined;
+    d.opened = {};
+    // everyone who is choosing gets three sealed packs; they only see the clues until they open one
+    const sealed = (id: string) => {
       const sq = s.squads[id]!;
-      d.boards = {
-        [id]: dealBoard({
-          seed: s.seed, pool: s.settings.pool, round, key: id,
-          size: boardSize('turns', n),
-          taken: new Set(Object.values(sq.slots).filter((x): x is string => !!x)),
-          needs: [openRoles(sq).map((o) => o.role)],
-        }),
-      };
+      d.offers![id] = dealPacks({
+        seed: s.seed, pool: s.settings.pool, round, key: id,
+        size: boardSize('packs', n),
+        taken: new Set(Object.values(sq.slots).filter((x): x is string => !!x)),
+        needs: [openRoles(sq).map((o) => o.role)],
+      });
+      d.boards[id] = [];
+    };
+    if (d.turns) {
+      d.offers = {};
+      d.boards = {};
+      sealed(d.order[d.turn]!);
     } else if (d.shared) {
       const needs = ids.map((id) => openRoles(s.squads[id]!).map((o) => o.role));
       d.board = dealBoard({
@@ -484,15 +493,8 @@ export class RoomEngine {
       d.order = round % 2 === 1 ? base : base.slice().reverse();
     } else {
       d.boards = {};
-      for (const id of ids) {
-        const sq = s.squads[id]!;
-        d.boards[id] = dealBoard({
-          seed: s.seed, pool: s.settings.pool, round, key: id,
-          size: boardSize('packs', n),
-          taken: new Set(Object.values(sq.slots).filter((x): x is string => !!x)),
-          needs: [openRoles(sq).map((o) => o.role)],
-        });
-      }
+      d.offers = {};
+      for (const id of ids) sealed(id);
       d.order = ids;
     }
     d.deadline = this.turnDeadline(now, round === 1);
@@ -539,11 +541,35 @@ export class RoomEngine {
       if (d.picked.includes(id)) return fail('not_your_turn', 'You already picked this round.');
       board = d.boards[id] ?? [];
     }
+    if (board.length === 0 && d.offers?.[id]) return fail('bad_card', 'Open a pack first.');
     if (!board.includes(card) || !PLAYER_BY_ID.has(card)) return fail('bad_card', 'That card is not on the board.');
     const sq = s.squads[id];
     if (!sq || !(slot in sq.slots) || sq.slots[slot]) return fail('bad_slot', 'That position is already filled.');
     this.applyPick(id, card, slot, false, now);
     return OK;
+  }
+
+  private openPack(id: string, round: number, index: number, now: number): Result {
+    const s = this.s;
+    const d = s.draft;
+    if (s.phase !== 'draft' || !d) return fail('wrong_phase', 'The draft is not running.');
+    if (d.shared || !d.offers) return fail('wrong_phase', 'This draft has no packs to open.');
+    if (round !== d.round) return fail('stale_round', 'That round is over.');
+    if (d.turns && d.order[d.turn] !== id) return fail('not_your_turn', 'Not your turn to draft yet.');
+    const offers = d.offers[id];
+    if (!offers || d.picked.includes(id)) return fail('not_your_turn', 'You have no pack to open right now.');
+    if (d.opened?.[id] !== undefined) return fail('bad_card', 'You already opened a pack.');
+    if (!Number.isInteger(index) || index < 0 || index >= offers.length) return fail('bad_message', 'Unknown pack.');
+    this.openOffer(id, index);
+    this.bump(now);
+    return OK;
+  }
+
+  private openOffer(id: string, index: number): void {
+    const d = this.s.draft!;
+    d.opened = d.opened ?? {};
+    d.opened[id] = index;
+    d.boards[id] = d.offers![id]![index]!.cards.slice();
   }
 
   private applyPick(id: string, card: string, slot: string, auto: boolean, now: number): void {
@@ -581,6 +607,9 @@ export class RoomEngine {
   private autoPickFor(id: string, now: number): void {
     const s = this.s;
     const d = s.draft!;
+    // somebody who ran out of time before choosing a pack gets one chosen for them, by the seed, so it is never a leak
+    const mine = d.offers?.[id];
+    if (!d.shared && mine && (d.boards[id] ?? []).length === 0) this.openOffer(id, hashSeed(`${s.seed}/open/${d.round}/${id}`) % mine.length);
     const board = d.shared ? d.board : (d.boards[id] ?? []);
     const sq = s.squads[id]!;
     let choice = autoPick(sq, board);
@@ -915,6 +944,9 @@ export class RoomEngine {
         turns: !!d.turns,
         // take-turns: everyone sees the pack of whoever is up, so the other player can watch the draft happen
         board: d.shared ? d.board : d.turns ? (d.boards[d.order[d.turn]!] ?? []) : (d.boards[forId] ?? []),
+        // only the clues on the packs, never what is inside the ones that stay sealed
+        packs: d.shared ? undefined : d.offers?.[d.turns ? d.order[d.turn]! : forId]?.map((o) => o.clue),
+        opened: d.shared ? undefined : (d.opened?.[d.turns ? d.order[d.turn]! : forId] ?? null),
         order: d.order,
         turn: d.turn,
         picked: d.picked,

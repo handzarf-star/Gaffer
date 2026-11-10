@@ -8,7 +8,7 @@ const BASE = process.env.BASE ?? 'http://localhost:8787';
 const axeSrc = fs.readFileSync(createRequire(import.meta.url).resolve('axe-core/axe.min.js'), 'utf8');
 const browser = await chromium.launch();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-async function openPack(page) { const s = page.locator('.sealed'); if (await s.count()) { await s.first().click({ timeout: 3000 }).catch(() => {}); await new Promise((r) => setTimeout(r, 750)); } }
+async function openPack(page) { const s = page.locator('.sealed, .pack'); if (await s.count()) { await s.first().click({ timeout: 3000 }).catch(() => {}); await new Promise((r) => setTimeout(r, 750)); } }
 let total = 0;
 const seen = new Map();
 
@@ -44,6 +44,7 @@ async function tournament(page, scheme) {
   const once = async (name, fn) => { if (!done.has(name)) { done.add(name); await fn(); } };
   for (let i = 0; i < 700 && !(await page.locator('.result').count()); i++) {
     if (await page.locator('.turn--you').count()) {
+      if (await page.locator('.pack').count()) await once('packs', () => audit(page, `${scheme}: choose a pack (three sealed packs with clues)`));
       await openPack(page);
       const cards = page.locator('.board .pcard:not([disabled])');
       if (await cards.count()) { await cards.first().click().catch(() => {}); await page.keyboard.press('Enter'); await sleep(120); }

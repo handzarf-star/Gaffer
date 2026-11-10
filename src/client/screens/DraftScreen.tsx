@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ROUNDS, openRoles, suggestSlot, type RatingsMode } from '../../shared/draft';
+import type { PackClue } from '../../shared/packs';
+import { PackChooser } from '../components/PackChooser';
 import { FORMATIONS, fitKind, penalty, type Role } from '../../shared/formations';
 import { player, shortName, tierOf, type Tier } from '../../shared/players';
 import { chemistry, profile, type Squad } from '../../shared/squad';
@@ -46,6 +48,10 @@ export interface DraftScreenProps {
   turns?: boolean;
   /** while watching, whose pitch to show */
   watchId?: string;
+  /** pick-a-pack: the clues on the three sealed packs, which one is open, and how to open one. Absent in Duel and the solo cup. */
+  packs?: PackClue[];
+  opened?: number | null;
+  onOpenPack?: (index: number) => void;
   deadline: number | null;
   offset: number;
   pickMs: number;
@@ -104,7 +110,9 @@ export function DraftScreen(p: DraftScreenProps) {
   }, [p.round, p.turn, p.turnName]);
 
   // Packs format: the pack starts sealed. Its glow hints at the best card inside; tap to open (or it opens by itself).
-  const sealed = !p.shared && !p.turns && p.canPick && p.board.length > 0 && opened !== p.round;
+  // (the single sealed pack is the solo cup's; rooms with packs choose between three instead)
+  const choosing = !!p.packs?.length && p.board.length === 0 && !p.shared;
+  const sealed = !p.packs && !p.shared && !p.turns && p.canPick && p.board.length > 0 && opened !== p.round;
   const bestTier: Tier | 'mystery' = useMemo(() => {
     if (p.mode === 'hidden') return 'mystery';
     const order: Tier[] = ['bronze', 'silver', 'gold', 'icon'];
@@ -206,8 +214,8 @@ export function DraftScreen(p: DraftScreenProps) {
             <>
               <span className="turn__badge"><Icon name="bolt" size={18} /></span>
               <div className="turn__text">
-                <b>{sealed ? 'Open your pack' : p.turn === 'all' ? 'Your pack is open' : 'Your pick'}</b>
-                <span>{sealed ? 'Tap it. The glow hints at what is inside' : selected ? 'Tap a green spot or press Enter' : 'Choose one card'}</span>
+                <b>{choosing ? 'Choose a pack' : sealed ? 'Open your pack' : p.turn === 'all' ? 'Your pack is open' : 'Your pick'}</b>
+                <span>{choosing ? 'Read the clues. They are rumours, not promises' : sealed ? 'Tap it. The glow hints at what is inside' : selected ? 'Tap a green spot or press Enter' : 'Choose one card'}</span>
               </div>
             </>
           )}
@@ -217,10 +225,12 @@ export function DraftScreen(p: DraftScreenProps) {
 
       <section className="draft__board" aria-label={p.shared ? 'Shared board' : p.turns && !p.canPick ? `${p.turnName}'s pack` : 'Your pack'}>
         <div className="board__title">
-          <h2>{p.shared ? 'Shared board' : p.turns && !p.canPick ? `${p.turnName}'s pack` : 'Your pack'}</h2>
-          <span>{p.shared ? `${p.board.length} left. Once it's taken, it's gone.` : p.turns && !p.canPick ? 'Watching live' : 'Pick 1 of 3'}</span>
+          <h2>{p.shared ? 'Shared board' : choosing ? (p.canPick ? 'Three sealed packs' : `${p.turnName ?? 'They'} is choosing`) : p.turns && !p.canPick ? `${p.turnName}'s pack` : p.packs && p.opened != null && p.packs[p.opened] ? p.packs[p.opened]!.name : 'Your pack'}</h2>
+          <span>{p.shared ? `${p.board.length} left. Once it's taken, it's gone.` : choosing ? (p.canPick ? 'Pick one to open' : 'Watching live') : p.turns && !p.canPick ? 'Watching live' : 'Pick 1 of 3'}</span>
         </div>
-        {sealed ? (
+        {choosing ? (
+          <PackChooser packs={p.packs!} canPick={p.canPick} mode={p.mode} who={p.turnName} onOpen={(i) => { sfx.reveal('silver'); buzz(30); p.onOpenPack?.(i); }} />
+        ) : sealed ? (
           <button type="button" className={cx('sealed', `sealed--${bestTier}`)} onClick={openPack}>
             <span className="sealed__foil" aria-hidden="true" />
             <span className="sealed__mark" aria-hidden="true"><Icon name="ball" size={46} /></span>

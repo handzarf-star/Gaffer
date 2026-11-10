@@ -435,6 +435,9 @@ function DraftRoom({ conn, view, offset }: PhaseProps) {
       turnHue={turnHue}
       canPick={canPick}
       shared={d.shared}
+      packs={d.packs}
+      opened={d.opened}
+      onOpenPack={(i) => conn.send({ t: 'pack', round: d.round, index: i })}
       turns={turnsMode}
       watchId={turnsMode && turnId !== you ? turnId : undefined}
       deadline={d.deadline}
