@@ -92,3 +92,33 @@ BALANCE: 6 gate(s) failing (--report: exit code 0)
 
 When `st@v<old>` backups are first used for a real migration in Sprint 3B, the migration must prune any backup older than
 `v(current - 1)` so Durable Object storage never accumulates historical copies. Add a test with three stacked backups.
+
+---
+
+## Changes, in order (each lever is its own commit; tables are the full harness)
+
+### 2.2 Keeper: the shot-stopping curve (`sim.ts`, `gkFactor`)
+
+The keeper stays at 0.15 of `overall`. The three copies of `1 - (gk - 80) / 140` (open play, corners, free kicks) became one function,
+`gkFactor(eff) = clamp(1 - (eff - 85) / 38, 0.55, 1.5)`.
+
+| +5 rating on one sector | before | after | overall weight |
+|---|---|---|---|
+| attack | +0.243 (34%) | +0.241 (31%) | 30% |
+| midfield | +0.228 (32%) | +0.228 (29%) | 30% |
+| defence | +0.214 (30%) | +0.214 (27%) | 25% |
+| **keeper** | **+0.027 (4%)** | **+0.101 (13%)** | **15%** |
+| goals a match (near-equal pairs) | 2.80 | 2.77 | |
+
+Two things the brief did not expect:
+
+* **`/70` is not enough.** Measured with the real engine, a divisor of 70 buys +0.054 ppm, half the target. The target needs about `/38`
+  (sweep: `/70` +0.054, `/50` +0.077, `/40` +0.096, `/38` +0.105, `/36` +0.108).
+* **The pivot had to move from 80 to 85.** The mean keeper of a drafted squad is 86.6, so a steeper curve centred on 80 made the
+  average keeper an above-average one and cut league-wide goals from 2.80 to 2.61 a match. Centred at 85 the curve moves the odds
+  *between* teams and leaves goals per match where they were.
+
+An elite keeper (95) now stops about a quarter of the shots that an 85 would concede (`gkFactor` 0.74); a poor one (65) concedes
+about 1.5 times as many (clamped).
+
+The golden table in `tests/result-text.test.ts` (40 seeded matches) follows the engine and was re-recorded on purpose.

@@ -214,6 +214,16 @@ export const REASONS: Record<string, string> = {
   saves: '{n} saves',
 };
 
+/**
+ * How much the keeper changes the odds that a shot goes in: 1.00 for an average drafted keeper, fewer goals above that, more below.
+ * Calibrated with `npm run check:balance`: +5 on the keeper has to be worth about its 15% share of the squad's overall, which is
+ * +0.09 to +0.12 points a match (it was +0.03 with a divisor of 140, 4% of the team's worth). The pivot is the mean keeper of a drafted
+ * squad (86.6 in the harness), so steepening the curve moves the odds between teams and leaves goals per match where they were.
+ */
+export const GK_PIVOT = 85;
+export const GK_DIVISOR = 38;
+export const gkFactor = (eff: number): number => clamp(1 - (eff - GK_PIVOT) / GK_DIVISOR, 0.55, 1.5);
+
 /** Pure, deterministic match simulation. */
 export function simulateMatch(
   sqA: Squad,
@@ -387,7 +397,7 @@ export function simulateMatch(
       push({ t: label, type: 'freekick', team: j, p: taker.id, v: victim.id, src: 'freekick', ...say('fk', { p: sn(taker.id), v: sn(victim.id), t: names[j] }) });
       card(i, fouler, YELLOW_PER_FOUL * 1.1, RED_PER_FOUL, label, victim.id);
       const gk = gkOf(side);
-      const gkF = clamp(1 - ((gk?.eff ?? 40) - 80) / 140, 0.55, 1.5);
+      const gkF = gkFactor(gk?.eff ?? 40);
       const pGoal = clamp(0.055 * (0.4 + taker.tr.fk * 1.1) * gkF, 0.01, 0.2);
       shot(j, taker, 'freekick', pGoal, pGoal, label);
     } else {
@@ -426,7 +436,7 @@ export function simulateMatch(
       if (rng.chance(CORNER_SHOT_PER_ATTACK)) {
         const header = pickBy(atkSide, (u) => ROLE_HEAD_W[u.role] * Math.pow(Math.max(u.eff, 30) / 80, 3));
         const gk = gkOf(dfnSide);
-        const gkF = clamp(1 - ((gk?.eff ?? 40) - 80) / 140, 0.55, 1.5);
+        const gkF = gkFactor(gk?.eff ?? 40);
         const pGoal = clamp(0.085 * (1 + (header.eff - 80) / 110) * gkF, 0.01, 0.4);
         stats.corners[att]++;
         push({ t: label, type: 'corner', team: att, p: header.id, src: 'corner', ...say('corner', { t: names[att] }) });
@@ -444,7 +454,7 @@ export function simulateMatch(
     const kind = rng.next();
     const quality = clamp(base * (kind < 0.7 ? 0.55 : kind < 0.94 ? 1.6 : 4), 0.02, 0.62);
     const shooterF = 1 + (shooter.eff - 80) / 110;
-    const gkF = clamp(1 - (gkEff - 80) / 140, 0.55, 1.5);
+    const gkF = gkFactor(gkEff);
     const pGoal = clamp(quality * shooterF * gkF, 0.01, 0.65);
     shot(att, shooter, 'play', pGoal, quality * shooterF, label);
   };
