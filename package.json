@@ -1,0 +1,47 @@
+{
+  "name": "gaffer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A fast, friend-first football draft game. Draft an XI, steal your mate's target, let the match engine settle it.",
+  "scripts": {
+    "dev": "concurrently -k -n web,api \"vite\" \"wrangler dev --port 8787\"",
+    "dev:node": "concurrently -k -n web,api \"vite\" \"tsx src/server/node-dev.ts\"",
+    "build": "npm run typecheck && vite build",
+    "typecheck": "tsc -p tsconfig.app.json && tsc -p tsconfig.worker.json && tsc -p tsconfig.node.json",
+    "preview": "npm run build && wrangler dev --port 8787",
+    "deploy": "npm run build && wrangler deploy",
+    "test": "vitest run",
+    "test:e2e": "node e2e/run.mjs",
+    "check:brand": "node scripts/brand-sweep.mjs",
+    "test:all": "npm run typecheck && npm test && npm run build && npm run test:e2e && npm run check:brand",
+    "icons": "node scripts/make-icons.mjs",
+    "check:persistence": "node scripts/check-persistence.mjs",
+    "predev": "node -e \"require('node:fs').mkdirSync('dist/client',{recursive:true})\"",
+    "predev:node": "node -e \"require('node:fs').mkdirSync('dist/client',{recursive:true})\""
+  },
+  "dependencies": {
+    "@fontsource-variable/bricolage-grotesque": "^5.2.0",
+    "@fontsource-variable/inter": "^5.2.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261109.1",
+    "@playwright/test": "1.63.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@types/ws": "^8.5.13",
+    "@vitejs/plugin-react": "^4.7.0",
+    "axe-core": "^4.14.0",
+    "concurrently": "^9.1.0",
+    "tsx": "^4.19.0",
+    "typescript": "~5.9.3",
+    "vite": "^6.4.0",
+    "vitest": "^3.2.0",
+    "wrangler": "^4.159.0",
+    "ws": "^8.18.0",
+    "zod": "^4.0.0"
+  }
+}

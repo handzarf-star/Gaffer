@@ -1,0 +1,5 @@
+{
+  "avoid": ["Draftie", "Draftie Cup", "draftieonline"],
+  "domains": ["draftie.online"],
+  "colors": ["#c6ff3d", "#166534", "#052e16", "#7f998c", "#2e67e9", "#351972", "#f87c26", "#22c55e", "#f1f5f0"]
+}

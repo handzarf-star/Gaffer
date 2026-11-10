@@ -1,0 +1,59 @@
+/* Gaffer design tokens. Roles are fixed; only values change per theme. Contrast verified with replica/design/*.json */
+:root {
+  color-scheme: light;
+  --bg: #f4f7fb; --surface: #ffffff; --surface-2: #eaf0f7; --glass: rgb(255 255 255 / .74);
+  --border: #d5deea; --border-input: #7a8aa3;
+  --text: #0b1324; --text-2: #2f3d55; --muted: #52627b;
+  --accent: #0b7d4f; --accent-strong: #076f46; --on-accent: #ffffff; --accent-soft: #dcf7ea;
+  --accent-2: #2f55f0; --on-accent-2: #ffffff; --accent-2-soft: #e3e9ff;
+  --ink: #0b1324; --on-ink: #f6f9fd;
+  --danger: #c4301f; --danger-soft: #fde6e2; --warning: #8a5a00; --warning-soft: #fff1d1; --success: #0b7a4b;
+  --blob-1: #ffd3dc; --blob-2: #c9dcff; --blob-3: #c8f3de;
+  --shadow-1: 0 1px 2px rgb(11 19 36 / .06), 0 2px 8px rgb(11 19 36 / .05);
+  --shadow-2: 0 12px 32px -10px rgb(11 19 36 / .22), 0 2px 6px rgb(11 19 36 / .06);
+  --shadow-3: 0 28px 70px -14px rgb(11 19 36 / .34);
+  --pitch-a: #1f7a46; --pitch-b: #248550; --pitch-line: rgb(255 255 255 / .8);
+
+  --bronze-1: #e0a06a; --bronze-2: #8f5426; --bronze-ink: #2a1503;
+  --silver-1: #eef2f8; --silver-2: #9aa7bc; --silver-ink: #151c28;
+  --gold-1: #ffe58a; --gold-2: #d79a0e; --gold-ink: #3a2600;
+  --icon-1: #7ae7ff; --icon-2: #b58bff; --icon-3: #ff8ad8; --icon-4: #ffe38a; --icon-ink: #10112b;
+  --fit-natural: #34f09a; --fit-close: #ffd23f; --fit-stretch: #ff9a3d; --fit-poor: #ff5a4d;
+  --r-sm: 10px; --r-md: 16px; --r-lg: 24px; --r-pill: 999px;
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --font-display: 'Bricolage Grotesque Variable', 'Inter Variable', system-ui, sans-serif;
+  --font-sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --topbar-h: 60px;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0a1017; --surface: #121b25; --surface-2: #1a2633; --glass: rgb(18 27 37 / .78);
+  --border: #26364a; --border-input: #6f819b;
+  --text: #eef3fa; --text-2: #c4d0e0; --muted: #98a9bf;
+  --accent: #34d68c; --accent-strong: #22b874; --on-accent: #04281a; --accent-soft: #123a29;
+  --accent-2: #8aa0ff; --on-accent-2: #0a1230; --accent-2-soft: #1b2650;
+  --ink: #eef3fa; --on-ink: #0a1017;
+  --danger: #ff8272; --danger-soft: #3a1914; --warning: #f5bd4f; --warning-soft: #33280b; --success: #4ade9a;
+  --blob-1: #3a1a26; --blob-2: #15284f; --blob-3: #0f3a2a;
+  --shadow-1: 0 1px 2px rgb(0 0 0 / .4), 0 2px 8px rgb(0 0 0 / .3);
+  --shadow-2: 0 12px 32px -10px rgb(0 0 0 / .6), 0 2px 6px rgb(0 0 0 / .4);
+  --shadow-3: 0 28px 70px -14px rgb(0 0 0 / .8);
+  --pitch-a: #14573a; --pitch-b: #17613f; --pitch-line: rgb(255 255 255 / .7);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+  color-scheme: dark;
+  --bg: #0a1017; --surface: #121b25; --surface-2: #1a2633; --glass: rgb(18 27 37 / .78);
+  --border: #26364a; --border-input: #6f819b;
+  --text: #eef3fa; --text-2: #c4d0e0; --muted: #98a9bf;
+  --accent: #34d68c; --accent-strong: #22b874; --on-accent: #04281a; --accent-soft: #123a29;
+  --accent-2: #8aa0ff; --on-accent-2: #0a1230; --accent-2-soft: #1b2650;
+  --ink: #eef3fa; --on-ink: #0a1017;
+  --danger: #ff8272; --danger-soft: #3a1914; --warning: #f5bd4f; --warning-soft: #33280b; --success: #4ade9a;
+  --blob-1: #3a1a26; --blob-2: #15284f; --blob-3: #0f3a2a;
+  --shadow-1: 0 1px 2px rgb(0 0 0 / .4), 0 2px 8px rgb(0 0 0 / .3);
+  --shadow-2: 0 12px 32px -10px rgb(0 0 0 / .6), 0 2px 6px rgb(0 0 0 / .4);
+  --shadow-3: 0 28px 70px -14px rgb(0 0 0 / .8);
+  --pitch-a: #14573a; --pitch-b: #17613f; --pitch-line: rgb(255 255 255 / .7);
+}
+}

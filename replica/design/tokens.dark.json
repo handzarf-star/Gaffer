@@ -1,0 +1,40 @@
+{
+  "color": {
+    "bg": "#0a1017",
+    "surface": "#121b25",
+    "surface-2": "#1a2633",
+    "border": "#26364a",
+    "border-input": "#6f819b",
+    "text": "#eef3fa",
+    "text-2": "#c4d0e0",
+    "text-muted": "#98a9bf",
+    "accent": "#34d68c",
+    "on-accent": "#04281a",
+    "accent-2": "#8aa0ff",
+    "on-accent-2": "#0a1230",
+    "ink-button": "#eef3fa",
+    "on-ink-button": "#0a1017",
+    "danger": "#ff8272",
+    "warning": "#f5bd4f",
+    "success": "#4ade9a"
+  },
+  "pairs": [
+    ["text", "bg"],
+    ["text", "surface"],
+    ["text-2", "bg"],
+    ["text-muted", "bg"],
+    ["text-muted", "surface"],
+    ["text-muted", "surface-2"],
+    ["on-accent", "accent"],
+    ["accent", "bg"],
+    ["accent", "surface"],
+    ["on-accent-2", "accent-2"],
+    ["accent-2", "bg"],
+    ["on-ink-button", "ink-button"],
+    ["danger", "surface"],
+    ["warning", "surface"],
+    ["success", "surface"],
+    ["border-input", "bg", "ui"],
+    ["border-input", "surface", "ui"]
+  ]
+}
