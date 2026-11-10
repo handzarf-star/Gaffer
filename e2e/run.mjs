@@ -33,7 +33,9 @@ const steps = [
   ['one phone vs CPU teams at small, large and landscape sizes (+ iOS zoom rule)', 'e2e/devices.mjs', { BASE }],
   ['themed pools: Premier League, Balkans, era chips, thin-mix guard, pack chooser', 'e2e/pools.mjs', { BASE }],
   ['WCAG audit (axe-core), light + dark, incl. tournament screens', 'e2e/a11y.mjs', { BASE }],
+  ['career mode: two phones draft, play, switch to Bosnian, use the transfer window and finish a season (+ a11y)', 'e2e/career.mjs', { BASE }],
   ['hard kill + restart of the runtime mid-draft and mid-tournament', 'scripts/check-persistence.mjs', {}],
+  ['career API on the real runtime: guest sign-in, a league, hard kill + restart keeps cookie and league', 'scripts/check-career-api.mjs', {}],
 ];
 let failed = 0;
 for (const [name, file, env] of steps) {
