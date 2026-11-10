@@ -54,7 +54,7 @@ That is the whole deploy: it builds the client and publishes one Worker that ser
 ## Test it
 
 ```bash
-npm test                   # 138 unit, simulation, tournament, room-machine, chaos and socket tests
+npm test                   # 185 unit, simulation, tournament, room-machine, chaos, socket and data tests
 npm run test:e2e           # real browsers: two-player games, two phones in a league, one phone at five sizes,
                            # reconnects, accessibility audit, and a hard kill-and-restart of the runtime
 npm run check:persistence  # just the kill-and-restart check (boots its own copy of the runtime)
@@ -75,6 +75,8 @@ src/client/   React screens, design tokens, resilient socket layer, and the live
               function from a finished match and a clock to dot and ball positions, so it is unit-tested)
 tests/ e2e/   vitest and Playwright
 replica/      the reverse-engineering, parity score, bug log and the devil's advocate report
+data/         sourced squads of 16 Balkan clubs (Wikipedia + Wikidata, every row pinned to a source) for the
+scripts/data/ planned season mode; the fetch / parse / merge pipeline. Not used by the game yet. See data/README.md
 ```
 
 Key decisions: the server owns every rule; the match and every board come from a seed; a tournament is simulated matchday by matchday and only matches a human plays keep their full story; state is persisted so a redeploy never loses a draft; the player pool ships with the build so there is no database to go down.
@@ -89,6 +91,8 @@ Key decisions: the server owns every rule; the match and every board come from a
 ## A note on the players
 
 **Premier League and eras are my recollection too.** Which players ever played in the Premier League, and which decade each retired player peaked in, are judgement calls from memory (`src/shared/pools.ts`). A test checks every name matches a real player, but not that I remembered correctly. The **Balkan** pool adds 72 players from Bosnia, Croatia and Serbia (current internationals and some league players) with my own rough ratings. I could not recall the Bosnian league reliably, so it is not there: send me names and ratings and I will add them.
+
+**Real squads are a separate, sourced dataset.** `data/` holds the current first-team squads of 16 Balkan clubs, read from Wikipedia club articles (revision pinned per club) with birth dates from Wikidata. Nothing in it is written from memory, and gaps stay gaps: about two thirds of players have a birth date, positions are only goalkeeper / defender / midfielder / forward, and there are **no ability ratings** (no free, sourced feed exists), so any rating in a future season mode will be a labelled estimate. Squad facts are from Wikipedia (CC BY-SA 4.0, credit: Wikipedia contributors) and Wikidata (CC0). The game does not use this data yet.
 
 The cards, fouls and penalties in a match are driven by league-wide averages (about 4 yellows and 0.15 reds a match, a penalty roughly every 3 or 4 games converting at about 78%). The per-player traits (who gets booked, who takes and scores penalties, who scores free kicks) are **my approximate recollections of reputations, not scraped statistics**, and the free-kick conversion rate is an estimate. They give the right flavour (a notorious tackler is booked more than a clean player) without pretending to be data. Edit them in `src/shared/playerstats.ts`.
 
