@@ -7,9 +7,13 @@ import './styles/tokens.css';
 import './styles/base.css';
 import './styles/app.css';
 import './styles/game.css';
+import './styles/career.css';
+import { LangProvider } from './lib/i18n';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <LangProvider>
+      <App />
+    </LangProvider>
   </StrictMode>,
 );

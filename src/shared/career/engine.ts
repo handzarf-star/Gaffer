@@ -113,7 +113,7 @@ export interface SeasonRecord {
   humans: Record<string, { league: 1 | 2; pos: number }>;
 }
 
-export interface HumanMatch { league: 1 | 2; a: string; b: string; result: MatchResult }
+export interface HumanMatch { league: 1 | 2; a: string; b: string; result: MatchResult; squads: [Squad, Squad] }
 
 export interface CareerState {
   v: 1;
@@ -163,7 +163,7 @@ function lineCounts(w: IndexedWorld, ids: readonly string[]): Record<Line, numbe
 }
 
 /** Can a roster that holds `ids` still be completed into a legal squad of ROSTER players? */
-function legalAfter(w: IndexedWorld, ids: readonly string[]): boolean {
+export function legalAfter(w: IndexedWorld, ids: readonly string[]): boolean {
   const c = lineCounts(w, ids);
   const lines = Object.keys(MIN_LINE) as Line[];
   if (lines.some((l) => c[l] > MAX_LINE[l])) return false;
@@ -421,26 +421,28 @@ function openMatchday(st: CareerState, now: number): void {
 export function autoLineup(w: IndexedWorld, st: CareerState, club: Club): Squad {
   let pool = club.roster.filter((id) => isAvailable(st, id));
   if (pool.length < 11) pool = [...club.roster]; // never field fewer than eleven
-  const over = overlayFor(w, st, club);
-  return withRatings(over, () => {
-    let best: Squad | null = null;
-    let bestO = -1;
-    for (const f of FORMATION_IDS) {
-      const placed = assignBest(pool, FORMATIONS[f]);
-      const slots: Record<string, string | null> = {};
-      for (const s of FORMATIONS[f].slots) slots[s.id] = placed[s.id] ?? null;
-      const sq: Squad = { formation: f, slots, style: 'possession' };
-      const o = profile(sq).overall;
-      if (o > bestO) { best = sq; bestO = o; }
-    }
-    let style: StyleId = 'possession';
-    let so = -1;
-    for (const s of STYLE_IDS) {
-      const o = profile({ ...best!, style: s }).overall;
-      if (o > so) { so = o; style = s; }
-    }
-    return { ...best!, style };
-  });
+  return withRatings(overlayFor(w, st, club), () => bestSquad(pool));
+}
+
+/** The best formation, style and eleven out of a pool of players, at the ratings currently in force (call inside withRatings for overrides). */
+export function bestSquad(pool: readonly string[]): Squad {
+  let best: Squad | null = null;
+  let bestO = -1;
+  for (const f of FORMATION_IDS) {
+    const placed = assignBest([...pool], FORMATIONS[f]);
+    const slots: Record<string, string | null> = {};
+    for (const s of FORMATIONS[f].slots) slots[s.id] = placed[s.id] ?? null;
+    const sq: Squad = { formation: f, slots, style: 'possession' };
+    const o = profile(sq).overall;
+    if (o > bestO) { best = sq; bestO = o; }
+  }
+  let style: StyleId = 'possession';
+  let so = -1;
+  for (const s of STYLE_IDS) {
+    const o = profile({ ...best!, style: s }).overall;
+    if (o > so) { so = o; style = s; }
+  }
+  return { ...best!, style };
 }
 
 function autoFormation(w: IndexedWorld, st: CareerState, club: Club): void {
@@ -556,7 +558,8 @@ export function tick(w: IndexedWorld, st: CareerState, now: number): boolean {
       if (due) runDay(w, st, now);
     } else if (st.phase === 'window' && st.window) {
       const win = st.window;
-      const allReady = st.members.every((m) => m.auto || win.ready[m.id]);
+      // auto-play plays a manager's matches; it does not make his squad decisions, so a window still waits for him (or the deadline)
+      const allReady = st.members.every((m) => win.ready[m.id]);
       if (allReady || (win.deadline !== null && now >= win.deadline)) closeWindow(w, st, now);
     }
     if (st.rev === rev || (st.season !== season0 && st.phase === 'play')) break;
@@ -616,7 +619,7 @@ export function runDay(w: IndexedWorld, st: CareerState, now: number): void {
       });
       f.r = [res.r.score[0], res.r.score[1]];
       f.g = res.r.events.filter((e) => e.type === 'goal' && e.p).map((e) => e.p!);
-      if (f.hum) humanMatches.push({ league: lid, a: f.a, b: f.b, result: res.r });
+      if (f.hum) humanMatches.push({ league: lid, a: f.a, b: f.b, result: res.r, squads: [res.sa, res.sb] });
       applyMatch(w, st, res.r, res.sa, res.sb, seed, played, pending);
     }
   }
@@ -922,7 +925,7 @@ export function viewFor(w: IndexedWorld, st: CareerState, memberId: string | nul
     window: st.window && st.phase === 'window' ? {
       kind: st.window.kind, free: st.window.free, max: st.window.max, deadline: st.window.deadline,
       plan: m ? st.window.plans[m.id] ?? [] : [], ready: m ? !!st.window.ready[m.id] : false,
-      others: Object.fromEntries(st.members.map((x) => [x.id, !!st.window!.ready[x.id] || x.auto])),
+      others: Object.fromEntries(st.members.map((x) => [x.id, !!st.window!.ready[x.id]])),
       pool: freePool(w, st).map((p) => p.id),
     } : null,
     injuries: st.injuries, susp: st.susp, yel: st.yel,

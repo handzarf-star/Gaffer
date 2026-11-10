@@ -284,6 +284,16 @@ describe('the transfer window', () => {
     const someonesPlayer = st.clubs['t05']!.roster[0]!;
     expect(windowPlan(W, st, m.id, [{ out: me.roster[0]!, in: someonesPlayer }])).toMatchObject({ ok: false, code: 'in' });
   });
+  it('a manager on auto-play still gets a say in the window: it waits for him until its deadline', () => {
+    const { st, now, m } = atWindow('autowin');
+    setAuto(st, m.id, true);
+    tick(W, st, now + 1000);
+    expect(st.phase).toBe('window');
+    tick(W, st, now + st.settings.windowHours * HOUR + 1);
+    // the window closed at its deadline; auto-play then plays his matches through to the next stop, the end-of-season window
+    expect(st.window?.kind).toBe('end');
+    expect(st.history).toHaveLength(1);
+  });
   it('closes at its deadline even if the manager never answers', () => {
     const { st, now } = atWindow('late');
     tick(W, st, now + st.settings.windowHours * HOUR + 1);
