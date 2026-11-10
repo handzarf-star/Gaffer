@@ -106,6 +106,23 @@ What is safe, and what is not:
 
 Leagues nobody has opened for 120 days are deleted automatically.
 
+## 9. "I pushed, but the link did not change"
+
+Three separate things can cause this. In order of how often they are the answer:
+
+1. **The change is not on `main`.** Cloudflare publishes the production link only from the production branch (`main`). A push to any other branch (such as `claude/…`) only produces a *Preview*, never the link. Merge the pull request into `main`, then watch *Workers & Pages → your Worker → Deployments → View build history*. On GitHub the pull request shows a *Workers Builds* check with a link to the same build.
+2. **A Preview build fails.** Every non-production branch is built with `npx wrangler preview`, which **requires a `previews` block in `wrangler.jsonc`** (it may be empty). Because this app reads its Durable Objects through `env`, that block repeats the three bindings. If you add a Durable Object, add it in both places. A failing Preview does not stop `main` from deploying, but it shows a red cross on every pull request.
+3. **The production build itself fails.** Open the failed build in the dashboard and read the last 20 lines of the log; the usual causes are a name mismatch (the Worker name on Cloudflare must equal `"name"` in `wrangler.jsonc`, here `gaffer`), a stale build token (create a new one under *Settings → Build → API token*), or `npm ci` complaining that `package-lock.json` is out of sync.
+
+You can reproduce Cloudflare's build exactly, offline, from a fresh clone:
+
+```bash
+git clone https://github.com/<you>/<repo> fresh && cd fresh
+npm ci && npm run build && npx wrangler deploy --dry-run
+```
+
+If that passes, the code and config are deployable and the cause is in the Cloudflare project settings, not the repository.
+
 ## Prefer your own server?
 
 ```bash
