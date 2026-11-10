@@ -51,7 +51,7 @@ export function LeaguePage({ code }: { code: string }) {
       ) : view.phase === 'draft' ? (
         <DraftRoom ctx={ctx} />
       ) : view.phase === 'window' ? (
-        <Window ctx={ctx} />
+        <Window key={`${view.season}-${view.window?.kind}`} ctx={ctx} />
       ) : mine ? (
         watch ? <Watch code={code} v={view} onClose={() => setWatch(false)} /> : <Matchday ctx={ctx} onWatch={() => setWatch(true)} />
       ) : (

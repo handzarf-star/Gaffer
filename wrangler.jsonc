@@ -22,5 +22,17 @@
   ],
   // Public OAuth client id for "Sign in with Google" (not a secret). Leave empty to play as a guest only. See DEPLOY.md.
   "vars": { "GOOGLE_CLIENT_ID": "" },
+  // Cloudflare builds every branch except main as a "Preview" (npx wrangler preview), and that REQUIRES this block. The code reads its
+  // Durable Objects through env, so the three bindings are repeated here; each Preview gets its own empty storage, never the real data.
+  "previews": {
+    "durable_objects": {
+      "bindings": [
+        { "name": "ROOMS", "class_name": "Room" },
+        { "name": "CAREERS", "class_name": "CareerRoom" },
+        { "name": "ACCOUNTS", "class_name": "Account" }
+      ]
+    },
+    "vars": { "GOOGLE_CLIENT_ID": "" }
+  },
   "observability": { "enabled": true }
 }

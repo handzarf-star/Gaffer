@@ -186,11 +186,21 @@ try {
   await A.page.locator('.swaps li').nth(3).getByRole('button', { name: 'Undo this change' }).click();
   await A.page.getByRole('button', { name: 'Confirm changes and continue' }).click();
   await B.page.getByRole('button', { name: 'Keep my squad and continue' }).click();
-  for (const { page } of [A, B]) await page.getByRole('tab', { name: 'Match' }).waitFor({ timeout: 20_000 });
-  console.log('✓ window closed when both were ready; play resumed');
-  await A.page.getByRole('tab', { name: 'Squad' }).click();
-  await A.page.getByText('Settling in').first().waitFor();
-  console.log('✓ new signings show as settling in');
+  // both managers are still on auto-play, so the window closing lets the rest of the season play out and the league stops at the season summary
+  for (const { page } of [A, B]) await page.getByText('Season 1 is over').waitFor({ timeout: 40_000 });
+  console.log('✓ window closed when both were ready; the season played out and stopped at the end-of-season window');
+  await A.page.getByText('Everyone is a year older').waitFor();
+  await audit(A.page, 'season summary + end-of-season window');
+  await noSideScroll(A.page, 'season end');
+  await A.page.screenshot({ path: path.join(OUT, 'career-season-end.png') });
+  for (const { page } of [A, B]) await page.getByRole('button', { name: 'Keep my squad and continue' }).click();
+  // auto-play carries season 2 straight to its own mid-season window, so assert on the league state, not on a heading that flashes by
+  for (const { page } of [A, B]) await page.getByText('Mid-season transfer window').waitFor({ timeout: 40_000 });
+  const season = await A.page.evaluate(async (c) => (await (await fetch(`/api/career/${c}`)).json()).view.season, code);
+  must(season === 2, `expected season 2, got ${season}`);
+  const hist = await A.page.evaluate(async (c) => (await (await fetch(`/api/career/${c}`)).json()).view.history.length, code);
+  must(hist === 1, `expected one finished season in the history, got ${hist}`);
+  console.log('✓ season 2 began after both managers were ready and played to its own transfer window; season 1 is in the history');
 
   await A.ctx.close(); await B.ctx.close();
   if (violations) throw new Error(`${violations} accessibility violation(s)`);
