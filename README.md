@@ -9,6 +9,8 @@
 
 <p align="center"><img src="docs/screens/mobile-match.png" width="230" alt="Live match on a phone: chances, cards and goals highlighted"> &nbsp; <img src="docs/screens/mobile-watching.png" width="230" alt="Watching your mate draft, live, in Take turns mode"> &nbsp; <img src="docs/screens/mobile-draft.png" width="230" alt="Draft on a phone"></p>
 
+<p align="center"><img src="docs/screens/match-arrow.png" width="300" alt="Quiet play: one big arrow showing who is attacking whom and how dangerous it is"></p>
+
 <p align="center"><img src="docs/screens/mobile-packs.png" width="230" alt="Choose one of three sealed packs, each with clues"> &nbsp; <img src="docs/screens/eras.png" width="300" alt="Era chips with player counts for the chosen pool"></p>
 
 <p align="center"><img src="docs/screens/landscape-match.png" width="520" alt="The match held sideways: pitch on the left, scoreboard and events on the right"></p>
@@ -24,7 +26,7 @@
 - **Themed pools and eras.** Draft from Modern Stars, the Hall of Legends, Everyone, the **Premier League** (anyone who played there) or the **Balkans** (Bosnia, Croatia and Serbia, with some league players), and narrow it by era with a tap: up to the 70s, the 80s, 90s, 2000s, 2010s or today. A mix that is too thin for the number of teams is refused, with the reason on screen.
 - **See the fit.** Every spot on the pitch shows how well a player suits it (natural, close, a stretch, out of position) as colour, icon and words, with the exact rating penalty. Same-nation neighbours link for chemistry.
 - **Pick tactics.** Five styles, each with a stated trade-off. Your rival can't see your lineup or tactics until kick-off.
-- **Watch the match on a pitch.** Dots and a ball on a live pitch. Players pass between neighbours at a believable pace and nobody can run faster than a sprinter or teleport (that is measured by a test, not eyeballed). Chances are flagged and highlighted, and so are corners, free kicks (with a wall), penalties, yellow and red cards, saves and goals. A match takes about a minute and a half; quiet stretches move the match clock on while the players keep moving calmly. Extra time and penalties happen when the stage needs a winner. Skip any time.
+- **Watch the match as a story.** Quiet play is one big arrow across the pitch with the team's name on it: it points at the goal that team is attacking, its tip creeps toward that goal as the attack gets dangerous, and a clear-cut chance reads BIG CHANCE and turns their half red-hot. The danger is the match engine's own chance of scoring, so the arrow never overstates. Dots and the ball appear only for real highlights (goals, penalties, red cards and real chances), move at a believable pace (nobody runs faster than a sprinter, nothing teleports, measured by a test) and fade away again. Yellow cards, speculative shots and routine set pieces are a label on the arrow. A match takes about a minute and a half, and extra time and penalties happen when the stage needs a winner. Skip is still there if you want it.
 - **Real-world rates.** Cards, penalties and free kicks follow Premier League and top-five-league averages, and individual players are booked, fouled and take penalties in line with their reputation (see the note on the players).
 - **Keep score.** A series score survives rematches; the first pick rotates so it stays fair.
 - **Solo Cup** (four knockout rounds against AI, instant) and **Daily Draft** (identical packs for everyone today).
@@ -52,7 +54,7 @@ That is the whole deploy: it builds the client and publishes one Worker that ser
 ## Test it
 
 ```bash
-npm test                   # 126 unit, simulation, tournament, room-machine, chaos and socket tests
+npm test                   # 138 unit, simulation, tournament, room-machine, chaos and socket tests
 npm run test:e2e           # real browsers: two-player games, two phones in a league, one phone at five sizes,
                            # reconnects, accessibility audit, and a hard kill-and-restart of the runtime
 npm run check:persistence  # just the kill-and-restart check (boots its own copy of the runtime)

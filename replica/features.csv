@@ -49,3 +49,5 @@ Game waits when your phone locks,stability,should,no,yes,added
 Landscape layout and iOS and Android install polish,mobile,should,no,yes,added: emulated only
 Take turns draft (one drafts while the other watches live),draft,should,no,yes,added: the other person sees the pack and the pitch fill up
 \nPick a pack of three before seeing players (clues are hints),draft,should,no,yes,added\nPremier League pool,pools,should,no,yes,added: from memory\nEra filters,pools,should,no,yes,added\nBalkan pool (BIH CRO SRB),pools,should,no,yes,added: approximate\nCalm live pitch movement with speed limits,match,must,no,yes,added\n
+Quiet play as a full-pitch arrow with team name and danger label,match,must,no,yes,added
+Dots and ball only for real highlights,match,must,no,yes,added

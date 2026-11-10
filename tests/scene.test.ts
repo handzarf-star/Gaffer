@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { aiPick, dealBoard, openRoles, placePlayer } from '../src/shared/draft';
 import { Rng } from '../src/shared/rng';
-import { playbackSchedule, simulateMatch, type MatchResult } from '../src/shared/sim';
+import { isHighlight, playbackSchedule, simulateMatch, type MatchResult } from '../src/shared/sim';
 import { emptySquad, type Squad } from '../src/shared/squad';
 import { PH, PW, buildScene, dotKey, makeLayout } from '../src/client/lib/scene';
 
@@ -57,9 +57,22 @@ describe('live pitch scene', () => {
       const s = setup('v' + i);
       for (const it of s.sch.items) {
         if (!wanted.has(it.event.type)) continue;
-        const mid = at(s, it.at + it.dur * 0.7);
+        const mid = at(s, it.at + it.dur * (isHighlight(it.event) ? 0.7 : 0.25));
         expect(mid.tag, `${it.event.type} has a tag`).toBeTruthy();
-        if (it.event.type !== 'pen_miss') expect(mid.dots.some((d) => d.hot), `${it.event.type} highlights a player`).toBe(true);
+        if (isHighlight(it.event)) {
+          // a highlight cuts to the players and one of them is picked out
+          if (it.event.type !== 'pen_miss') expect(mid.dots.some((d) => d.hot), `${it.event.type} highlights a player`).toBe(true);
+          expect(mid.live, `${it.event.type} shows the players`).toBeGreaterThan(0.95);
+        } else {
+          // a minor moment is told on the arrow: a label, nobody moves, no players on screen
+          const checkAt = it.at + it.dur * 0.25;
+          const nearHighlight = s.sch.items.some((o) => o !== it && isHighlight(o.event) && o.at - 700 <= checkAt && o.at + o.dur + 600 >= checkAt);
+          if (!nearHighlight) {
+            expect(mid.live, `${it.event.type} (minor) keeps the pitch to the arrow`).toBe(0);
+            expect(mid.flow, `${it.event.type} (minor) keeps the arrow`).not.toBeNull();
+          }
+          expect(mid.dots.some((d) => d.hot)).toBe(false);
+        }
         seen.add(it.event.type);
       }
     }
@@ -92,12 +105,13 @@ describe('live pitch scene', () => {
     expect(goals).toBeGreaterThanOrEqual(8);
   });
 
-  it('a free kick shows a wall of four defenders', () => {
-    for (let i = 0; i < 80; i++) {
+  it('a free kick that is worth the camera shows a wall of defenders', () => {
+    for (let i = 0; i < 200; i++) {
       const s = setup('w' + i);
-      const fk = s.sch.items.find((it) => it.event.type === 'freekick');
+      // the award is a label on the arrow; the shot that follows, if it is a real chance, is the highlight with the wall
+      const fk = s.sch.items.find((it) => it.event.src === 'freekick' && ['goal', 'save', 'miss', 'post'].includes(it.event.type) && isHighlight(it.event));
       if (!fk) continue;
-      const sc = at(s, fk.at + fk.dur * 0.98);
+      const sc = at(s, fk.at + fk.dur * 0.3);
       const def = fk.event.team === 0 ? 1 : 0;
       const ball = sc.ball;
       const wall = sc.dots.filter((d) => d.team === def && !d.gk && Math.hypot(d.x - ball.x, d.y - ball.y) > 7 && Math.hypot(d.x - ball.x, d.y - ball.y) < 12);

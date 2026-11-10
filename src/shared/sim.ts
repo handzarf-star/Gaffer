@@ -37,6 +37,8 @@ export interface MatchEvent {
   /** the other player involved: the player who was fouled */
   v?: string;
   src?: Source;
+  /** the chance of this shot scoring, 0 to 1 (shots only), exactly as the engine rolled it: the live view's arrow uses it so it never overstates a chance */
+  xg?: number;
   /** score after this event; for pen_* the shootout score */
   s: [number, number];
   text: string;
@@ -249,7 +251,7 @@ export function simulateMatch(
       else if (src === 'penalty') text = fill(rng.pick(T.goalPen), { p: pn });
       else if (src === 'corner') text = fill(rng.pick(T.goalCorner), { p: pn });
       else text = fill(rng.pick(T.goal), { p: pn, t: tName });
-      push({ t: label, type: 'goal', team: att, p: shooter.id, a: assistId, src, text });
+      push({ t: label, type: 'goal', team: att, p: shooter.id, a: assistId, src, xg: Math.round(pGoal * 100) / 100, text });
       return;
     }
 
@@ -280,7 +282,7 @@ export function simulateMatch(
     }
     const key = (outcome + (src === 'play' ? '' : src === 'freekick' ? 'Fk' : src === 'penalty' ? 'Pen' : 'Corner')) as keyof typeof T;
     const pool = (T[key] ?? T[outcome]) as string[];
-    push({ t: label, type: outcome, team: att, p: shooter.id, src, text: fill(rng.pick(pool), { p: pn, k }) });
+    push({ t: label, type: outcome, team: att, p: shooter.id, src, xg: Math.round(pGoal * 100) / 100, text: fill(rng.pick(pool), { p: pn, k }) });
   };
 
   const sendOff = (i: 0 | 1, u: Unit, label: number, second: boolean, victim?: string) => {
@@ -388,7 +390,11 @@ export function simulateMatch(
     const shooter = pickBy(atkSide, (u) => ROLE_SCORE_W[u.role] * Math.pow(Math.max(u.eff, 30) / 80, 4));
     const gk = gkOf(dfnSide);
     const gkEff = gk ? gk.eff : 40;
-    const quality = clamp(OPEN_QUALITY + (atk.att - dfn.def) / 560 + rng.normal() * 0.022, 0.025, 0.4);
+    const base = clamp(OPEN_QUALITY + (atk.att - dfn.def) / 560 + rng.normal() * 0.022, 0.025, 0.4);
+    // chances are not all alike: most are speculative, some are good, a few are clear-cut. The average is unchanged, so goals
+    // per match are too; what changes is that the live view can honestly say "big chance".
+    const kind = rng.next();
+    const quality = clamp(base * (kind < 0.7 ? 0.55 : kind < 0.94 ? 1.6 : 4), 0.02, 0.62);
     const shooterF = 1 + (shooter.eff - 80) / 110;
     const gkF = clamp(1 - (gkEff - 80) / 140, 0.55, 1.5);
     const pGoal = clamp(quality * shooterF * gkF, 0.01, 0.65);
@@ -557,6 +563,24 @@ export interface ScheduledEvent {
   event: MatchEvent;
 }
 
+/**
+ * The live view cuts to the players and the ball only for these: goals, penalties, red cards and real chances. Everything
+ * else (a yellow card, a speculative shot, a routine free kick or corner) is told on the arrow with a short label, so quiet
+ * play stays quiet and the highlights mean something.
+ */
+export function isHighlight(e: MatchEvent): boolean {
+  switch (e.type) {
+    case 'goal': case 'penalty': case 'red': case 'kickoff': case 'shootout': case 'pen_goal': case 'pen_miss':
+      return true;
+    case 'save': case 'miss': case 'post':
+      return e.src === 'penalty' || (e.xg ?? 0.1) >= 0.12;
+    default:
+      return false; // yellow cards, free-kick and corner awards, half-time, full-time
+  }
+}
+/** how long a minor moment's label stays up */
+const MINOR_DUR: Partial<Record<EventType, number>> = { yellow: 1900, freekick: 1200, corner: 1100, save: 1500, miss: 1400, post: 1500 };
+
 const DUR: Partial<Record<EventType, number>> = {
   kickoff: 1500, half: 2000, full: 2000, et: 2000, etend: 1600, shootout: 2400,
   goal: 5600, red: 3400, yellow: 2200, save: 3000, miss: 2500, post: 2800,
@@ -589,7 +613,7 @@ export function playbackSchedule(result: MatchResult, pace: Pace = 'normal'): { 
       gapSum += g;
       if (g > 400 * k) quiet.push([prevEnd, prevEnd + g]);
       at = prevEnd + g;
-      const dur = ((DUR[e.type] ?? 1500) + (e.src ? SRC_BONUS[e.src] : 0)) * k * durScale;
+      const dur = ((isHighlight(e) || !(e.type in MINOR_DUR) ? (DUR[e.type] ?? 1500) + (e.src ? SRC_BONUS[e.src] : 0) : MINOR_DUR[e.type]!) * k * durScale);
       items.push({ at, dur, event: e });
       prevEnd = at + dur;
       if (e.t <= 120) prevT = e.t;

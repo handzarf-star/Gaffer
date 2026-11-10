@@ -268,7 +268,7 @@ export function MatchPlayer({ fixtures, startAt, you, onSeen, continueLabel, onC
 
       <div className="match__stage">
         <div className="mwrap">
-          <MatchPitch scene={scene} trail={trail} colors={[fx.a.color, fx.b.color]} tagKey={`${k}-${shown.length}`} />
+          <MatchPitch scene={scene} trail={trail} colors={[fx.a.color, fx.b.color]} names={[fx.a.name, fx.b.name]} tagKey={`${k}-${shown.length}`} />
           {!finished && !countdown && (
             <button type="button" className="mskip" onClick={skip} aria-label="Skip to the end of the match"><Icon name="skip" size={16} /> Skip</button>
           )}

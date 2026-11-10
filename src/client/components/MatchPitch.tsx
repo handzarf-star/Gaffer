@@ -1,15 +1,77 @@
 import { shade } from '../lib/colors';
-import { PH, PW, type Scene } from '../lib/scene';
+import { PH, PW, type FlowLabel, type Scene } from '../lib/scene';
 import { cx } from './ui';
 
 const GOAL_W = 7.32;
 const GX = (PW - GOAL_W) / 2;
 
+
+const STATE_WORDS: Record<FlowLabel, string> = { attack: 'ATTACKING', danger: 'DANGEROUS ATTACK', chance: 'BIG CHANCE' };
+
+/** hex colour a mixed toward b by t (0 to 1) */
+function mixHex(a: string, b: string, t: number): string {
+  const p = (h: string) => { const x = h.replace('#', ''); const n = x.length === 3 ? x.split('').map((c) => c + c).join('') : x; return [0, 2, 4].map((i) => parseInt(n.slice(i, i + 2), 16)); };
+  const [r1, g1, b1] = p(a); const [r2, g2, b2] = p(b);
+  const m = (u: number, v: number) => Math.round(u + (v - u) * t).toString(16).padStart(2, '0');
+  return `#${m(r1!, r2!)}${m(g1!, g2!)}${m(b1!, b2!)}`;
+}
+
+/**
+ * Quiet play: one big arrow over the whole pitch. It points at the goal the team is attacking, its tip gets closer to
+ * that goal as the attack gets more dangerous, and for a big chance their whole half glows red. The team and the state are
+ * written on the pitch. Distances below are measured from the attacking team's own goal line.
+ */
+function FlowArrow({ team, show, level, lane, color, name, label }: {
+  team: 0 | 1; show: number; level: number; lane: number; color: string; name: string; label: FlowLabel;
+}) {
+  const yy = (d: number) => (team === 0 ? PH - d : d); // team 0 attacks up the screen, team 1 down
+  const dTail = 16;
+  const dTip = 56 + level * 39; // from just past halfway to ten metres from goal
+  const dHead = Math.max(dTail + 12, dTip - 13);
+  const hw = 3.2 + level * 3.3;
+  const hh = hw * 2.1;
+  const hot = Math.min(1, Math.max(0, (level - 0.62) / 0.38));
+  const fill = mixHex(color, '#ff2a1f', hot * 0.85);
+  const path = `M${lane - hw} ${yy(dTail)}L${lane + hw} ${yy(dTail)}L${lane + hw} ${yy(dHead)}L${lane + hh} ${yy(dHead)}L${lane} ${yy(dTip)}L${lane - hh} ${yy(dHead)}L${lane - hw} ${yy(dHead)}Z`;
+  const chevrons: number[] = [];
+  for (let d = dTail - 7; d < dTip; d += 7) chevrons.push(d);
+  const words = STATE_WORDS[label];
+  const nm = name.length > 15 ? `${name.slice(0, 14)}.` : name;
+  const wide = Math.max(nm.length, words.length) * 1.62 + 4.5;
+  const mid = (dTail + dTip) / 2;
+  return (
+    <g className={cx('mp-flow', `mp-flow--${team}`, label === 'chance' && 'is-hot')} opacity={Math.min(1, show)}>
+      <defs>
+        <clipPath id={`mp-clip-${team}`}><path d={path} /></clipPath>
+        <linearGradient id={`mp-heat-${team}`} x1="0" y1={team === 0 ? 0 : 1} x2="0" y2={team === 0 ? 1 : 0}>
+          <stop offset="0" stopColor="#ff2a1f" stopOpacity=".62" />
+          <stop offset="1" stopColor="#ff2a1f" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {hot > 0 && <rect className="mp-heat" x="0" y={team === 0 ? 0 : PH / 2} width={PW} height={PH / 2} fill={`url(#mp-heat-${team})`} opacity={hot} />}
+      <path d={path} fill={fill} fillOpacity=".72" stroke="#fff" strokeOpacity=".7" strokeWidth=".5" strokeLinejoin="round" />
+      <g clipPath={`url(#mp-clip-${team})`}>
+        <g className={`mp-chev mp-chev--${team}`}>
+          {chevrons.map((d) => (
+            <polyline key={d} points={`${lane - hh * 0.62} ${yy(d - 3.4)} ${lane} ${yy(d)} ${lane + hh * 0.62} ${yy(d - 3.4)}`} fill="none" stroke="#fff" strokeOpacity=".62" strokeWidth=".95" strokeLinecap="round" strokeLinejoin="round" />
+          ))}
+        </g>
+      </g>
+      <g transform={`translate(${lane} ${yy(mid)})`} className="mp-flow__label">
+        <rect x={-wide / 2} y="-4.2" width={wide} height="8.4" rx="2.2" fill="#0a1017" fillOpacity=".82" stroke={fill} strokeWidth=".45" />
+        <text y="-.55" textAnchor="middle" className="mp-flow__team">{nm.toUpperCase()}</text>
+        <text y="2.7" textAnchor="middle" className={cx('mp-flow__state', label !== 'attack' && 'is-danger')}>{words}</text>
+      </g>
+    </g>
+  );
+}
+
 /** The live match: a striped top-down pitch with 22 dots and a ball. Everything is driven by a Scene. */
-export function MatchPitch({ scene, trail, colors, tagKey }: {
+export function MatchPitch({ scene, trail, colors, names, tagKey }: {
   scene: Scene;
   trail: Array<{ x: number; y: number }>;
   colors: [string, string];
+  names: [string, string];
   /** changes whenever a new moment starts so the tag pops in again */
   tagKey: string;
 }) {
@@ -85,6 +147,13 @@ export function MatchPitch({ scene, trail, colors, tagKey }: {
           );
         })}
 
+        {/* quiet play: the arrow(s). They cross-fade when the attack changes hands. */}
+        {scene.flow && ([0, 1] as const).map((tm) => scene.flow!.show[tm] > 0.02 && (
+          <FlowArrow key={tm} team={tm} show={scene.flow!.show[tm]} level={scene.flow!.level[tm]} lane={scene.flow!.lane[tm]} color={tm === 0 ? c0 : c1} name={names[tm]} label={scene.flow!.label[tm]} />
+        ))}
+
+        {/* highlights: the players and the ball are only there when something is happening */}
+        <g opacity={scene.live} style={{ visibility: scene.live < 0.01 ? 'hidden' : 'visible' }}>
         {/* chance pulse and shot line */}
         {scene.pulse && (
           <circle cx={scene.pulse.x} cy={scene.pulse.y} r={2.4 + scene.pulse.p * 5.5} className="mp-pulse" style={{ stroke: scene.pulse.team === 0 ? c0 : c1, opacity: 1 - scene.pulse.p }} />
@@ -137,6 +206,7 @@ export function MatchPitch({ scene, trail, colors, tagKey }: {
           <circle r={0.95 + scene.ball.lift * 0.35} fill="url(#mp-ball)" stroke="#111" strokeWidth=".14" />
           <path d="M0-.55l.5.35-.2.6h-.6l-.2-.6z" fill="#111" opacity=".85" />
         </g>
+        </g>
       </svg>
 
       {scene.tag && (
@@ -145,7 +215,6 @@ export function MatchPitch({ scene, trail, colors, tagKey }: {
           {scene.tag.sub && <span>{scene.tag.sub}</span>}
         </div>
       )}
-      {scene.fast && <div className="mfast" aria-hidden="true"><i>⏩</i> fast-forward</div>}
     </div>
   );
 }

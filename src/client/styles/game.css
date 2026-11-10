@@ -542,3 +542,16 @@
 .era:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .pool__note { margin-top: 8px; font-size: 14px; color: var(--muted); }
 .pool__note.is-warn { color: var(--danger); font-weight: 600; }
+
+/* ═════════════ quiet play: the big arrow ═════════════ */
+.mp-flow { pointer-events: none; }
+.mp-chev { animation: mpchev 1.1s linear infinite; }
+.mp-chev--0 { --step: -7px; } .mp-chev--1 { --step: 7px; }
+@keyframes mpchev { from { transform: translateY(0); } to { transform: translateY(var(--step)); } }
+.mp-heat { animation: mpheat 1s ease-in-out infinite alternate; }
+@keyframes mpheat { from { filter: brightness(.9); } to { filter: brightness(1.25); } }
+.mp-flow__team { font: 800 2.3px var(--font-display); fill: #fff; letter-spacing: .04em; }
+.mp-flow__state { font: 800 2px var(--font-sans); fill: #bfe9d2; letter-spacing: .08em; }
+.mp-flow__state.is-danger { fill: #ffd54a; }
+.mp-flow.is-hot .mp-flow__state { fill: #ff9a8f; }
+@media (prefers-reduced-motion: reduce) { .mp-chev, .mp-heat { animation: none; } }
