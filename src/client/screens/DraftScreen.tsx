@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ROUNDS, openRoles, suggestSlot, type RatingsMode } from '../../shared/draft';
+import type { TFn } from '../../shared/i18n';
 import type { PackClue } from '../../shared/packs';
 import { PackChooser } from '../components/PackChooser';
 import { FORMATIONS, fitKind, penalty, type Role } from '../../shared/formations';
@@ -11,6 +12,7 @@ import { Pitch } from '../components/Pitch';
 import { Timer } from '../components/Timer';
 import { Avatar, Button, Icon, cx } from '../components/ui';
 import { announce, prefersReducedMotion, toast } from '../lib/hooks';
+import { useI18n } from '../lib/i18n';
 import { buzz, sfx } from '../lib/sfx';
 
 export interface Rival {
@@ -63,9 +65,28 @@ export interface DraftScreenProps {
   statusNote?: string;
 }
 
-const ROLE_WORD: Partial<Record<Role, string>> = { GK: 'keeper', CB: 'centre-back', LB: 'left-back', RB: 'right-back', LWB: 'left wing-back', RWB: 'right wing-back', CDM: 'holding mid', CM: 'midfielder', CAM: 'playmaker', LM: 'left mid', RM: 'right mid', LW: 'left winger', RW: 'right winger', ST: 'striker' };
+/** the short name of a role for the tooltip on a "still need" chip */
+function roleWord(t: TFn, role: Role): string {
+  switch (role) {
+    case 'GK': return t('keeper');
+    case 'CB': return t('centre-back');
+    case 'LB': return t('left-back');
+    case 'RB': return t('right-back');
+    case 'LWB': return t('left wing-back');
+    case 'RWB': return t('right wing-back');
+    case 'CDM': return t('holding mid');
+    case 'CM': return t('midfielder');
+    case 'CAM': return t('playmaker');
+    case 'LM': return t('left mid');
+    case 'RM': return t('right mid');
+    case 'LW': return t('left winger');
+    case 'RW': return t('right winger');
+    default: return t('striker');
+  }
+}
 
 export function DraftScreen(p: DraftScreenProps) {
+  const { t } = useI18n();
   const [selected, setSelected] = useState<string | null>(null);
   const [pending, setPending] = useState<string | null>(null);
   const [fresh, setFresh] = useState<string | null>(null);
@@ -85,7 +106,7 @@ export function DraftScreen(p: DraftScreenProps) {
     if (selected && p.shared && old.includes(selected) && !p.board.includes(selected)) {
       const taker = p.log.find((l) => l.player === selected && !l.mine);
       if (taker) {
-        toast(`Stolen! ${taker.who} took ${shortName(player(selected).name)}`, 'error');
+        toast(t('Stolen! {who} took {name}', { who: taker.who, name: shortName(player(selected).name) }), 'error');
         sfx.error();
       }
     }
@@ -103,11 +124,11 @@ export function DraftScreen(p: DraftScreenProps) {
     if (p.turn === 'me' || p.turn === 'all') {
       sfx.turn();
       buzz(18);
-      announce(`Round ${p.round}. ${p.turn === 'all' ? 'Open your pack and pick a player.' : 'Your pick.'}`);
+      announce(p.turn === 'all' ? t('Round {round}. Open your pack and pick a player.', { round: p.round }) : t('Round {round}. Your pick.', { round: p.round }));
     } else {
-      announce(`Round ${p.round}. ${p.turnName ?? 'Opponent'} is picking.`);
+      announce(t('Round {round}. {name} is picking.', { round: p.round, name: p.turnName ?? t('Opponent') }));
     }
-  }, [p.round, p.turn, p.turnName]);
+  }, [p.round, p.turn, p.turnName, t]);
 
   // Packs format: the pack starts sealed. Its glow hints at the best card inside; tap to open (or it opens by itself).
   // (the single sealed pack is the solo cup's; rooms with packs choose between three instead)
@@ -190,13 +211,27 @@ export function DraftScreen(p: DraftScreenProps) {
 
   const yourTurn = p.turn === 'me' || p.turn === 'all';
   const hint = selected && heldPlayer && suggestedRole
-    ? `Drop ${shortName(heldPlayer.name)} at ${suggestedRole}${penalty(heldPlayer.pos, suggestedRole) ? ` (-${penalty(heldPlayer.pos, suggestedRole)})` : ''}`
+    ? `${t('Drop {name} at {role}', { name: shortName(heldPlayer.name), role: suggestedRole })}${penalty(heldPlayer.pos, suggestedRole) ? ` (-${penalty(heldPlayer.pos, suggestedRole)})` : ''}`
     : null;
+  // "<name> is choosing" for the board title and the idle dock (the English fallback keeps its original wording)
+  const choosingText = p.turnName != null ? t('{name} is choosing', { name: p.turnName }) : t('They is choosing');
+  // one log line, translated as a sentence so the verb can agree with the subject; the names stay bold
+  const pickLine = (l: DraftLogRow): ReactNode => {
+    const vals: Record<string, string> = { you: t('You'), who: l.who, name: shortName(player(l.player).name) };
+    const keep = { you: '{you}', who: '{who}', name: '{name}' };
+    const text = l.mine
+      ? (l.auto ? t('{you} auto-picked {name}', keep) : t('{you} took {name}', keep))
+      : (l.auto ? t('{who} auto-picked {name}', keep) : t('{who} took {name}', keep));
+    return text.split(/(\{you\}|\{who\}|\{name\})/).map((part, i) => {
+      const m = /^\{(you|who|name)\}$/.exec(part);
+      return m ? <b key={i}>{vals[m[1]!]}</b> : part;
+    });
+  };
 
   return (
     <div className="draft">
       <header className="drafthead">
-        <div className="roundpill" aria-label={`Round ${p.round} of ${ROUNDS}`}>
+        <div className="roundpill" aria-label={t('Round {n} of {total}', { n: p.round, total: ROUNDS })}>
           <span className="roundpill__n">{p.round}</span>
           <span className="roundpill__of">/ {ROUNDS}</span>
           <span className="roundpill__bar"><i style={{ width: `${((p.round - 1) / ROUNDS) * 100}%` }} /></span>
@@ -206,16 +241,16 @@ export function DraftScreen(p: DraftScreenProps) {
             <>
               <Avatar name={p.turnName ?? '?'} hue={p.turnHue ?? 0} size={34} />
               <div className="turn__text">
-                <b>{p.turnName} is picking</b>
-                <span>{p.shared ? 'Tap a card to plan your next move' : p.turns ? 'Watch them build their squad. You are up next.' : 'Waiting on them'}</span>
+                <b>{t('{name} is picking', { name: p.turnName ?? '' })}</b>
+                <span>{p.shared ? t('Tap a card to plan your next move') : p.turns ? t('Watch them build their squad. You are up next.') : t('Waiting on them')}</span>
               </div>
             </>
           ) : (
             <>
               <span className="turn__badge"><Icon name="bolt" size={18} /></span>
               <div className="turn__text">
-                <b>{choosing ? 'Choose a pack' : sealed ? 'Open your pack' : p.turn === 'all' ? 'Your pack is open' : 'Your pick'}</b>
-                <span>{choosing ? 'Read the clues. They are rumours, not promises' : sealed ? 'Tap it. The glow hints at what is inside' : selected ? 'Tap a green spot or press Enter' : 'Choose one card'}</span>
+                <b>{choosing ? t('Choose a pack') : sealed ? t('Open your pack') : p.turn === 'all' ? t('Your pack is open') : t('Your pick')}</b>
+                <span>{choosing ? t('Read the clues. They are rumours, not promises') : sealed ? t('Tap it. The glow hints at what is inside') : selected ? t('Tap a green spot or press Enter') : t('Choose one card')}</span>
               </div>
             </>
           )}
@@ -223,10 +258,10 @@ export function DraftScreen(p: DraftScreenProps) {
         <Timer deadline={p.deadline} offset={p.offset} totalMs={p.pickMs} tick={yourTurn} />
       </header>
 
-      <section className="draft__board" aria-label={p.shared ? 'Shared board' : p.turns && !p.canPick ? `${p.turnName}'s pack` : 'Your pack'}>
+      <section className="draft__board" aria-label={p.shared ? t('Shared board') : p.turns && !p.canPick ? t("{name}'s pack", { name: p.turnName ?? '' }) : t('Your pack')}>
         <div className="board__title">
-          <h2>{p.shared ? 'Shared board' : choosing ? (p.canPick ? 'Three sealed packs' : `${p.turnName ?? 'They'} is choosing`) : p.turns && !p.canPick ? `${p.turnName}'s pack` : p.packs && p.opened != null && p.packs[p.opened] ? p.packs[p.opened]!.name : 'Your pack'}</h2>
-          <span>{p.shared ? `${p.board.length} left. Once it's taken, it's gone.` : choosing ? (p.canPick ? 'Pick one to open' : 'Watching live') : p.turns && !p.canPick ? 'Watching live' : 'Pick 1 of 3'}</span>
+          <h2>{p.shared ? t('Shared board') : choosing ? (p.canPick ? t('Three sealed packs') : choosingText) : p.turns && !p.canPick ? t("{name}'s pack", { name: p.turnName ?? '' }) : p.packs && p.opened != null && p.packs[p.opened] ? t(p.packs[p.opened]!.name) : t('Your pack')}</h2>
+          <span>{p.shared ? t("{n} left. Once it's taken, it's gone.", { n: p.board.length }) : choosing ? (p.canPick ? t('Pick one to open') : t('Watching live')) : p.turns && !p.canPick ? t('Watching live') : t('Pick 1 of 3')}</span>
         </div>
         {choosing ? (
           <PackChooser packs={p.packs!} canPick={p.canPick} mode={p.mode} who={p.turnName} onOpen={(i) => { sfx.reveal('silver'); buzz(30); p.onOpenPack?.(i); }} />
@@ -234,8 +269,8 @@ export function DraftScreen(p: DraftScreenProps) {
           <button type="button" className={cx('sealed', `sealed--${bestTier}`)} onClick={openPack}>
             <span className="sealed__foil" aria-hidden="true" />
             <span className="sealed__mark" aria-hidden="true"><Icon name="ball" size={46} /></span>
-            <b>Tap to open</b>
-            <small>{bestTier === 'icon' ? 'Something special is in there' : bestTier === 'gold' ? 'This one is glowing' : 'Pick 1 of 3'}</small>
+            <b>{t('Tap to open')}</b>
+            <small>{bestTier === 'icon' ? t('Something special is in there') : bestTier === 'gold' ? t('This one is glowing') : t('Pick 1 of 3')}</small>
           </button>
         ) : (
         <div className={cx('board', p.shared ? 'board--duel' : 'board--packs')}>
@@ -269,25 +304,25 @@ export function DraftScreen(p: DraftScreenProps) {
               hotkey={String(i + 1)}
             />
           ))}
-          {p.board.length === 0 && <div className="board__empty">Dealing the next round…</div>}
+          {p.board.length === 0 && <div className="board__empty">{t('Dealing the next round…')}</div>}
         </div>
         )}
 
         {!(p.turns && !p.canPick) && (
-          <div className="needs" aria-label="Positions you still need">
-            <span className="needs__label">Still need</span>
-            {needs.length === 0 ? <span className="needs__done">All spots filled</span> : needs.map(([role, n]) => (
-              <span key={role} className="chip chip--role" title={ROLE_WORD[role as Role]}>{role}{n > 1 ? ` ×${n}` : ''}</span>
+          <div className="needs" aria-label={t('Positions you still need')}>
+            <span className="needs__label">{t('Still need')}</span>
+            {needs.length === 0 ? <span className="needs__done">{t('All spots filled')}</span> : needs.map(([role, n]) => (
+              <span key={role} className="chip chip--role" title={roleWord(t, role as Role)}>{role}{n > 1 ? ` ×${n}` : ''}</span>
             ))}
           </div>
         )}
 
         {p.log.length > 0 && (
-          <ol className="picklog" aria-label="Recent picks">
+          <ol className="picklog" aria-label={t('Recent picks')}>
             {p.log.slice(-4).reverse().map((l) => (
               <li key={l.key} className={cx(l.mine && 'is-mine')}>
                 <Avatar name={l.who} hue={l.hue} size={20} />
-                <span><b>{l.mine ? 'You' : l.who}</b> {l.auto ? 'auto-picked' : 'took'} <b>{shortName(player(l.player).name)}</b></span>
+                <span>{pickLine(l)}</span>
               </li>
             ))}
           </ol>
@@ -296,8 +331,8 @@ export function DraftScreen(p: DraftScreenProps) {
 
       <aside className="draft__side">
         {p.rivals.length > 0 && (
-          <div className="tabs" role="tablist" aria-label="Whose squad">
-            <button role="tab" aria-selected={tab === 'me'} className={cx('tab', tab === 'me' && 'is-on')} onClick={() => setTab('me')}>You</button>
+          <div className="tabs" role="tablist" aria-label={t('Whose squad')}>
+            <button role="tab" aria-selected={tab === 'me'} className={cx('tab', tab === 'me' && 'is-on')} onClick={() => setTab('me')}>{t('You')}</button>
             {p.rivals.map((r) => (
               <button key={r.id} role="tab" aria-selected={tab === r.id} className={cx('tab', tab === r.id && 'is-on')} onClick={() => setTab(r.id)}>
                 <Avatar name={r.name} hue={r.hue} size={18} connected={r.connected} />
@@ -318,14 +353,14 @@ export function DraftScreen(p: DraftScreenProps) {
             fresh={tab === 'me' ? fresh : null}
             onSlot={tab === 'me' ? place : undefined}
             ratings={p.mode}
-            label={tab === 'me' ? 'Your pitch' : `${viewing?.name ?? ''} pitch`}
+            label={tab === 'me' ? t('Your pitch') : t('{name} pitch', { name: viewing?.name ?? '' })}
           />
           <Confetti burst={burst} count={14} />
         </div>
         <div className="strip">
-          <div><span>Squad</span><b>{mine.filled}/11</b></div>
-          <div><span>Rating</span><b>{mine.filled ? mine.prof.avg : '–'}</b></div>
-          <div title="Adjacent players from the same nation"><span>Chemistry</span><b>{mine.chem.score}%</b></div>
+          <div><span>{t('Squad')}</span><b>{mine.filled}/11</b></div>
+          <div><span>{t('Rating')}</span><b>{mine.filled ? mine.prof.avg : '–'}</b></div>
+          <div title={t('Adjacent players from the same nation')}><span>{t('Chemistry')}</span><b>{mine.chem.score}%</b></div>
         </div>
       </aside>
 
@@ -334,16 +369,16 @@ export function DraftScreen(p: DraftScreenProps) {
           <>
             <div className="dock__who">
               <b>{shortName(heldPlayer.name)}</b>
-              <span>{heldPlayer.pos} · {hint ?? 'Choose a spot'}</span>
+              <span>{heldPlayer.pos} · {hint ?? t('Choose a spot')}</span>
             </div>
             <Button variant="primary" icon={p.canPick ? 'check' : 'clock'} disabled={!p.canPick || !suggested || !!pending} loading={!!pending} onClick={() => suggested && place(suggested)}>
-              {p.canPick ? (suggestedRole ? `Place at ${suggestedRole}` : 'Place') : `Waiting for ${p.turnName ?? 'turn'}`}
+              {p.canPick ? (suggestedRole ? t('Place at {role}', { role: suggestedRole }) : t('Place')) : (p.turnName != null ? t('Waiting for {name}', { name: p.turnName }) : t('Waiting for turn'))}
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => setSelected(null)}>Cancel</Button>
+            <Button variant="ghost" size="sm" onClick={() => setSelected(null)}>{t('Cancel')}</Button>
           </>
         ) : (
           <div className="dock__idle">
-            {p.statusNote ?? (yourTurn ? 'Pick a card to see where it fits.' : `${p.turnName ?? 'They'} ${p.shared ? 'is choosing. You can plan ahead.' : 'is choosing.'}`)}
+            {p.statusNote ?? (yourTurn ? t('Pick a card to see where it fits.') : `${choosingText}.${p.shared ? ` ${t('You can plan ahead.')}` : ''}`)}
           </div>
         )}
       </div>

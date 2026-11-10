@@ -1,5 +1,6 @@
 import { GLOW_TEXT, SCENT_TEXT, type PackClue, type Scent } from '../../shared/packs';
 import type { RatingsMode } from '../../shared/draft';
+import { useI18n } from '../lib/i18n';
 import { cx } from './ui';
 
 const SCENT_GLYPH: Record<Scent, string> = { goals: '⚽', grit: '🛡', engine: '⚙', gloves: '🧤' };
@@ -15,11 +16,13 @@ export function PackChooser({ packs, canPick, mode, onOpen, who }: {
   onOpen: (index: number) => void;
   who?: string;
 }) {
+  const { t } = useI18n();
+  // the clue texts come from the server in English (shared/packs.ts); they are translated here, where they are shown
   return (
-    <div className="packs" role="group" aria-label={canPick ? 'Choose a pack' : `${who ?? 'Someone'} is choosing a pack`}>
+    <div className="packs" role="group" aria-label={canPick ? t('Choose a pack') : who != null ? t('{name} is choosing a pack', { name: who }) : t('Someone is choosing a pack')}>
       {packs.map((c, i) => {
         const glow = mode === 'hidden' ? 'mystery' : c.glow;
-        const glowText = mode === 'hidden' ? 'No telling' : GLOW_TEXT[c.glow];
+        const glowText = mode === 'hidden' ? t('No telling') : t(GLOW_TEXT[c.glow]);
         return (
           <button
             key={`${c.name}-${i}`}
@@ -34,12 +37,12 @@ export function PackChooser({ packs, canPick, mode, onOpen, who }: {
               <span className="pack__mark" data-g="?" />
             </span>
             <span className="pack__text">
-              <b className="pack__name">{c.name}</b>{' '}
+              <b className="pack__name">{t(c.name)}</b>{' '}
               <span className="pack__chips">
                 <span className="pack__chip" data-g="✨">{glowText}</span>{' '}
-                <span className="pack__chip" data-g={SCENT_GLYPH[c.scent]}>{SCENT_TEXT[c.scent]}</span>
+                <span className="pack__chip" data-g={SCENT_GLYPH[c.scent]}>{t(SCENT_TEXT[c.scent])}</span>
               </span>
-              <i className="pack__rumour">{c.rumour}</i>
+              <i className="pack__rumour">{t(c.rumour)}</i>
             </span>
           </button>
         );

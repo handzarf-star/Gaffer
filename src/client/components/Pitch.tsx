@@ -1,18 +1,40 @@
 import type { CSSProperties } from 'react';
+import type { TFn } from '../../shared/i18n';
 import type { RatingsMode } from '../../shared/draft';
 import { FORMATIONS, fitKind, penalty, type FitKind, type FormationId, type Role } from '../../shared/formations';
-import { TIER_LABEL, player, shortName, tierOf } from '../../shared/players';
-import { initials, faceHue } from './PlayerCard';
+import { player, shortName, tierOf } from '../../shared/players';
+import { useI18n } from '../lib/i18n';
+import { initials, faceHue, tierLabel } from './PlayerCard';
 import { cx } from './ui';
 
-const ROLE_NAME: Record<Role, string> = {
-  GK: 'Goalkeeper', LB: 'Left back', CB: 'Centre back', RB: 'Right back', LWB: 'Left wing-back', RWB: 'Right wing-back',
-  CDM: 'Defensive midfield', CM: 'Central midfield', CAM: 'Attacking midfield', LM: 'Left midfield', RM: 'Right midfield',
-  LW: 'Left wing', RW: 'Right wing', ST: 'Striker',
-};
+function roleName(t: TFn, role: Role): string {
+  switch (role) {
+    case 'GK': return t('Goalkeeper');
+    case 'LB': return t('Left back');
+    case 'CB': return t('Centre back');
+    case 'RB': return t('Right back');
+    case 'LWB': return t('Left wing-back');
+    case 'RWB': return t('Right wing-back');
+    case 'CDM': return t('Defensive midfield');
+    case 'CM': return t('Central midfield');
+    case 'CAM': return t('Attacking midfield');
+    case 'LM': return t('Left midfield');
+    case 'RM': return t('Right midfield');
+    case 'LW': return t('Left wing');
+    case 'RW': return t('Right wing');
+    default: return t('Striker');
+  }
+}
 
 const FIT_ICON: Record<FitKind, string> = { natural: '✓', close: '≈', stretch: '!', poor: '✕' };
-const FIT_WORD: Record<FitKind, string> = { natural: 'natural fit', close: 'close fit', stretch: 'a stretch', poor: 'out of position' };
+function fitWord(t: TFn, kind: FitKind): string {
+  switch (kind) {
+    case 'natural': return t('natural fit');
+    case 'close': return t('close fit');
+    case 'stretch': return t('a stretch');
+    default: return t('out of position');
+  }
+}
 
 export interface PitchProps {
   formation: FormationId;
@@ -33,11 +55,12 @@ export interface PitchProps {
 }
 
 export function Pitch({ formation, slots, links = [], holding, suggested, selected, onSlot, ratings = 'tier', compact, fresh, linkCount, label }: PitchProps) {
+  const { t, tn } = useI18n();
   const f = FORMATIONS[formation];
   const pos = new Map(f.slots.map((s) => [s.id, s]));
   const heldPos = holding ? player(holding).pos : null;
   return (
-    <div className={cx('pitch', compact && 'pitch--compact')} role="group" aria-label={label ?? `Pitch, ${f.name}`}>
+    <div className={cx('pitch', compact && 'pitch--compact')} role="group" aria-label={label ?? t('Pitch, {formation}', { formation: f.name })}>
       <svg className="pitch__lines" viewBox="0 0 68 100" preserveAspectRatio="none" aria-hidden="true">
         <rect x="2" y="2" width="64" height="96" rx="1.2" />
         <path d="M2 50h64" />
@@ -67,11 +90,19 @@ export function Pitch({ formation, slots, links = [], holding, suggested, select
         const tier = p ? tierOf(p.ovr) : null;
         const chem = pid ? (linkCount?.[s.id] ?? 0) : 0;
         const interactive = !!onSlot && (empty ? !!holding : true);
+        const role = roleName(t, s.role);
+        const fit = kind ? fitWord(t, kind) : '';
         const aria = p
-          ? `${ROLE_NAME[s.role]}: ${p.name}${ratings === 'full' ? `, rating ${p.ovr}` : ratings === 'tier' ? `, ${TIER_LABEL[tier!]}` : ''}`
+          ? ratings === 'full'
+            ? t('{role}: {name}, rating {rating}', { role, name: p.name, rating: p.ovr })
+            : ratings === 'tier'
+              ? t('{role}: {name}, {tier}', { role, name: p.name, tier: tierLabel(t, tier!) })
+              : t('{role}: {name}', { role, name: p.name })
           : kind
-            ? `${ROLE_NAME[s.role]}, empty. Placing here is ${FIT_WORD[kind]}${pen ? `, minus ${pen} rating` : ''}`
-            : `${ROLE_NAME[s.role]}, empty`;
+            ? pen
+              ? t('{role}, empty. Placing here is {fit}, minus {pen} rating', { role, fit, pen })
+              : t('{role}, empty. Placing here is {fit}', { role, fit })
+            : t('{role}, empty', { role });
         return (
           <button
             key={s.id}
@@ -88,13 +119,13 @@ export function Pitch({ formation, slots, links = [], holding, suggested, select
             style={{ left: `${s.x}%`, top: `${s.y}%`, '--hue': pid ? faceHue(pid) : 0 } as CSSProperties}
             onClick={() => onSlot?.(s.id)}
             disabled={!onSlot}
-            title={kind ? `${ROLE_NAME[s.role]}: ${FIT_WORD[kind]}${pen ? ` (-${pen})` : ''}` : p ? p.name : ROLE_NAME[s.role]}
+            title={kind ? `${t('{role}: {fit}', { role, fit })}${pen ? ` (-${pen})` : ''}` : p ? p.name : role}
           >
             <span className="sr-only">{aria}</span>
             <span className={cx('slot__disc', tier && `tier-${ratings === 'hidden' ? 'mystery' : tier}`)} aria-hidden="true">
               {p ? <span className="slot__init">{initials(p.name)}</span> : <span className="slot__role">{s.role}</span>}
               {p && ratings === 'full' && <span className="slot__ovr">{p.ovr}</span>}
-              {chem > 0 && <span className="slot__chem" title={`${chem} nation link${chem > 1 ? 's' : ''}`}>{'•'.repeat(Math.min(chem, 3))}</span>}
+              {chem > 0 && <span className="slot__chem" title={tn('{n} nation link', '{n} nation links', chem)}>{'•'.repeat(Math.min(chem, 3))}</span>}
               {kind && <span className={cx('slot__fit', `slot__fit--${kind}`)} aria-hidden="true">{FIT_ICON[kind]}</span>}
             </span>
             {p && (
