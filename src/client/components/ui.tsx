@@ -2,6 +2,7 @@ import { useEffect, useState, useSyncExternalStore, type ButtonHTMLAttributes, t
 import { BRAND } from '../../shared/brand';
 import { SEAT_HUES } from '../../shared/protocol';
 import { toast, useTheme, useToasts } from '../lib/hooks';
+import { useI18n } from '../lib/i18n';
 import { sfx } from '../lib/sfx';
 
 export const cx = (...parts: Array<string | false | null | undefined>): string => parts.filter(Boolean).join(' ');
@@ -81,6 +82,7 @@ export function Logo({ size = 28 }: { size?: number }) {
 }
 
 export function Wordmark({ onClick }: { onClick?: () => void }) {
+  const { t } = useI18n();
   return (
     <a
       className="brand"
@@ -91,7 +93,7 @@ export function Wordmark({ onClick }: { onClick?: () => void }) {
           onClick();
         }
       }}
-      aria-label={`${BRAND.name} home`}
+      aria-label={t('{brand} home', { brand: BRAND.name })}
     >
       <Logo />
       <span className="brand__name">{BRAND.name}</span>
@@ -133,7 +135,8 @@ export function IconButton({ icon, label, onClick, active }: { icon: string; lab
 }
 
 export function Spinner({ size = 28 }: { size?: number }) {
-  return <span className="spinner" style={{ width: size, height: size }} role="status" aria-label="Loading" />;
+  const { t } = useI18n();
+  return <span className="spinner" style={{ width: size, height: size }} role="status" aria-label={t('Loading')} />;
 }
 
 export function Avatar({ name, hue, size = 36, connected, color: colorProp }: { name: string; hue: number; size?: number; connected?: boolean; color?: string }) {
@@ -177,11 +180,13 @@ export function Seg<T extends string | number>({
 
 export function Toasts() {
   const items = useToasts();
+  const { t } = useI18n();
   return (
     <div className="toasts" aria-live="polite">
-      {items.map((t) => (
-        <div key={t.id} className={cx('toast', `toast--${t.kind}`)} role="status">
-          {t.text}
+      {items.map((item) => (
+        // toast() can be called from plain functions (copyText), which only know the English text; translate it here, where the language is known
+        <div key={item.id} className={cx('toast', `toast--${item.kind}`)} role="status">
+          {t(item.text)}
         </div>
       ))}
     </div>
@@ -191,15 +196,19 @@ export function Toasts() {
 /* ───────────── global toggles ───────────── */
 
 export function ThemeToggle() {
+  const { t } = useI18n();
   const [theme, setTheme] = useTheme();
   const next = theme === 'system' ? 'light' : theme === 'light' ? 'dark' : 'system';
   const icon = theme === 'system' ? 'auto' : theme === 'light' ? 'sun' : 'moon';
-  return <IconButton icon={icon} label={`Theme: ${theme}. Switch to ${next}`} onClick={() => setTheme(next)} />;
+  // one whole sentence per state: Bosnian has to decline the theme name ("svijetla" / "svijetlu")
+  const label = theme === 'system' ? t('Theme: system. Switch to light') : theme === 'light' ? t('Theme: light. Switch to dark') : t('Theme: dark. Switch to system');
+  return <IconButton icon={icon} label={label} onClick={() => setTheme(next)} />;
 }
 
 export function SoundToggle() {
+  const { t } = useI18n();
   const on = useSyncExternalStore(sfx.subscribe, sfx.isOn, sfx.isOn);
-  return <IconButton icon={on ? 'volume' : 'mute'} label={on ? 'Mute sounds' : 'Turn sounds on'} onClick={() => sfx.set(!on)} />;
+  return <IconButton icon={on ? 'volume' : 'mute'} label={on ? t('Mute sounds') : t('Turn sounds on')} onClick={() => sfx.set(!on)} />;
 }
 
 export function Banner({ tone = 'warn', icon, children }: { tone?: 'warn' | 'info' | 'bad'; icon?: string; children: ReactNode }) {

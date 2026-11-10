@@ -69,8 +69,12 @@ export interface MatchResult {
   winner: 0 | 1 | null;
   events: MatchEvent[];
   stats: MatchStats;
-  motm: { team: 0 | 1; player: string; reason: string };
+  /** `rk`/`rv`: key and variables of the English `reason`, so the client can re-render it in another language (see REASONS). */
+  motm: { team: 0 | 1; player: string; reason: string; rk?: string; rv?: Record<string, string> };
   headline: string;
+  /** key (`group:index` into HEADLINES) and variables of `headline`, so the client can re-render it in another language */
+  hk?: string;
+  hv?: Record<string, string>;
   overall: [number, number];
 }
 
@@ -173,6 +177,42 @@ export const T = {
 function fill(tpl: string, vars: Record<string, string>): string {
   return tpl.replace(/\{(\w+)\}/g, (_, k: string) => vars[k] ?? '');
 }
+
+/**
+ * Headline templates. {wn} winner, {ln} loser, {p} player, {ws}-{ls} shootout score, {hi}-{lo} score. Same idea as T: the match result
+ * carries the key ("group:index") and variables, so the client can show the same line in another language.
+ * Order inside a group matters: it is the index in the key and the order of the translations in i18n/result.bs.ts.
+ */
+export const HEADLINES: Record<string, readonly string[]> = {
+  pens: ['{wn} survive the shootout, {ws}-{ls}', 'Penalty drama: {wn} win it from the spot', '{ln} heartbroken as {wn} take it on penalties'],
+  hat: ['{p} hat-trick sinks {ln}'],
+  hatDraw: ['{p} hat-trick sinks the opposition'],
+  upset: ['Shock! {wn} topple the favourites', 'Giant-killing: {wn} beat {ln} against the odds', 'Upset of the day: {wn} stun {ln}'],
+  penDecider: ['A penalty decides it for {wn}', '{wn} win it from the spot'],
+  lateWinner: ['Last-gasp winner breaks {ln} hearts', '{wn} snatch it late', 'Stoppage-time drama as {wn} edge it'],
+  nilNil: ['Nil-nil: nothing to separate them'],
+  draw: ['Honours even in a thriller', 'Share of the spoils', 'Everything level at the final whistle'],
+  riot: ['{wn} run riot', 'Demolition: {wn} {hi}-{lo} {ln}', '{ln} torn apart: {wn} are ruthless'],
+  cruise: ['{wn} cruise past {ln}', 'Comfortable night for {wn}', '{wn} too strong for {ln}'],
+  feisty: ['Red-card chaos as {wn} come out on top', 'A feisty one: {wn} take it'],
+  et: ['{wn} edge it in extra time', 'Extra-time winner sends {wn} through'],
+  goalfest: ["Goal-fest! Everyone gets their money's worth", '{wn} win a classic'],
+  oneNil: ['{wn} grind out a 1-0', 'One goal is enough for {wn}'],
+  win: ['{wn} take the points', '{wn} get the better of {ln}', '{wn} win a tight one'],
+};
+
+/** Man-of-the-match reasons. {n} is a count; the key is the whole entry (no random choice), and the client picks the plural form from {n}. */
+export const REASONS: Record<string, string> = {
+  goal: '{n} goal',
+  goals: '{n} goals',
+  assist: '{n} assist',
+  assists: '{n} assists',
+  allRound: 'solid all-round display',
+  cleanSheet: 'clean sheet and {n} save',
+  cleanSheets: 'clean sheet and {n} saves',
+  rockSolid: 'rock-solid at the back',
+  saves: '{n} saves',
+};
 
 /** Pure, deterministic match simulation. */
 export function simulateMatch(
@@ -479,7 +519,12 @@ export function simulateMatch(
   ];
 
   // man of the match
-  const rows: Array<{ id: string; team: 0 | 1; score: number; reason: string }> = [];
+  type Why = { reason: string; rk: string; rv: Record<string, string> };
+  const why = (rk: string, n?: number): Why => {
+    const rv: Record<string, string> = n === undefined ? {} : { n: String(n) };
+    return { reason: fill(REASONS[rk]!, rv), rk, rv };
+  };
+  const rows: Array<{ id: string; team: 0 | 1; score: number } & Why> = [];
   for (const i of [0, 1] as const) {
     const cleanSheet = score[other(i)]! === 0;
     for (const u of sides[i].units) {
@@ -487,15 +532,15 @@ export function simulateMatch(
       const a = assists[u.id] ?? 0;
       const sv = saves[u.id] ?? 0;
       let sc = g * 3 + a * 1.6 + sv * 0.45 + u.eff / 200;
-      let reason = g ? `${g} goal${g > 1 ? 's' : ''}` : a ? `${a} assist${a > 1 ? 's' : ''}` : 'solid all-round display';
+      let wy = g ? why(g > 1 ? 'goals' : 'goal', g) : a ? why(a > 1 ? 'assists' : 'assist', a) : why('allRound');
       if (cleanSheet && (u.role === 'GK' || u.role === 'CB')) {
         sc += 1.6;
-        if (!g && !a) reason = u.role === 'GK' ? `clean sheet and ${sv} save${sv === 1 ? '' : 's'}` : 'rock-solid at the back';
+        if (!g && !a) wy = u.role === 'GK' ? why(sv === 1 ? 'cleanSheet' : 'cleanSheets', sv) : why('rockSolid');
       }
-      if (u.role === 'GK' && sv >= 4 && !g) reason = `${sv} saves`;
+      if (u.role === 'GK' && sv >= 4 && !g) wy = why('saves', sv);
       if (redded.has(u.id)) sc -= 3;
       if (winner === i) sc += 0.6;
-      rows.push({ id: u.id, team: i, score: sc, reason });
+      rows.push({ id: u.id, team: i, score: sc, ...wy });
     }
   }
   rows.sort((x, y) => y.score - x.score || player(y.id).ovr - player(x.id).ovr);
@@ -508,11 +553,14 @@ export function simulateMatch(
     winner,
     events,
     stats,
-    motm: { team: top.team, player: top.id, reason: top.reason },
+    motm: { team: top.team, player: top.id, reason: top.reason, rk: top.rk, rv: top.rv },
     headline: '',
     overall: [profs[0].overall, profs[1].overall],
   };
-  result.headline = headlineFor(result, names, rng.fork('headline'));
+  const hl = headlineFor(result, names, rng.fork('headline'));
+  result.headline = hl.text;
+  result.hk = hl.hk;
+  result.hv = hl.hv;
   return result;
 }
 
@@ -525,12 +573,12 @@ function decided(sh: [number, number], round: number, kicker: 0 | 1): boolean {
   return sh[0] > sh[1] + leftB || sh[1] > sh[0] + leftA;
 }
 
-function headlineFor(r: MatchResult, names: [string, string], rng: Rng): string {
+function headlineFor(r: MatchResult, names: [string, string], rng: Rng): { text: string; hk: string; hv: Record<string, string> } {
   const [a, b] = r.score;
   const diff = Math.abs(a - b);
   const w = r.winner;
   const wn = w === null ? '' : names[w];
-  const ln = w === null ? '' : names[1 - w];
+  const ln = w === null ? '' : names[1 - w]!;
   const total = a + b;
   const gap = r.overall[0] - r.overall[1];
   const favourite: 0 | 1 = gap >= 0 ? 0 : 1;
@@ -545,19 +593,30 @@ function headlineFor(r: MatchResult, names: [string, string], rng: Rng): string 
   const penDecider = !!lastGoal && lastGoal.src === 'penalty' && r.went === 'ft' && w !== null && lastGoal.team === w && diff === 1;
   const reds = r.stats.reds[0] + r.stats.reds[1];
 
-  if (r.went === 'pens' && r.pens) return rng.pick([`${wn} survive the shootout, ${r.pens[w!]}-${r.pens[1 - w!]}`, `Penalty drama: ${wn} win it from the spot`, `${ln} heartbroken as ${wn} take it on penalties`]);
-  if (hat) return `${shortName(player(hat[0]).name)} hat-trick sinks ${ln || 'the opposition'}`;
-  if (upset) return rng.pick([`Shock! ${wn} topple the favourites`, `Giant-killing: ${wn} beat ${ln} against the odds`, `Upset of the day: ${wn} stun ${ln}`]);
-  if (penDecider) return rng.pick([`A penalty decides it for ${wn}`, `${wn} win it from the spot`]);
-  if (lateWinner) return rng.pick([`Last-gasp winner breaks ${ln} hearts`, `${wn} snatch it late`, `Stoppage-time drama as ${wn} edge it`]);
-  if (w === null) return total === 0 ? 'Nil-nil: nothing to separate them' : rng.pick(['Honours even in a thriller', 'Share of the spoils', 'Everything level at the final whistle']);
-  if (diff >= 4) return rng.pick([`${wn} run riot`, `Demolition: ${wn} ${Math.max(a, b)}-${Math.min(a, b)} ${ln}`, `${ln} torn apart: ${wn} are ruthless`]);
-  if (diff >= 3) return rng.pick([`${wn} cruise past ${ln}`, `Comfortable night for ${wn}`, `${wn} too strong for ${ln}`]);
-  if (reds >= 2) return rng.pick(['Red-card chaos as ' + wn + ' come out on top', `A feisty one: ${wn} take it`]);
-  if (r.went === 'et') return rng.pick([`${wn} edge it in extra time`, `Extra-time winner sends ${wn} through`]);
-  if (total >= 5) return rng.pick(["Goal-fest! Everyone gets their money's worth", `${wn} win a classic`]);
-  if (total === 1) return rng.pick([`${wn} grind out a 1-0`, `One goal is enough for ${wn}`]);
-  return rng.pick([`${wn} take the points`, `${wn} get the better of ${ln}`, `${wn} win a tight one`]);
+  /** one random draw from the group (none for a group of one), like the rng.pick this replaced */
+  const line = (group: string, vars: Record<string, string> = {}) => {
+    const list = HEADLINES[group]!;
+    const tpl = list.length > 1 ? rng.pick(list) : list[0]!;
+    return { text: fill(tpl, vars), hk: `${group}:${list.indexOf(tpl)}`, hv: vars };
+  };
+  const v = { wn, ln };
+
+  if (r.went === 'pens' && r.pens) return line('pens', { ...v, ws: String(r.pens[w!]), ls: String(r.pens[1 - w!]) });
+  if (hat) {
+    const p = shortName(player(hat[0]).name);
+    return ln ? line('hat', { p, ln }) : line('hatDraw', { p });
+  }
+  if (upset) return line('upset', v);
+  if (penDecider) return line('penDecider', v);
+  if (lateWinner) return line('lateWinner', v);
+  if (w === null) return total === 0 ? line('nilNil') : line('draw');
+  if (diff >= 4) return line('riot', { ...v, hi: String(Math.max(a, b)), lo: String(Math.min(a, b)) });
+  if (diff >= 3) return line('cruise', v);
+  if (reds >= 2) return line('feisty', v);
+  if (r.went === 'et') return line('et', v);
+  if (total >= 5) return line('goalfest', v);
+  if (total === 1) return line('oneNil', v);
+  return line('win', v);
 }
 
 /* ───────────── playback schedule (shared by server and client so they agree on timing) ───────────── */

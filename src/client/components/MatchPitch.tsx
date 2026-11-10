@@ -1,12 +1,45 @@
+import type { TFn } from '../../shared/i18n';
 import { shade } from '../lib/colors';
+import { useI18n } from '../lib/i18n';
 import { PH, PW, type FlowLabel, type Scene } from '../lib/scene';
 import { cx } from './ui';
 
 const GOAL_W = 7.32;
 const GX = (PW - GOAL_W) / 2;
 
+/** The word under the team name on the arrow. */
+function stateWord(label: FlowLabel, t: TFn): string {
+  switch (label) {
+    case 'attack': return t('ATTACKING');
+    case 'danger': return t('DANGEROUS ATTACK');
+    default: return t('BIG CHANCE');
+  }
+}
 
-const STATE_WORDS: Record<FlowLabel, string> = { attack: 'ATTACKING', danger: 'DANGEROUS ATTACK', chance: 'BIG CHANCE' };
+/** The big label that pops in over the pitch. scene.ts writes it in English; this is where it is shown in the reader's language. */
+function tagText(text: string, t: TFn): string {
+  switch (text) {
+    case 'GOAL!': return t('GOAL!');
+    case 'SAVED': return t('SAVED');
+    case 'MISSED': return t('MISSED');
+    case 'SCORES': return t('SCORES');
+    case 'OFF TARGET': return t('OFF TARGET');
+    case 'OFF THE POST': return t('OFF THE POST');
+    case 'YELLOW CARD': return t('YELLOW CARD');
+    case 'RED CARD': return t('RED CARD');
+    case 'FREE KICK': return t('FREE KICK');
+    case 'PENALTY': return t('PENALTY');
+    case 'CORNER': return t('CORNER');
+    case 'CHANCE': return t('CHANCE');
+    case 'KICK-OFF': return t('KICK-OFF');
+    case 'HALF-TIME': return t('HALF-TIME');
+    case 'FULL-TIME': return t('FULL-TIME');
+    case 'EXTRA TIME': return t('EXTRA TIME');
+    case 'END OF EXTRA TIME': return t('END OF EXTRA TIME');
+    case 'PENALTIES': return t('PENALTIES');
+    default: return text;
+  }
+}
 
 /** hex colour a mixed toward b by t (0 to 1) */
 function mixHex(a: string, b: string, t: number): string {
@@ -24,6 +57,7 @@ function mixHex(a: string, b: string, t: number): string {
 function FlowArrow({ team, show, level, lane, color, name, label }: {
   team: 0 | 1; show: number; level: number; lane: number; color: string; name: string; label: FlowLabel;
 }) {
+  const { t } = useI18n();
   const yy = (d: number) => (team === 0 ? PH - d : d); // team 0 attacks up the screen, team 1 down
   const dTail = 16;
   const dTip = 56 + level * 39; // from just past halfway to ten metres from goal
@@ -35,7 +69,7 @@ function FlowArrow({ team, show, level, lane, color, name, label }: {
   const path = `M${lane - hw} ${yy(dTail)}L${lane + hw} ${yy(dTail)}L${lane + hw} ${yy(dHead)}L${lane + hh} ${yy(dHead)}L${lane} ${yy(dTip)}L${lane - hh} ${yy(dHead)}L${lane - hw} ${yy(dHead)}Z`;
   const chevrons: number[] = [];
   for (let d = dTail - 7; d < dTip; d += 7) chevrons.push(d);
-  const words = STATE_WORDS[label];
+  const words = stateWord(label, t);
   const nm = name.length > 15 ? `${name.slice(0, 14)}.` : name;
   const wide = Math.max(nm.length, words.length) * 1.62 + 4.5;
   const mid = (dTail + dTip) / 2;
@@ -75,12 +109,13 @@ export function MatchPitch({ scene, trail, colors, names, tagKey }: {
   /** changes whenever a new moment starts so the tag pops in again */
   tagKey: string;
 }) {
+  const { t } = useI18n();
   const [c0, c1] = colors;
   const stripes = Array.from({ length: 14 }, (_, i) => i);
   const rippleTop = scene.ripple?.goal === 0 ? scene.ripple.p : 0;
   const rippleBottom = scene.ripple?.goal === 1 ? scene.ripple.p : 0;
   return (
-    <div className="mpitch" role="img" aria-label="Live match view">
+    <div className="mpitch" role="img" aria-label={t('Live match view')}>
       <svg viewBox={`-2.5 -5 ${PW + 5} ${PH + 10}`} preserveAspectRatio="xMidYMid meet">
         <defs>
           <linearGradient id="mp-grass" x1="0" y1="0" x2="0" y2="1">
@@ -211,7 +246,7 @@ export function MatchPitch({ scene, trail, colors, names, tagKey }: {
 
       {scene.tag && (
         <div className={cx('mtag', `mtag--${scene.tag.kind}`)} key={`${tagKey}-${scene.tag.kind}`} style={{ ['--team' as string]: scene.tag.team === 0 ? c0 : c1 }}>
-          <b>{scene.tag.text}</b>
+          <b>{tagText(scene.tag.text, t)}</b>
           {scene.tag.sub && <span>{scene.tag.sub}</span>}
         </div>
       )}

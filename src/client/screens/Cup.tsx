@@ -3,6 +3,7 @@ import { BRAND } from '../../shared/brand';
 import { CUP_STAGES, buildOpponent, cupBoard, dailyLabel, dailySeed } from '../../shared/cup';
 import { ROUNDS, placePlayer, type RatingsMode } from '../../shared/draft';
 import { FORMATIONS, FORMATION_IDS, type FormationId } from '../../shared/formations';
+import type { TFn } from '../../shared/i18n';
 import { player } from '../../shared/players';
 import { BASE_POOL_IDS, POOLS, type PoolId } from '../../shared/pools';
 import { hashSeed, randomSeed } from '../../shared/rng';
@@ -12,6 +13,7 @@ import { Confetti } from '../components/Confetti';
 import { Pitch } from '../components/Pitch';
 import { Button, Icon, Seg, cx, shareOrCopy } from '../components/ui';
 import { navigate, useScrollTop } from '../lib/hooks';
+import { useI18n } from '../lib/i18n';
 import { BOT_HUES, SEAT_HUES } from '../../shared/protocol';
 import { sfx } from '../lib/sfx';
 import { lsGet, lsSet } from '../lib/storage';
@@ -48,6 +50,39 @@ interface Save {
 const POOL_IDS: PoolId[] = BASE_POOL_IDS;
 const keyFor = (mode: Mode, seed: string) => (mode === 'daily' ? `daily:${seed}` : 'cup:current');
 
+/* Stage names and the sentences built around them. Bosnian declines the stage name (u finale, u polufinalu), so every sentence is spelled out per stage. */
+const stageName = (t: TFn, i: number): string => t(CUP_STAGES[i]!);
+function throughTo(t: TFn, i: number): string {
+  switch (i) {
+    case 1: return t('Through to the Quarter-final');
+    case 2: return t('Through to the Semi-final');
+    default: return t('Through to the Final');
+  }
+}
+function kickOff(t: TFn, i: number): string {
+  switch (i) {
+    case 0: return t('Kick off the Round of 16');
+    case 1: return t('Kick off the Quarter-final');
+    case 2: return t('Kick off the Semi-final');
+    default: return t('Kick off the Final');
+  }
+}
+function onTo(t: TFn, i: number): string {
+  switch (i) {
+    case 1: return t('On to the Quarter-final');
+    case 2: return t('On to the Semi-final');
+    default: return t('On to the Final');
+  }
+}
+function outIn(t: TFn, i: number): string {
+  switch (i) {
+    case 0: return t('Out in the Round of 16');
+    case 1: return t('Out in the Quarter-final');
+    case 2: return t('Out in the Semi-final');
+    default: return t('Out in the Final');
+  }
+}
+
 function fresh(mode: Mode): Save {
   const seed = mode === 'daily' ? dailySeed() : randomSeed();
   return {
@@ -74,6 +109,7 @@ function load(mode: Mode): Save {
 }
 
 export function CupPage({ mode }: { mode: Mode }) {
+  const { t } = useI18n();
   const [s, setS] = useState<Save>(() => load(mode));
   const update = useCallback((patch: Partial<Save> | ((x: Save) => Save)) => {
     setS((cur) => {
@@ -118,22 +154,22 @@ export function CupPage({ mode }: { mode: Mode }) {
   if (s.phase === 'intro') {
     return (
       <div className="intro panel">
-        <p className="eyebrow">{mode === 'daily' ? `Daily Draft · ${dailyLabel(s.seed)}` : 'Solo Cup'}</p>
-        <h1>{mode === 'daily' ? 'Same packs for everyone today' : 'Win four knockout rounds'}</h1>
+        <p className="eyebrow">{mode === 'daily' ? t('Daily Draft · {date}', { date: dailyLabel(s.seed) }) : t('Solo Cup')}</p>
+        <h1>{mode === 'daily' ? t('Same packs for everyone today') : t('Win four knockout rounds')}</h1>
         <p className="muted">
           {mode === 'daily'
-            ? 'Everyone in the world gets the identical packs and opponents today. Compare how far you got with your mates.'
-            : 'Draft an XI from 11 packs, then beat four AI sides in a row. Fresh packs every run.'}
+            ? t('Everyone in the world gets the identical packs and opponents today. Compare how far you got with your mates.')
+            : t('Draft an XI from 11 packs, then beat four AI sides in a row. Fresh packs every run.')}
         </p>
         <div className="setting">
-          <label>Player pool</label>
+          <label>{t('Player pool')}</label>
           {mode === 'daily' ? (
-            <p><b>{POOLS[s.pool].name}</b> <span className="muted">is today's pool</span></p>
+            <p><b>{t(POOLS[s.pool].name)}</b> <span className="muted">{t("is today's pool")}</span></p>
           ) : (
             <div className="opts opts--3">
               {POOL_IDS.map((id) => (
                 <button key={id} className={cx('opt', s.pool === id && 'is-on')} onClick={() => update({ pool: id })} aria-pressed={s.pool === id}>
-                  <b>{POOLS[id].name}</b><span>{POOLS[id].blurb}</span>
+                  <b>{t(POOLS[id].name)}</b><span>{t(POOLS[id].blurb)}</span>
                 </button>
               ))}
             </div>
@@ -141,17 +177,17 @@ export function CupPage({ mode }: { mode: Mode }) {
         </div>
         <div className="setting setting--inline">
           <div>
-            <label>Ratings on cards</label>
-            <Seg<RatingsMode> label="Ratings" value={s.ratings} onChange={(v) => update({ ratings: v })} options={[{ value: 'hidden', label: 'Hidden' }, { value: 'tier', label: 'Stars' }, { value: 'full', label: 'Numbers' }]} />
+            <label>{t('Ratings on cards')}</label>
+            <Seg<RatingsMode> label={t('Ratings')} value={s.ratings} onChange={(v) => update({ ratings: v })} options={[{ value: 'hidden', label: t('Hidden') }, { value: 'tier', label: t('Stars') }, { value: 'full', label: t('Numbers') }]} />
           </div>
           <div>
-            <label>Formation</label>
-            <Seg<string> label="Formation" value={s.squad.formation} onChange={(v) => update({ squad: emptySquad(v as FormationId) })} options={FORMATION_IDS.map((id) => ({ value: id, label: FORMATIONS[id].name }))} />
+            <label>{t('Formation')}</label>
+            <Seg<string> label={t('Formation')} value={s.squad.formation} onChange={(v) => update({ squad: emptySquad(v as FormationId) })} options={FORMATION_IDS.map((id) => ({ value: id, label: FORMATIONS[id].name }))} />
           </div>
         </div>
         <div className="row">
-          <Button variant="primary" size="lg" icon="play" onClick={start}>Start drafting</Button>
-          <Button variant="ghost" onClick={() => navigate('/')}>Back</Button>
+          <Button variant="primary" size="lg" icon="play" onClick={start}>{t('Start drafting')}</Button>
+          <Button variant="ghost" onClick={() => navigate('/')}>{t('Back')}</Button>
         </div>
       </div>
     );
@@ -173,7 +209,7 @@ export function CupPage({ mode }: { mode: Mode }) {
         rivals={[]}
         log={[]}
         onPick={onPick}
-        subtitle={mode === 'daily' ? `Daily ${dailyLabel(s.seed)}` : 'Solo Cup'}
+        subtitle={mode === 'daily' ? t('Daily {date}', { date: dailyLabel(s.seed) }) : t('Solo Cup')}
       />
     );
   }
@@ -193,10 +229,10 @@ export function CupPage({ mode }: { mode: Mode }) {
         onArrange={() => update((c) => ({ ...c, squad: autoArrange(c.squad) }))}
         onStyle={(st: StyleId) => update((c) => ({ ...c, squad: { ...c.squad, style: st } }))}
         onReady={(r) => { if (r) update({ phase: 'match', matchStartedAt: Date.now() + 3000 }); }}
-        title={s.stage === 0 ? 'Set your lineup' : `Through to the ${CUP_STAGES[s.stage]}`}
-        subtitle={s.stage === 0 ? 'Choose a formation and style, then take on the cup.' : 'Adjust your lineup and style before the next one.'}
-        readyLabel={`Kick off the ${CUP_STAGES[s.stage]}`}
-        opponent={{ name: opp.name, overall: opp.overall, stage: CUP_STAGES[s.stage]! }}
+        title={s.stage === 0 ? t('Set your lineup') : throughTo(t, s.stage)}
+        subtitle={s.stage === 0 ? t('Choose a formation and style, then take on the cup.') : t('Adjust your lineup and style before the next one.')}
+        readyLabel={kickOff(t, s.stage)}
+        opponent={{ name: opp.name, overall: opp.overall, stage: stageName(t, s.stage) }}
       />
     );
   }
@@ -209,9 +245,12 @@ export function CupPage({ mode }: { mode: Mode }) {
 }
 
 function CupMatch({ s, opp, update }: { s: Save; opp: ReturnType<typeof buildOpponent>; update: (p: Partial<Save> | ((x: Save) => Save)) => void }) {
+  const { t, lang } = useI18n();
+  // The team name also fills the Bosnian commentary lines ("Korner za {t}", "{t} slavi"), which need a noun, not the pronoun "Ti".
+  const you = lang === 'en' ? 'You' : t('Your team');
   const result = useMemo(
-    () => simulateMatch(s.squad, opp.squad, ['You', opp.name], `${s.seed}/cup/${s.stage}`, { knockout: true }),
-    [s.squad, s.seed, s.stage, opp],
+    () => simulateMatch(s.squad, opp.squad, [you, opp.name], `${s.seed}/cup/${s.stage}`, { knockout: true }),
+    [s.squad, s.seed, s.stage, opp, you],
   );
   const won = result.winner === 0;
   const last = s.stage >= CUP_STAGES.length - 1;
@@ -230,21 +269,22 @@ function CupMatch({ s, opp, update }: { s: Save; opp: ReturnType<typeof buildOpp
   };
   return (
     <MatchPlayer
-      fixtures={[{ a: { name: 'You', hue: 1, color: SEAT_HUES[1], squad: s.squad }, b: { name: opp.name, hue: 0, color: BOT_HUES[0], squad: opp.squad, bot: true }, result }]}
+      fixtures={[{ a: { name: you, hue: 1, color: SEAT_HUES[1], squad: s.squad }, b: { name: opp.name, hue: 0, color: BOT_HUES[0], squad: opp.squad, bot: true }, result }]}
       startAt={s.matchStartedAt!}
       you={() => 0}
       onSeen={() => undefined}
       pace="normal"
-      continueLabel={won ? (last ? 'Lift the trophy' : `On to the ${CUP_STAGES[s.stage + 1]}`) : 'See how it ended'}
+      continueLabel={won ? (last ? t('Lift the trophy') : onTo(t, s.stage + 1)) : t('See how it ended')}
       onContinue={next}
     />
   );
 }
 
 function CupOver({ s, onNew }: { s: Save; onNew: () => void }) {
+  const { t, tn } = useI18n();
   const prof = profile(s.squad);
   const champion = s.status === 'champion';
-  const reached = champion ? 'Champions' : `Out in the ${CUP_STAGES[Math.min(s.stage, 3)]}`;
+  const reached = champion ? t('Champions') : outIn(t, Math.min(s.stage, 3));
   const wins = s.results.filter((r) => r.won).length;
 
   useEffect(() => {
@@ -255,8 +295,8 @@ function CupOver({ s, onNew }: { s: Save; onNew: () => void }) {
   }, []);
 
   const text = [
-    `${BRAND.name} ${s.mode === 'daily' ? `Daily ${dailyLabel(s.seed)}` : 'Cup'} · ${reached}${champion ? ' 🏆' : ''}`,
-    `${FORMATIONS[s.squad.formation].name} · ${prof.overall.toFixed(1)} OVR · ${prof.chem.score}% chem · ${wins}/4 wins`,
+    `${BRAND.name} ${s.mode === 'daily' ? t('Daily {date}', { date: dailyLabel(s.seed) }) : t('Cup')} · ${reached}${champion ? ' 🏆' : ''}`,
+    t('{formation} · {ovr} OVR · {chem}% chem · {wins}/4 wins', { formation: FORMATIONS[s.squad.formation].name, ovr: prof.overall.toFixed(1), chem: prof.chem.score, wins }),
     s.results.map((r) => (r.won ? '🟩' : '🟥')).join('') + '⬜'.repeat(Math.max(0, 4 - s.results.length)),
   ].join('\n');
 
@@ -264,29 +304,29 @@ function CupOver({ s, onNew }: { s: Save; onNew: () => void }) {
     <div className="result">
       {champion && <Confetti burst="cup" count={70} />}
       <section className={cx('panel winner', champion && 'winner--you')}>
-        <p className="eyebrow">{s.mode === 'daily' ? `Daily ${dailyLabel(s.seed)}` : 'Solo Cup'}</p>
-        <h1>{champion ? 'Champions!' : reached}</h1>
-        <p className="winner__sum">{wins} win{wins === 1 ? '' : 's'} · {prof.overall.toFixed(1)} overall</p>
+        <p className="eyebrow">{s.mode === 'daily' ? t('Daily {date}', { date: dailyLabel(s.seed) }) : t('Solo Cup')}</p>
+        <h1>{champion ? t('Champions!') : reached}</h1>
+        <p className="winner__sum">{tn('{n} win', '{n} wins', wins)} · {t('{ovr} overall', { ovr: prof.overall.toFixed(1) })}</p>
         <ol className="cupresults">
           {s.results.map((r) => (
             <li key={r.stage} className={r.won ? 'is-win' : 'is-loss'}>
-              <span className="cupresults__stage">{CUP_STAGES[r.stage]}</span>
-              <span>vs {r.opp}</span>
-              <b>{r.score[0]}–{r.score[1]}{r.pens ? ` (${r.pens[0]}–${r.pens[1]} pens)` : ''}</b>
+              <span className="cupresults__stage">{stageName(t, r.stage)}</span>
+              <span>{t('vs {opp}', { opp: r.opp })}</span>
+              <b>{r.score[0]}–{r.score[1]}{r.pens ? ` (${t('{a}–{b} pens', { a: r.pens[0], b: r.pens[1] })})` : ''}</b>
               <Icon name={r.won ? 'check' : 'x'} size={16} />
             </li>
           ))}
         </ol>
         <div className="row row--center">
-          <Button variant="soft" icon="share" onClick={() => shareOrCopy({ title: BRAND.name, text: text, url: location.origin })}>Share result</Button>
-          {s.mode === 'cup' ? <Button variant="primary" size="lg" icon="refresh" onClick={onNew}>New run</Button> : <Button variant="primary" size="lg" onClick={() => navigate('/')}>Back home</Button>}
-          {s.mode === 'cup' && <Button variant="ghost" onClick={() => navigate('/')}>Home</Button>}
+          <Button variant="soft" icon="share" onClick={() => shareOrCopy({ title: BRAND.name, text: text, url: location.origin })}>{t('Share result')}</Button>
+          {s.mode === 'cup' ? <Button variant="primary" size="lg" icon="refresh" onClick={onNew}>{t('New run')}</Button> : <Button variant="primary" size="lg" onClick={() => navigate('/')}>{t('Back home')}</Button>}
+          {s.mode === 'cup' && <Button variant="ghost" onClick={() => navigate('/')}>{t('Home')}</Button>}
         </div>
       </section>
       <section className="panel">
-        <h2 className="panel__title">Your XI</h2>
+        <h2 className="panel__title">{t('Your XI')}</h2>
         <div className="squadview">
-          <Pitch formation={s.squad.formation} slots={s.squad.slots} links={prof.chem.links} linkCount={prof.chem.perSlot} ratings="full" label="Your final XI" />
+          <Pitch formation={s.squad.formation} slots={s.squad.slots} links={prof.chem.links} linkCount={prof.chem.perSlot} ratings="full" label={t('Your final XI')} />
           <ul className="roster">
             {FORMATIONS[s.squad.formation].slots.map((slot) => {
               const pid = s.squad.slots[slot.id];

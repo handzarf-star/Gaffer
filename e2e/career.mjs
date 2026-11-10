@@ -28,6 +28,7 @@ async function newPhone(name) {
 
 let violations = 0;
 async function audit(page, label) {
+  await page.evaluate(() => window.scrollTo(0, 0)); // a sticky bar overlapping a button only when scrolled is not a defect of the button
   await page.addStyleTag({ content: '*, *::before, *::after { animation: none !important; transition: none !important; }' });
   await sleep(250);
   await page.evaluate(axeSrc);

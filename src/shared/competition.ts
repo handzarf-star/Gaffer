@@ -31,6 +31,9 @@ export interface LiteResult {
   winner: 0 | 1 | null;
   goals: Array<{ t: number; p: string; team: 0 | 1; src?: string }>;
   headline: string;
+  /** template key and variables behind `headline`, so it can be shown in another language */
+  hk?: string;
+  hv?: Record<string, string>;
 }
 
 export function litefy(r: MatchResult): LiteResult {
@@ -40,6 +43,8 @@ export function litefy(r: MatchResult): LiteResult {
     went: r.went,
     winner: r.winner,
     headline: r.headline,
+    hk: r.hk,
+    hv: r.hv,
     goals: r.events.filter((e) => e.type === 'goal').map((e) => ({ t: e.t, p: e.p!, team: e.team, src: e.src })),
   };
 }
