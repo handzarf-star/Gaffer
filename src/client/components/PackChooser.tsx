@@ -24,10 +24,12 @@ export function PackChooser({ packs, canPick, mode, onOpen, who, identical }: {
     return (
       <div className="packs packs--same" role="group" aria-label={label}>
         {Array.from({ length: identical }, (_, i) => (
-          <button key={i} type="button" className="pack pack--same" disabled={!canPick} onClick={() => onOpen(i)} data-pack={i} aria-label={t('Pack {n} of {total}', { n: i + 1, total: identical })}>
+          <button key={i} type="button" className="pack pack--same" disabled={!canPick} onClick={() => onOpen(i)} data-pack={i}>
             <span className="pack__foil" aria-hidden="true" />
             <span className="pack__art" aria-hidden="true"><span className="pack__mark" data-g="?" /></span>
-            <span className="pack__tap" aria-hidden="true">{canPick ? t('Tap to open') : ''}</span>
+            {/* identical to the eye; a screen reader still needs to tell them apart */}
+            <span className="sr-only">{t('Pack {n} of {total}', { n: i + 1, total: identical })}</span>
+            <span className="pack__tap">{canPick ? t('Tap to open') : ''}</span>
           </button>
         ))}
       </div>

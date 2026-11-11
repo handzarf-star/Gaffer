@@ -19,7 +19,6 @@ registerDict('bs', {
   "Your pick": "Tvoj izbor",
   "Read the clues. They are rumours, not promises": "Čitaj nagovještaje. To su glasine, a ne obećanja",
   "Tap it. The glow hints at what is inside": "Dodirni ga. Sjaj nagovještava šta je unutra",
-  "Tap a green spot or press Enter": "Dodirni zeleno mjesto ili pritisni Enter",
   "Choose one card": "Izaberi jednu kartu",
   "Shared board": "Zajednička tabla",
   "{name}'s pack": "Paket: {name}",

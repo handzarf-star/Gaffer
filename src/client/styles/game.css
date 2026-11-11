@@ -591,8 +591,9 @@
 .stealbar b { font: 800 18px/1 var(--font-display); font-variant-numeric: tabular-nums; color: var(--text); }
 .stealbar i { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--accent-2); transition: width .1s linear; }
 .stealbar--go { background: var(--accent-2-soft); color: var(--text); }
-.stealbtn { animation: stealPulse .7s ease-in-out infinite alternate; }
-@keyframes stealPulse { to { transform: scale(1.06); } }
+/* it glows, it does not move: a button you have three seconds to hit must stay where it is */
+.stealbtn { animation: stealGlow .7s ease-in-out infinite alternate; }
+@keyframes stealGlow { to { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 35%, transparent), 0 0 22px -2px var(--accent); } }
 
 /* what the manager did not get */
 .missed { margin: 10px 0 2px; padding: 10px 12px; border-radius: var(--r-md); border: 1px dashed var(--border); background: color-mix(in srgb, var(--surface) 70%, transparent); animation: toastIn .35s var(--ease); }
