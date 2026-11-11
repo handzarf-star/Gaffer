@@ -50,12 +50,18 @@ const phaseOf = (page) => page.evaluate(() => {
 });
 
 /** If it is this phone's turn: open a pack (when sealed), wait out the steal window, sign the first card. Returns true if it acted. */
-async function takeTurn(p) {
+async function takeTurn(p, thief = null) {
   const { page } = p;
   const pack = page.locator('.pack--same:not([disabled])').first();
   if (await pack.count()) {
     await pack.click();
     await page.locator('.board--spot .pcard').first().waitFor();
+    // the rival, watching on their own phone, takes a card out of the pack that has just opened
+    if (thief && !thief.stole) {
+      const btn = thief.page.getByRole('button', { name: 'Steal' }).first();
+      await btn.waitFor({ timeout: 3000 }).catch(() => undefined);
+      if (await btn.count()) { await btn.click(); thief.stole = true; await sleep(300); }
+    }
   }
   const mine = await page.locator('.turn--you').count();
   const cards = page.locator('.board--spot .pcard:not([disabled])');
@@ -76,6 +82,7 @@ try {
 
   // ── the front door
   await A.page.goto(BASE + '/');
+  await A.page.getByRole('button', { name: 'Start a league' }).waitFor();
   must((await A.page.getByRole('button', { name: 'Start a league' }).count()) === 1, 'the home page should have one primary action');
   must(!(await A.page.getByRole('button', { name: 'Start a run' }).isVisible().catch(() => false)), 'Solo Cup should be under "More", not on the front');
   await audit(A.page, 'home');
@@ -131,8 +138,9 @@ try {
   must((await A.page.locator('.pack--same').count()) === 3, 'three sealed packs');
   must((await A.page.locator('.pack--same:not([disabled])').count()) === 3, 'the manager on the clock can open any of them');
   must((await B.page.locator('.pack--same:not([disabled])').count()) === 0, 'the manager who is watching cannot');
+  await sleep(900); // the packs arrive one after another; measure them once they have landed
   // what the eye gets: the label a sighted person reads, the wrapper and its glow (the hidden screen-reader text is allowed to differ)
-  const faces = await A.page.locator('.pack--same').evaluateAll((els) => els.map((e) => (e.querySelector('.pack__tap')?.textContent ?? '') + '|' + getComputedStyle(e).backgroundImage + '|' + getComputedStyle(e).boxShadow + '|' + e.getBoundingClientRect().width.toFixed(0)));
+  const faces = await A.page.locator('.pack--same').evaluateAll((els) => els.map((e) => (e.querySelector('.pack__tap')?.textContent ?? '') + '|' + getComputedStyle(e).backgroundImage + '|' + getComputedStyle(e).boxShadow + '|' + Math.round(e.getBoundingClientRect().width / 2)));
   must(new Set(faces).size === 1, 'the three packs must look exactly the same');
   must(!(await A.page.locator('.pack__chip, .pack__rumour, .pack__name').count()), 'no clues on the packs');
   await audit(A.page, 'draft: three sealed packs');
@@ -157,21 +165,14 @@ try {
   await audit(A.page, 'draft: what you missed');
 
   // the rest of the draft: A steals once from B on the way, to prove it works both ways
-  let stoleBack = false;
   const t0 = Date.now();
   while (Date.now() - t0 < 240_000) {
     const [pa, pb] = [await phaseOf(A.page), await phaseOf(B.page)];
     if (pa !== 'draft' && pb !== 'draft') break;
-    if (!stoleBack && (await A.page.getByRole('button', { name: 'Steal' }).count())) {
-      await A.page.getByRole('button', { name: 'Steal' }).first().click().catch(() => undefined);
-      stoleBack = true;
-      await sleep(300);
-      continue;
-    }
-    const acted = (await takeTurn(A)) || (await takeTurn(B));
+    const acted = (await takeTurn(A)) || (await takeTurn(B, A));
     if (!acted) await sleep(150);
   }
-  must(stoleBack, 'Sam never got the chance to steal back');
+  must(A.stole, 'Sam never got the chance to steal back');
   for (const p of [A, B]) await p.page.getByRole('button', { name: 'Lock in and kick off' }).waitFor({ timeout: 30_000 });
   console.log('✓ draft finished on both phones (eleven each, a steal each way)');
 

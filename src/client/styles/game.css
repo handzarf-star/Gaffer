@@ -598,7 +598,7 @@
 /* what the manager did not get */
 .missed { margin: 10px 0 2px; padding: 10px 12px; border-radius: var(--r-md); border: 1px dashed var(--border); background: color-mix(in srgb, var(--surface) 70%, transparent); animation: toastIn .35s var(--ease); }
 .missed__title { display: block; font: 800 13px var(--font-display); margin-bottom: 8px; }
-.missed__row { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 2px; }
+.missed__row { display: flex; flex-wrap: wrap; gap: 10px 14px; } /* wraps instead of scrolling sideways: nothing to reach by keyboard */
 .missed__pack { display: grid; gap: 4px; flex: none; }
 .missed__label { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
 .missed__cards { display: flex; gap: 5px; }
@@ -631,3 +631,15 @@
 .fxrow__lock { font-size: 18px; }
 
 @media (prefers-reduced-motion: reduce) { .is-ripping .pack--same, .board--spot .pcard--reveal, .stealbtn, .missed { animation: none !important; } }
+
+/* The league table never scrolls sideways: fixed columns, the club name gives way (ellipsis), and a phone drops W / D / L. */
+.table { table-layout: fixed; }
+.table th:first-child { width: 30px; }
+.table th:nth-child(n+3) { width: 40px; }
+.table td:nth-child(2) { overflow: hidden; }
+.table td:nth-child(2) .team { display: flex; max-width: 100%; }
+.table td:nth-child(2) .team .badge, .table td:nth-child(2) .team .cpu { flex: none; }
+@media (max-width: 560px) {
+  .table th:nth-child(4), .table td:nth-child(4), .table th:nth-child(5), .table td:nth-child(5), .table th:nth-child(6), .table td:nth-child(6) { display: none; }
+  .table th:nth-child(n+3) { width: 38px; }
+}
