@@ -1,6 +1,7 @@
 // Automated WCAG 2.x A/AA audit (axe-core) over every screen reachable solo, in light and dark.
 //   BASE=http://localhost:8787 node e2e/a11y.mjs
 import { chromium } from '@playwright/test';
+import { classic } from './classic.mjs';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 
@@ -36,7 +37,8 @@ async function audit(page, label) {
 // teams, the live pitch, the between-matchdays hub and the final table.
 async function tournament(page, scheme) {
   await page.goto(BASE); await page.getByLabel('Your name').fill('Sam');
-  await page.getByRole('button', { name: 'Create a room' }).click(); await page.getByText('Waiting for a friend').waitFor();
+  await page.getByRole('button', { name: 'Start a league' }).click(); await page.getByText('Waiting for a friend').waitFor();
+  await classic(page, { format: 'packs', competition: 'league' });
   await page.getByRole('button', { name: /^League/ }).click();
   await page.getByRole('button', { name: /Packs/ }).click();
   await page.getByText(/3 CPU teams/).first().waitFor(); await sleep(300);
@@ -77,7 +79,7 @@ for (const scheme of ['light', 'dark']) {
   await page.goto(`${BASE}/how-to-play`); await sleep(300); await audit(page, `${scheme}: how to play`);
   // lobby
   await page.goto(BASE); await page.getByLabel('Your name').fill('Sam');
-  await page.getByRole('button', { name: 'Create a room' }).click(); await page.getByText('Waiting for a friend').waitFor(); await sleep(400);
+  await page.getByRole('button', { name: 'Start a league' }).click(); await page.getByText('Waiting for a friend').waitFor(); await sleep(400);
   await audit(page, `${scheme}: lobby`);
   // solo cup
   await page.goto(`${BASE}/cup`); await page.evaluate(() => localStorage.clear()); await page.reload(); await sleep(300);

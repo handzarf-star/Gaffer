@@ -25,14 +25,16 @@ for (let i = 0; i < 90 && !up; i++) {
 if (!up) { console.error('server did not start'); process.exit(1); }
 
 const steps = [
+  ['League Night on two phones: club, spotlight draft with steals, transfer window, time limits, sealed results (+ a11y)', 'e2e/league-night.mjs', { BASE }],
   ['two players, Duel draft, desktop', 'e2e/flow.mjs', { BASE }],
   ['two players, Packs draft, phone', 'e2e/flow.mjs', { BASE, FORMAT: 'packs', MOBILE: '1' }],
   ['two players, Take turns draft (one drafts, the other watches), phone', 'e2e/flow.mjs', { BASE, FORMAT: 'turns', MOBILE: '1' }],
   ['reconnect, resume, solo cup, daily', 'e2e/more.mjs', { BASE }],
   ['two phones play a league with CPU teams (iPhone + Pixel emulation)', 'e2e/tournament.mjs', { BASE }],
   ['one phone vs CPU teams at small, large and landscape sizes (+ iOS zoom rule)', 'e2e/devices.mjs', { BASE }],
-  ['themed pools: Premier League, Balkans, era chips, thin-mix guard, pack chooser', 'e2e/pools.mjs', { BASE }],
+  ['pools: Balkan League, countries, two pools at once, legends and eras, thin-mix guard', 'e2e/pools.mjs', { BASE }],
   ['WCAG audit (axe-core), light + dark, incl. tournament screens', 'e2e/a11y.mjs', { BASE }],
+  ['Bosnian on a phone: home, lobby, how to play, cup, career (no sideways scroll, no leftover English)', 'e2e/bosnian.mjs', { BASE }, 'tsx'],
   ['career mode: two phones draft, play, switch to Bosnian, use the transfer window and finish a season (+ a11y)', 'e2e/career.mjs', { BASE }],
   ['Google sign-in loads under the real CSP; other origins stay blocked', 'e2e/csp.mjs', {}],
   ['build id handshake: server, page and socket agree; a newer deploy shows the update banner', 'e2e/update.mjs', {}],
@@ -40,9 +42,11 @@ const steps = [
   ['career API on the real runtime: guest sign-in, a league, hard kill + restart keeps cookie and league', 'scripts/check-career-api.mjs', {}],
 ];
 let failed = 0;
-for (const [name, file, env] of steps) {
+for (const [name, file, env, via] of steps) {
   console.log(`\n━━ ${name}`);
-  if (sh('node', [file], env) !== 0) { failed++; console.log(`✗ FAILED: ${name}`); }
+  // a step that imports TypeScript (the dictionary) runs through tsx
+  const code = via === 'tsx' ? sh('npx', ['tsx', file], env) : sh('node', [file], env);
+  if (code !== 0) { failed++; console.log(`✗ FAILED: ${name}`); }
 }
 stop();
 console.log(failed ? `\n${failed} e2e step(s) failed` : '\nALL E2E STEPS PASSED');

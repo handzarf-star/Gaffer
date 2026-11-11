@@ -52,9 +52,25 @@ async function check(label) {
 
 await page.goto(BASE);
 await check('home');
-await page.getByRole('button', { name: /Napravi sobu/ }).click();
+await page.getByRole('button', { name: /Pokreni ligu/ }).click();
 await page.waitForURL(/\/r\/[A-Z]{4}/);
 await check('lobby');
+// the options most people never open, then the new draft: sealed packs, an opened pack, "what you missed"
+await page.locator('details.advanced summary').click();
+await page.locator('details.advanced').scrollIntoViewIfNeeded();
+await check('lobby-advanced');
+await page.getByRole('button', { name: /^Počni/ }).click();
+await page.locator('.draft').waitFor();
+await page.locator('.pack--same:not([disabled])').first().waitFor({ timeout: 90_000 });
+await check('draft-packs');
+await page.locator('.pack--same:not([disabled])').first().click();
+await page.locator('.board--spot .pcard').first().waitFor();
+await check('draft-opened');
+for (let i = 0; i < 60 && (await page.locator('.stealbar').count()); i++) await sleep(100);
+await page.locator('.board--spot .pcard').first().click();
+await page.locator('.board--spot .pcard').first().click().catch(() => undefined);
+await page.locator('.missed').waitFor();
+await check('draft-missed');
 await page.goto(`${BASE}/how-to-play`);
 await check('how-to-play');
 await page.goto(`${BASE}/cup`);

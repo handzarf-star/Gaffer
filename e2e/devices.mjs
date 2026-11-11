@@ -5,6 +5,7 @@
 //   BASE=... ONLY=small node e2e/devices.mjs                   (one size)
 // Chromium emulation only: it checks layout, touch and viewport rules, not WebKit rendering.
 import { chromium, devices } from '@playwright/test';
+import { classic } from './classic.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -71,8 +72,9 @@ async function run(size) {
   try {
     await page.goto(BASE);
     await page.getByLabel('Your name').fill('Sam');
-    await page.getByRole('button', { name: 'Create a room' }).click();
+    await page.getByRole('button', { name: 'Start a league' }).click();
     await page.waitForURL(/\/r\/[A-Z]{4}$/);
+    await classic(page, { format: 'packs', competition: size.comp === 'groups' ? 'groups' : 'knockout' });
     await page.getByRole('button', { name: new RegExp(`^${size.comp === 'groups' ? 'Groups' : 'Knockout'}`) }).click();
     await page.getByRole('radiogroup', { name: 'Teams' }).getByRole('radio', { name: String(size.teams), exact: true }).click();
     await page.getByRole('button', { name: /Packs/ }).click();

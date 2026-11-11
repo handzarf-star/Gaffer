@@ -2,6 +2,7 @@
 // Checks the rule that matters: each phone only sees its own game, CPU-vs-CPU games never have to be watched.
 //   BASE=http://localhost:8787 node e2e/tournament.mjs
 import { chromium, devices } from '@playwright/test';
+import { classic } from './classic.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -41,13 +42,14 @@ try {
   // lobby on a phone
   await sam.page.goto(BASE);
   await sam.page.getByLabel('Your name').fill('Sam');
-  await sam.page.getByRole('button', { name: 'Create a room' }).click();
+  await sam.page.getByRole('button', { name: 'Start a league' }).click();
   await sam.page.waitForURL(/\/r\/[A-Z]{4}$/);
   const code = sam.page.url().split('/').pop();
   await alex.page.goto(`${BASE}/r/${code}`);
   await alex.page.getByPlaceholder('Your name').fill('Alex');
   await alex.page.getByRole('button', { name: 'Join the room' }).click();
-  await sam.page.getByText('Alex', { exact: true }).first().waitFor();
+  await sam.page.getByText('Alex FC').first().waitFor();
+  await classic(sam.page, { format: 'packs', competition: 'league' });
   await sam.page.getByRole('button', { name: /^League/ }).click();
   await sam.page.getByRole('radio', { name: '4', exact: true }).click();
   await sam.page.getByRole('button', { name: /Packs/ }).click();

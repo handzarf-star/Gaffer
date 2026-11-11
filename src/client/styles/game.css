@@ -643,3 +643,6 @@
   .table th:nth-child(4), .table td:nth-child(4), .table th:nth-child(5), .table td:nth-child(5), .table th:nth-child(6), .table td:nth-child(6) { display: none; }
   .table th:nth-child(n+3) { width: 38px; }
 }
+
+/* keyboard hints are for keyboards: on a touch screen they only sat on top of the country chip */
+@media (hover: none) { .pcard__key { display: none; } }

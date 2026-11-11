@@ -1,6 +1,7 @@
 // More real-browser scenarios: reconnect, solo cup (+ reload resume), daily, bad code.
 //   BASE=http://localhost:8787 node e2e/more.mjs
 import { chromium } from '@playwright/test';
+import { classic } from './classic.mjs';
 
 const BASE = process.env.BASE ?? 'http://localhost:8787';
 const errors = [];
@@ -36,7 +37,7 @@ try {
     ok('unknown room shows a friendly "Room not found" (no raw errors)');
     await page.goto(BASE);
     await page.getByLabel('Your name').fill('Sam');
-    await page.getByPlaceholder('CODE').fill('AB');
+    await page.locator('#code').fill('AB');
     await page.keyboard.press('Enter');
     await page.getByText(/4 letters/).waitFor({ timeout: 3000 }).catch(() => {});
   }
@@ -49,13 +50,14 @@ try {
     await b.page.routeWebSocket(/\/ws\//, (ws) => { sockets.push(ws); ws.connectToServer(); });
     await a.page.goto(BASE);
     await a.page.getByLabel('Your name').fill('Sam');
-    await a.page.getByRole('button', { name: 'Create a room' }).click();
+    await a.page.getByRole('button', { name: 'Start a league' }).click();
     await a.page.waitForURL(/\/r\/[A-Z]{4}$/);
     const code = a.page.url().split('/').pop();
     await b.page.goto(`${BASE}/r/${code}`);
     await b.page.getByPlaceholder('Your name').fill('Alex');
     await b.page.getByRole('button', { name: 'Join the room' }).click();
-    await a.page.getByText('Alex', { exact: true }).first().waitFor();
+    await a.page.getByText('Alex FC').first().waitFor();
+    await classic(a.page);
     await a.page.getByRole('button', { name: 'Start the draft' }).click();
     await a.page.locator('.draft').waitFor(); await b.page.locator('.draft').waitFor();
     // play 4 rounds

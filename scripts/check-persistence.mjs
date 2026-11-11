@@ -98,7 +98,7 @@ async function draftScenario() {
   const code = await newRoom();
   const a = await open(code, { name: 'Sam' });
   const b = await open(code, { name: 'Alex' });
-  send(a, { t: 'settings', patch: { format: 'duel', pickSeconds: 15 } });
+  send(a, { t: 'settings', patch: { format: 'duel', pools: ['modern'], ratings: 'tier', competition: 'match', window: false, pickSeconds: 15 } });
   await sleep(200);
   send(a, { t: 'start' });
   await sleep(300);
@@ -128,7 +128,7 @@ async function draftScenario() {
 async function tournamentScenario() {
   const code = await newRoom();
   let st = await open(code, { name: 'Sam' });
-  send(st, { t: 'settings', patch: { format: 'packs', competition: 'league', teams: 4, pickSeconds: 0 } });
+  send(st, { t: 'settings', patch: { format: 'packs', pools: ['modern'], ratings: 'tier', window: false, competition: 'league', teams: 4, pickSeconds: 0 } });
   await sleep(250);
   must(st.view.settings.competition === 'league' && st.view.settings.teams === 4, 'lobby settings did not apply');
   send(st, { t: 'start' });

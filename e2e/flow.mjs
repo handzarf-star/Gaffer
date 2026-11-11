@@ -1,6 +1,7 @@
 // Plays a complete two-player game through the real UI in two real browsers.
 //   BASE=http://localhost:8787 SHOTS=/some/dir node e2e/flow.mjs
 import { chromium } from '@playwright/test';
+import { classic } from './classic.mjs';
 import fs from 'node:fs';
 
 const BASE = process.env.BASE ?? 'http://localhost:8787';
@@ -47,7 +48,7 @@ try {
 await host.page.goto(BASE);
 await host.page.getByLabel('Your name').fill('Sam');
 await shot(host, '01-home');
-await host.page.getByRole('button', { name: 'Create a room' }).click();
+await host.page.getByRole('button', { name: 'Start a league' }).click();
 await host.page.waitForURL(/\/r\/[A-Z]{4}$/);
 const code = host.page.url().split('/').pop();
 log('room', code);
@@ -57,12 +58,13 @@ await host.page.getByText('Waiting for a friend').waitFor();
 await guest.page.goto(`${BASE}/r/${code}`);
 await guest.page.getByPlaceholder('Your name').fill('Alex');
 await guest.page.getByRole('button', { name: 'Join the room' }).click();
-await host.page.getByText('Alex', { exact: true }).first().waitFor();
+await host.page.getByText('Alex FC').first().waitFor();
 await sleep(400);
 await shot(host, '02-lobby');
 await shot(guest, '02-lobby-guest');
 
-// 3) Settings + start
+// 3) Settings + start (these flows cover the draft styles from before League Night: reached through Advanced)
+await classic(host.page, { format: FORMAT === 'packs' ? 'packs' : FORMAT === 'turns' ? 'turns' : 'duel' });
 if (FORMAT === 'packs') await host.page.getByRole('button', { name: /Packs/ }).click();
 if (FORMAT === 'turns') await host.page.getByRole('button', { name: /^Take turns/ }).click();
 await host.page.getByRole('radio', { name: 'Numbers' }).click();

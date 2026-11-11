@@ -43,7 +43,7 @@ try {
   page.on('websocket', (ws) => { ws.on('framesent', (f) => frames.sent.push(String(f.payload))); ws.on('framereceived', (f) => frames.received.push(String(f.payload))); });
   await page.goto(base);
   await page.getByLabel('Your name').fill('Sam');
-  await page.getByRole('button', { name: 'Create a room' }).click();
+  await page.getByRole('button', { name: 'Start a league' }).click();
   await page.waitForURL(/\/r\/[A-Z]{4}/);
   await page.getByText('Waiting for a friend').waitFor();
   const hello = frames.sent.map((s) => { try { return JSON.parse(s); } catch { return null; } }).find((m) => m?.t === 'hello');

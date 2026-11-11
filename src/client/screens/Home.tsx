@@ -84,7 +84,7 @@ export function Home() {
         <p className="muted small start__note">{t('You get a link to send to your mates. Play it in one evening, or carry on over days.')}</p>
         <form className="joinrow" onSubmit={join}>
           <label className="sr-only" htmlFor="code">{t('Room code')}</label>
-          <input id="code" className="input input--code" inputMode="text" autoCapitalize="characters" autoComplete="off" spellCheck={false} maxLength={4} placeholder="CODE" value={code} onChange={(e) => { setCode(e.target.value.toUpperCase().replace(/[^A-Z]/g, '')); setErr(''); }} />
+          <input id="code" className="input input--code" inputMode="text" autoCapitalize="characters" autoComplete="off" spellCheck={false} maxLength={4} placeholder="KQTM" value={code} onChange={(e) => { setCode(e.target.value.toUpperCase().replace(/[^A-Z]/g, '')); setErr(''); }} />
           <Button type="submit" variant="ink" disabled={code.length !== 4}>{t('Join')}</Button>
         </form>
       </section>
