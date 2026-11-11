@@ -18,15 +18,12 @@ report; the measurement scripts become `npm run check:balance` in Sprint 2.
   underlying sector weights and seating maths so 3-back and 5-back are viable, with no artificial stat padding.
 * **Styles.** Zero-sum style vectors plus a small pairwise matchup term; acceptance: every style's row average within 0.03 points per match of the others and no column with a single best row.
 
-## Sprint 3A: pure split of `career/engine.ts` (zero behaviour change)
-Split into draft / matchday / window / season modules. Gate: all existing tests unchanged and green, seeded results byte-identical (the 40-match
-fingerprint and a full-season career fingerprint). No feature work in this sprint.
+## Sprint 3A and 3B: CANCELLED (decided after the product audit)
 
-## Sprint 3B: career longevity (after 3A is merged)
-Retirement, youth intake from the already-fetched Wikipedia youth rows, estimated ages flagged "est." for players with no known age, fatigue.
-This sprint bumps the state schema through `migrate()` from Sprint 1.
-* **Fatigue maths (corrected).** Per matchday: outfield starters lose 8 energy per start; rested outfielders gain 20. Starting keepers lose 2
-  per start; rested keepers gain 15. Rating penalty = `max(0, 70 - energy) / 10`. (The first proposal of -12 / +18 was negative-sum for an
-  18-man squad: ten outfield starters lose 120 per match while six bench outfielders can recover only 108, and it forced keeper rotation every
-  three games.)
-* Acceptance: over 30 simulated seasons the best-XI rating stays within +/-1 and the average age stays between 26 and 30; state size stays flat.
+Both served only Career mode (splitting `career/engine.ts`, then retirement, youth intake and fatigue). The product goal that was then
+written down, a friends' league built on a pack draft, does not contain Career's real clubs, transfer lists or promotion, so that work is
+dropped, not postponed. Career stays in the app as it is, under "More", and is not developed further. What Career had that the goal needs
+(guest accounts, the "ready or deadline" matchday rule, the club name and badge editor, the sourced Balkan squads) moves into the one mode
+that is the product. The plan for that is `docs/league-night.md`.
+
+One rule recorded for whoever next migrates a saved league: prune `st@v<old>` backups older than `v(current - 1)` (see `docs/balance.md`).
