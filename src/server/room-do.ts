@@ -10,6 +10,9 @@ export interface Env {
   ASSETS: Fetcher;
 }
 
+/** what survives hibernation with each socket: the seat it speaks for and the account it came in with */
+interface Attachment { id: string | null; account: string | null }
+
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
 
@@ -58,8 +61,9 @@ export class Room extends DurableObject<Env> {
     if (!c) {
       c = {
         raw: ws,
-        getId: () => (ws.deserializeAttachment() as { id: string | null } | null)?.id ?? null,
-        setId: (id) => ws.serializeAttachment({ id }),
+        getId: () => (ws.deserializeAttachment() as Attachment | null)?.id ?? null,
+        setId: (id) => ws.serializeAttachment({ ...((ws.deserializeAttachment() as Attachment | null) ?? { account: null }), id }),
+        account: () => (ws.deserializeAttachment() as Attachment | null)?.account ?? null,
         send: (data) => ws.send(data),
         close: (code, reason) => ws.close(code, reason.slice(0, 100)),
       };
@@ -129,7 +133,8 @@ export class Room extends DurableObject<Env> {
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair) as [WebSocket, WebSocket];
     this.ctx.acceptWebSocket(server);
-    server.serializeAttachment({ id: null });
+    // the worker verified the sign-in cookie and set this header; clients cannot reach this object directly
+    server.serializeAttachment({ id: null, account: request.headers.get('x-account') || null } satisfies Attachment);
     return new Response(null, { status: 101, webSocket: client });
   }
 

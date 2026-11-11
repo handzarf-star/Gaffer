@@ -2,7 +2,8 @@ import { useMemo } from 'react';
 import { COMPETITIONS, tables, type CompFixture, type CompState } from '../../shared/competition';
 import type { TFn } from '../../shared/i18n';
 import { player, shortName } from '../../shared/players';
-import type { Seat } from '../../shared/protocol';
+import { teamName, type Seat } from '../../shared/protocol';
+import { Badge } from '../career/Badge';
 import { seatColor } from '../lib/colors';
 import { useI18n } from '../lib/i18n';
 import { Avatar, Icon, cx } from './ui';
@@ -47,8 +48,8 @@ export function TeamName({ seat, you, compact }: { seat: Seat | undefined; you?:
   if (!seat) return <span>?</span>;
   return (
     <span className="team">
-      <Avatar name={seat.name} hue={seat.hue} color={seatColor(seat)} size={compact ? 20 : 26} />
-      <span className="team__name">{seat.name}</span>
+      {seat.badge ? <Badge badge={seat.badge} initial={teamName(seat)} size={compact ? 20 : 26} /> : <Avatar name={seat.name} hue={seat.hue} color={seatColor(seat)} size={compact ? 20 : 26} />}
+      <span className="team__name">{teamName(seat)}</span>
       {seat.bot && <span className="cpu">CPU</span>}
       {seat.id === you && <span className="cpu cpu--you">{t('you')}</span>}
     </span>
@@ -63,8 +64,10 @@ export function FixtureRow({ fx, seats, you, showScorers = true }: { fx: CompFix
   const l = fx.lite;
   const mine = fx.a === you || fx.b === you;
   const humans = fx.humans.length > 0;
+  // played, but somebody in it has yet to watch it: nobody else is told the score
+  const sealed = !!fx.sealed && !l;
   return (
-    <div className={cx('fxrow', mine && 'is-mine', !humans && 'is-cpu')}>
+    <div className={cx('fxrow', mine && 'is-mine', !humans && 'is-cpu', sealed && 'is-sealed')}>
       <div className="fxrow__main">
         <span className={cx('fxrow__t', l?.winner === 0 && 'is-win')}><TeamName seat={a} you={you} compact /></span>
         <span className="fxrow__score">
@@ -72,10 +75,11 @@ export function FixtureRow({ fx, seats, you, showScorers = true }: { fx: CompFix
             <>
               <b>{l.score[0]}</b><i>–</i><b>{l.score[1]}</b>
             </>
-          ) : <i>v</i>}
+          ) : sealed ? <span className="fxrow__lock" aria-hidden="true">🔒</span> : <i>v</i>}
         </span>
         <span className={cx('fxrow__t fxrow__t--r', l?.winner === 1 && 'is-win')}><TeamName seat={b} you={you} compact /></span>
       </div>
+      {sealed && <div className="fxrow__meta"><span>{stageLabel(fx.stage, t)}</span><span>{t('Played. The score is sealed until it has been watched.')}</span></div>}
       {l && (
         <div className="fxrow__meta">
           <span>{stageLabel(fx.stage, t)}</span>
@@ -177,8 +181,8 @@ export function ChampionBanner({ id, seats, you }: { id: string | null; seats: S
   return (
     <div className={cx('champ', id === you && 'champ--you')}>
       <Icon name="trophy" size={22} />
-      <Avatar name={s.name} hue={s.hue} color={seatColor(s)} size={34} />
-      <b>{s.name}</b>
+      {s.badge ? <Badge badge={s.badge} initial={teamName(s)} size={34} /> : <Avatar name={s.name} hue={s.hue} color={seatColor(s)} size={34} />}
+      <b>{teamName(s)}</b>
       {s.bot && <span className="cpu">CPU</span>}
     </div>
   );

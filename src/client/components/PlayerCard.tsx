@@ -5,6 +5,7 @@ import { nation, nationGradient } from '../../shared/nations';
 import { player, shortName, tierOf, type Tier } from '../../shared/players';
 import { hashSeed } from '../../shared/rng';
 import { useI18n } from '../lib/i18n';
+import { useBands } from '../lib/tier';
 import { cx } from './ui';
 
 export function initials(name: string): string {
@@ -72,11 +73,12 @@ interface Props {
 export function PlayerCard({ id, mode, size = 'md', selected, dim, pending, disabled, reveal, index = 0, onClick, onDoubleClick, hotkey }: Props) {
   const { t } = useI18n();
   const p = player(id);
-  const tier = tierOf(p.ovr);
+  const tier = tierOf(p.ovr, useBands());
+  const ovr = Math.round(p.ovr); // sourced ratings carry a decimal; a card shows a whole number
   const tierClass = mode === 'hidden' ? 'mystery' : tier;
   const n = nation(p.nat);
   const sn = shortName(p.name);
-  const vars = { name: p.name, pos: p.pos, nation: t(n.name), rating: p.ovr, tier: tierLabel(t, tier) };
+  const vars = { name: p.name, pos: p.pos, nation: t(n.name), rating: ovr, tier: tierLabel(t, tier) };
   const label = mode === 'full' ? t('{name}, {pos}, {nation}, rating {rating}', vars) : mode === 'tier' ? t('{name}, {pos}, {nation}, {tier} tier', vars) : t('{name}, {pos}, {nation}', vars);
   const style = { '--i': index, '--hue': faceHue(id) } as CSSProperties;
   return (
@@ -95,7 +97,7 @@ export function PlayerCard({ id, mode, size = 'md', selected, dim, pending, disa
         <span className="pcard__body">
         <span className="pcard__shine" aria-hidden="true" />
         <span className="pcard__top">
-          {mode === 'full' ? <b className="pcard__rating">{p.ovr}</b> : mode === 'tier' ? <Stars tier={tier} /> : <span />}
+          {mode === 'full' ? <b className="pcard__rating">{ovr}</b> : mode === 'tier' ? <Stars tier={tier} /> : <span />}
           <span className="pcard__pos">{p.pos}</span>
         </span>
         <span className="pcard__face" aria-hidden="true">

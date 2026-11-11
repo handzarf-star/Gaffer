@@ -23,6 +23,16 @@ async function call<T>(method: 'GET' | 'POST', url: string, body?: unknown): Pro
   }
 }
 
+/**
+ * Make sure this browser has an account before it joins a room: a silent guest account if there is none. The room binds the seat to
+ * it, so the seat can be reclaimed later even if the browser has lost the seat secret. Never blocks play: a host without accounts
+ * (the plain Node host) or a failed call simply means the seat is tied to the browser only, as it always was.
+ */
+export async function ensureAccount(name: string): Promise<void> {
+  const me = await api.me();
+  if (me.ok && !me.data.user) await api.guest(name);
+}
+
 export interface Me { user: { name: string; kind: 'google' | 'guest' } | null; googleClientId: string | null }
 export interface MyCareer { code: string; club: string; at: number }
 

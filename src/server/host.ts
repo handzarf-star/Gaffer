@@ -13,6 +13,8 @@ export interface Conn {
   setId(id: string | null): void;
   send(data: string): void;
   close(code: number, reason: string): void;
+  /** the signed-in account behind this connection, when the host knows it */
+  account?(): string | null;
 }
 
 export interface HostIO {
@@ -62,7 +64,7 @@ export class RoomHost {
         this.fatal(conn, 'no_room', 'Wrong room.');
         return;
       }
-      const r = this.engine.join({ id: msg.id, secret: msg.secret, name: msg.name }, now);
+      const r = this.engine.join({ id: msg.id, secret: msg.secret, name: msg.name, account: conn.account?.() ?? null }, now);
       if (!r.ok) {
         this.fatal(conn, r.code, r.msg);
         return;

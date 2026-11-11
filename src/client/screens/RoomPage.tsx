@@ -4,25 +4,33 @@ import { BRAND } from '../../shared/brand';
 import { BOT_LEVELS, type BotLevel } from '../../shared/bots';
 import { COMPETITIONS, currentDay, isAlive, roundsInfo, type CompFixture, type CompetitionKind } from '../../shared/competition';
 import { FORMAT_INFO, type DraftFormat, type RatingsMode } from '../../shared/draft';
-import { FORMATIONS, FORMATION_IDS } from '../../shared/formations';
+import { defaultBadge } from '../../shared/career/world';
+import { FORMATIONS, FORMATION_IDS, effectiveOvr } from '../../shared/formations';
 import type { Lang, TFn, TnFn } from '../../shared/i18n';
 import { headlineText, motmReasonText } from '../../shared/i18n/commentary';
-import { player } from '../../shared/players';
-import { ERAS, ERA_IDS, POOLS, POOL_IDS, eraCounts, poolHealth, poolKey, type EraId } from '../../shared/pools';
-import { EMOTES, MAX_SEATS, PICK_SECONDS, type ErrorCode, type RoomView, type Seat } from '../../shared/protocol';
-import { HUB_SECONDS, SETUP_SECONDS } from '../../shared/room';
+import { nation } from '../../shared/nations';
+import { player, shortName } from '../../shared/players';
+import { ERAS, ERA_IDS, LOBBY_POOLS, POOLS, eraCounts, nationCounts, poolBands, poolHealth, poolKey, type EraId, type PoolId } from '../../shared/pools';
+import { EMOTES, LIMIT_HOURS, MAX_SEATS, PICK_SECONDS, teamName, type ErrorCode, type RoomView, type Seat } from '../../shared/protocol';
+import { HUB_SECONDS, SETUP_SECONDS, WINDOW_SECONDS } from '../../shared/room';
 import type { Pace } from '../../shared/sim';
 import { chemistry, profile } from '../../shared/squad';
 import { ChampionBanner, CompetitionTables, FixtureRow, TeamName, compName, seatMap, stageLabel } from '../components/CompViews';
+import { Badge } from '../career/Badge';
+import { BadgeEditor } from '../career/Lobby';
 import { Confetti } from '../components/Confetti';
+import { PackChooser } from '../components/PackChooser';
+import { PlayerCard } from '../components/PlayerCard';
 import { Pitch } from '../components/Pitch';
 import { Timer } from '../components/Timer';
 import { Avatar, Banner, Button, Icon, Seg, Spinner, copyText, cx, shareOrCopy } from '../components/ui';
+import { ensureAccount } from '../lib/api';
 import { seatColor } from '../lib/colors';
 import { navigate, toast, useScrollTop } from '../lib/hooks';
 import { useI18n } from '../lib/i18n';
 import { useRoom, type RoomConnection } from '../lib/net';
 import { sfx } from '../lib/sfx';
+import { TierProvider } from '../lib/tier';
 import { getIdentity, getName, setName } from '../lib/storage';
 import { DraftScreen, type DraftLogRow, type Rival } from './DraftScreen';
 import { MatchPlayer, type MatchFixture, type MatchSide } from './MatchPlayer';
@@ -104,7 +112,18 @@ export function RoomPage({ code }: { code: string }) {
   const { t } = useI18n();
   const [name, setNameState] = useState(() => getIdentity(code)?.name || getName());
   const [exists, setExists] = useState<'unknown' | 'yes' | 'no'>('unknown');
+  const [acct, setAcct] = useState(false);
   const ready = !!name;
+
+  // A silent guest account before the socket opens, so the room can tie the seat to it. Never holds the room up for long.
+  useEffect(() => {
+    if (!name) return;
+    let done = false;
+    const go = () => { if (!done) { done = true; setAcct(true); } };
+    void ensureAccount(name).then(go, go);
+    const id = setTimeout(go, 2500);
+    return () => { done = true; clearTimeout(id); };
+  }, [name]);
 
   useEffect(() => {
     if (getIdentity(code)) return setExists('yes');
@@ -129,7 +148,7 @@ export function RoomPage({ code }: { code: string }) {
       </div>
     );
   }
-  return <Connected code={code} ready={exists !== 'unknown'} />;
+  return <Connected code={code} ready={exists !== 'unknown' && acct} />;
 }
 
 function NameForm({ onSubmit, cta, initial = '' }: { onSubmit: (n: string) => void; cta: string; initial?: string }) {
@@ -239,22 +258,55 @@ interface PhaseProps {
 }
 
 function Phase({ conn, view, offset }: PhaseProps) {
-  useScrollTop(view.phase + view.game + (view.comp?.day ?? ''));
+  useScrollTop(view.phase + view.game + (view.comp?.day ?? '') + (view.replay?.fixture ?? ''));
+  const set = view.settings;
+  // a league drafted from sourced squads grades its cards against its own pool; every card under this room uses the same bands
+  const bands = useMemo(() => poolBands(poolKey(set.pools, set.eras ?? [], set.nations ?? [])), [set.pools, set.eras, set.nations]);
+  return <TierProvider value={bands}><PhaseBody conn={conn} view={view} offset={offset} /></TierProvider>;
+}
+
+function PhaseBody({ conn, view, offset }: PhaseProps) {
+  // a played match of yours that you have not watched comes first, whatever the league is doing
+  if (view.replay && view.phase !== 'match' && view.phase !== 'lobby') return <ReplayRoom key={view.replay.fixture} conn={conn} view={view} offset={offset} />;
   switch (view.phase) {
     case 'lobby': return <Lobby conn={conn} view={view} />;
     case 'draft': return <DraftRoom conn={conn} view={view} offset={offset} />;
     case 'setup': return <SetupRoom conn={conn} view={view} offset={offset} />;
     case 'match': return <MatchRoom conn={conn} view={view} offset={offset} />;
+    case 'window': return <WindowRoom conn={conn} view={view} offset={offset} />;
     case 'hub': return <HubRoom conn={conn} view={view} offset={offset} />;
     case 'result': return <ResultRoom conn={conn} view={view} />;
   }
+}
+
+/** How long is left on a stage: a ring while everyone plays together, words when the league is on a time limit. */
+function StageClock({ deadline, offset, liveMs, view, size = 56 }: { deadline: number | null; offset: number; liveMs: number; view: RoomView; size?: number }) {
+  const { t, tn } = useI18n();
+  if (view.settings.gate !== 'limit' || deadline === null) return <Timer deadline={deadline} offset={offset} totalMs={liveMs} size={size} />;
+  const hours = Math.max(0, (deadline - (Date.now() + offset)) / 3_600_000);
+  return <span className="limitclock" role="timer">{hours >= 1 ? tn('{n} hour left', '{n} hours left', Math.round(hours)) : t('Under an hour left')}</span>;
+}
+
+/** One evening, or carry on with time limits. Everyone sees which; the host can switch at any time. */
+function GateSwitch({ conn, view }: { conn: RoomConnection; view: RoomView }) {
+  const { t } = useI18n();
+  const slow = view.settings.gate === 'limit';
+  return (
+    <p className="gatebar">
+      <Icon name="clock" size={16} />
+      <span>{slow ? t('On a time limit: {h} hours for each stage. You watch your match when you next open the game.', { h: view.settings.limitHours }) : t('Playing live: everyone together.')}</span>
+      {view.hostId === view.you && (
+        <Button size="sm" variant="soft" onClick={() => conn.send({ t: 'settings', patch: { gate: slow ? 'live' : 'limit' } })}>{slow ? t('We are all here: play live') : t('Finish later with time limits')}</Button>
+      )}
+    </p>
+  );
 }
 
 const humansOf = (view: RoomView): Seat[] => view.seats.filter((s) => !s.bot);
 
 function sideOf(view: RoomView, id: string): MatchSide {
   const seat = view.seats.find((s) => s.id === id)!;
-  return { name: seat.name, hue: seat.hue, color: seatColor(seat), squad: view.squads[id]!, bot: seat.bot };
+  return { name: teamName(seat), hue: seat.hue, color: seatColor(seat), squad: view.squads[id]!, bot: seat.bot };
 }
 
 function fixtureFor(view: RoomView, f: CompFixture): MatchFixture {
@@ -272,8 +324,27 @@ function Lobby({ conn, view }: { conn: RoomConnection; view: RoomView }) {
   const connected = humans.filter((s) => s.connected).length;
   const set = view.settings;
   const cpus = Math.max(0, set.teams - humans.length);
-  const depth = useMemo(() => poolHealth(poolKey(set.pool, set.eras ?? []), set.teams), [set.pool, set.eras, set.teams]);
-  const eraTotals = useMemo(() => eraCounts(set.pool), [set.pool]);
+  const key = poolKey(set.pools, set.eras ?? [], set.nations ?? []);
+  const depth = useMemo(() => poolHealth(key, set.teams), [key, set.teams]);
+  const eraTotals = useMemo(() => eraCounts(set.pools, set.nations), [set.pools, set.nations]);
+  const nations = useMemo(() => nationCounts(set.pools, set.eras), [set.pools, set.eras]);
+  const legendCount = ERA_IDS.filter((e) => e !== 'now').reduce((sum, e) => sum + eraTotals[e], 0);
+  const legendsOn = set.eras.length === 0 || set.eras.some((e) => e !== 'now');
+  const patch = (p: Partial<RoomView['settings']>) => conn.send({ t: 'settings', patch: p });
+  const togglePool = (id: PoolId) => {
+    const cur = new Set(set.pools);
+    if (cur.has(id)) {
+      if (cur.size === 1) return; // never leave the draft with nobody in it
+      cur.delete(id);
+    } else cur.add(id);
+    const pools = [...LOBBY_POOLS.filter((x) => cur.has(x)), ...set.pools.filter((x) => !LOBBY_POOLS.includes(x) && cur.has(x))];
+    patch(pools.length === 1 && pools[0] === 'bl' ? { pools, eras: [] } : { pools }); // a league of today's squads has no eras to filter
+  };
+  const toggleNation = (code: string) => {
+    const cur = new Set(set.nations);
+    if (cur.has(code)) cur.delete(code); else cur.add(code);
+    patch({ nations: [...cur] });
+  };
   const toggleEra = (e: EraId) => {
     const cur = new Set<EraId>(set.eras.length ? set.eras : ERA_IDS);
     if (cur.has(e)) {
@@ -283,12 +354,17 @@ function Lobby({ conn, view }: { conn: RoomConnection; view: RoomView }) {
     patch({ eras: cur.size === ERA_IDS.length ? [] : ERA_IDS.filter((x) => cur.has(x)) });
   };
   const canStart = isHost && connected >= 1 && set.teams >= 2 && depth.ok;
-  const patch = (p: Partial<RoomView['settings']>) => conn.send({ t: 'settings', patch: p });
   const hostName = view.seats.find((s) => s.id === view.hostId)?.name ?? t('the host');
   const wins = view.series.wins;
   const [editName, setEditName] = useState(me.name);
   useEffect(() => setEditName(me.name), [me.name]);
+  const myClub = teamName(me);
+  const [club, setClub] = useState(myClub);
+  useEffect(() => setClub(myClub), [myClub]);
+  const badge = me.badge ?? defaultBadge(myClub);
   const teamOptions = COMPETITIONS[set.competition].teamOptions.filter((n) => n >= humans.length);
+  // the countries worth a chip: the ones already chosen, then the biggest
+  const nationChips = nations.filter(([code, count]) => set.nations.includes(code) || count >= 4).slice(0, 40);
 
   return (
     <div className="lobby">
@@ -298,7 +374,7 @@ function Lobby({ conn, view }: { conn: RoomConnection; view: RoomView }) {
           <div className="code" aria-label={t('Room code {code}', { code: view.code.split('').join(' ') })}>
             {view.code.split('').map((c, i) => <span key={i} className="code__char">{c}</span>)}
           </div>
-          <p className="muted">{t('Send this link to your mate. It works on any phone or laptop. Playing on one device? Just add CPU teams below.')}</p>
+          <p className="muted">{t('Send this link to your mates. On your own? CPU teams fill the league.')}</p>
         </div>
         <div className="lobby__share">
           <input className="input input--link" readOnly value={link} onFocus={(e) => e.currentTarget.select()} aria-label={t('Invite link')} />
@@ -309,26 +385,43 @@ function Lobby({ conn, view }: { conn: RoomConnection; view: RoomView }) {
         </div>
       </section>
 
+      <section className="panel club">
+        <h2 className="panel__title">{t('Your club')}</h2>
+        <div className="club__row">
+          <Badge badge={badge} initial={club || '?'} size={68} title={t('Your badge')} />
+          <div className="club__fields">
+            <label htmlFor="clubname">{t('Club name')}</label>
+            <input
+              id="clubname" className="input" maxLength={24} autoComplete="off" value={club}
+              onChange={(e) => setClub(e.target.value)}
+              onBlur={() => { const n = club.replace(/\s+/g, ' ').trim(); if (n && n !== myClub) conn.send({ t: 'club', name: n, badge }); else setClub(myClub); }}
+              onKeyDown={(e) => e.key === 'Enter' && (e.currentTarget as HTMLInputElement).blur()}
+            />
+            <label htmlFor="mgrname">{t('Manager')}</label>
+            <input
+              id="mgrname" className="input" maxLength={16} autoComplete="nickname" value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              onBlur={() => { const n = editName.trim(); if (n && n !== me.name) { setName(n); conn.send({ t: 'name', name: n }); } else setEditName(me.name); }}
+              onKeyDown={(e) => e.key === 'Enter' && (e.currentTarget as HTMLInputElement).blur()}
+            />
+          </div>
+        </div>
+        <details className="more">
+          <summary>{t('Change the badge')}</summary>
+          <BadgeEditor value={badge} initial={club || '?'} onChange={(b) => conn.send({ t: 'club', name: myClub, badge: b })} />
+        </details>
+      </section>
+
       <section className="panel">
-        <h2 className="panel__title">{t('Players')} <span className="count">{humans.length}/{MAX_SEATS}</span></h2>
+        <h2 className="panel__title">{t('Managers')} <span className="count">{humans.length}/{MAX_SEATS}</span></h2>
         <ul className="seats">
           {humans.map((s) => (
             <li key={s.id} className={cx('seat', s.id === view.you && 'is-me')}>
-              <Avatar name={s.name} hue={s.hue} size={44} connected={s.connected} />
+              <Badge badge={s.badge ?? defaultBadge(teamName(s))} initial={teamName(s)} size={44} />
               <div className="seat__info">
-                {s.id === view.you ? (
-                  <input
-                    className="seat__name-input"
-                    value={editName}
-                    maxLength={16}
-                    aria-label={t('Your name')}
-                    onChange={(e) => setEditName(e.target.value)}
-                    onBlur={() => { const n = editName.trim(); if (n && n !== me.name) { setName(n); conn.send({ t: 'name', name: n }); } else setEditName(me.name); }}
-                    onKeyDown={(e) => e.key === 'Enter' && (e.currentTarget as HTMLInputElement).blur()}
-                  />
-                ) : <b>{s.name}</b>}
+                <b>{teamName(s)}</b>
                 <span>
-                  {s.id === view.hostId && <><Icon name="crown" size={13} /> {t('Host')} · </>}
+                  {s.name} · {s.id === view.hostId && <><Icon name="crown" size={13} /> {t('Host')} · </>}
                   {s.connected ? t('Connected') : t('Disconnected')}
                   {view.series.games > 0 && ` · ${tn('{n} win', '{n} wins', wins[s.id] ?? 0)}`}
                 </span>
@@ -352,7 +445,63 @@ function Lobby({ conn, view }: { conn: RoomConnection; view: RoomView }) {
       </section>
 
       <section className="panel settings">
-        <h2 className="panel__title">{t('Competition')} {!isHost && <span className="muted tiny">{t('{host} controls these', { host: hostName })}</span>}</h2>
+        <h2 className="panel__title">{t('Who is in the draft?')} {!isHost && <span className="muted tiny">{t('{host} controls these', { host: hostName })}</span>}</h2>
+        <div className="setting">
+          <label>{t('Draft from')}</label>
+          <div className="eras" role="group" aria-label={t('Draft from')}>
+            {LOBBY_POOLS.map((id) => (
+              <button key={id} type="button" disabled={!isHost} className={cx('era', set.pools.includes(id) && 'is-on')} aria-pressed={set.pools.includes(id)} onClick={() => togglePool(id)}>{t(POOLS[id].name)}</button>
+            ))}
+          </div>
+          <p className="muted tiny">{set.pools.map((id) => t(POOLS[id].blurb)).join(' · ')}</p>
+        </div>
+        {legendCount > 0 && (
+          <div className="setting">
+            <label>{t('Legends')}</label>
+            <Seg<string> label={t('Legends')} disabled={!isHost} value={legendsOn ? 'on' : 'off'} onChange={(v) => patch({ eras: v === 'on' ? [] : ['now'] })} options={[{ value: 'off', label: t("Today's players only") }, { value: 'on', label: t('Legends too') }]} />
+            {legendsOn && (
+              <div className="eras" role="group" aria-label={t('Eras')}>
+                {ERA_IDS.map((e) => {
+                  const on = set.eras.length === 0 || set.eras.includes(e);
+                  return (
+                    <button key={e} type="button" disabled={!isHost || eraTotals[e] === 0} className={cx('era', on && eraTotals[e] > 0 && 'is-on')} aria-pressed={on && eraTotals[e] > 0} onClick={() => toggleEra(e)}>
+                      {t(ERAS[e].name)} <small>{eraTotals[e]}</small>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+        <details className="more">
+          <summary>{set.nations.length ? tn('{n} country chosen', '{n} countries chosen', set.nations.length) : t('All countries')}</summary>
+          <div className="eras" role="group" aria-label={t('Countries')}>
+            {nationChips.map(([code, count]) => (
+              <button key={code} type="button" disabled={!isHost} className={cx('era', set.nations.includes(code) && 'is-on')} aria-pressed={set.nations.includes(code)} onClick={() => toggleNation(code)}>
+                {t(nation(code).name)} <small>{count}</small>
+              </button>
+            ))}
+          </div>
+          {isHost && set.nations.length > 0 && <Button size="sm" variant="ghost" onClick={() => patch({ nations: [] })}>{t('Back to all countries')}</Button>}
+        </details>
+        <p className={cx('pool__note', !depth.ok && 'is-warn')} role={depth.ok ? undefined : 'alert'}>{depth.ok ? tn('{n} players in the mix.', '{n} players in the mix.', depth.players) : poolProblem(depth.problem ?? '', lang, t, tn)}</p>
+        <div className="setting">
+          <label>{t('Teams')}</label>
+          <Seg<number> label={t('Teams')} disabled={!isHost || teamOptions.length < 2} value={set.teams} onChange={(v) => patch({ teams: v })} options={teamOptions.map((n) => ({ value: n, label: String(n) }))} />
+          <p className="muted tiny setting__note">{tn('{n} human', '{n} humans', humans.length)} + {cpus} CPU</p>
+        </div>
+      </section>
+
+      <details className="panel settings advanced">
+        <summary className="panel__title">{t('Advanced')}</summary>
+        <div className="setting">
+          <label>{t('Pace')}</label>
+          <Seg<string> label={t('Pace')} disabled={!isHost} value={set.gate} onChange={(v) => patch({ gate: v as 'live' | 'limit' })} options={[{ value: 'live', label: t('One evening') }, { value: 'limit', label: t('Over days') }]} />
+          {set.gate === 'limit' && (
+            <Seg<number> label={t('Time limit')} disabled={!isHost} value={set.limitHours} onChange={(v) => patch({ limitHours: v as (typeof LIMIT_HOURS)[number] })} options={LIMIT_HOURS.map((h) => ({ value: h, label: t('{h} h', { h }) }))} />
+          )}
+          <p className="muted tiny">{t('One evening: everyone plays together. Over days: each stage has a time limit and you watch your match when you next open the game. The host can switch at any time.')}</p>
+        </div>
         <div className="setting">
           <label>{t('Format')}</label>
           <div className="opts">
@@ -366,36 +515,31 @@ function Lobby({ conn, view }: { conn: RoomConnection; view: RoomView }) {
         </div>
         <div className="setting setting--inline">
           <div>
-            <label>{t('Teams')}</label>
-            <Seg<number> label={t('Teams')} disabled={!isHost || teamOptions.length < 2} value={set.teams} onChange={(v) => patch({ teams: v })} options={teamOptions.map((n) => ({ value: n, label: String(n) }))} />
-            <p className="muted tiny setting__note">{tn('{n} human', '{n} humans', humans.length)} + {cpus} CPU</p>
-          </div>
-          <div>
             <label>{t('CPU level')}</label>
             <Seg<BotLevel> label={t('CPU level')} disabled={!isHost || cpus === 0} value={set.botLevel} onChange={(v) => patch({ botLevel: v })} options={(Object.keys(BOT_LEVELS) as BotLevel[]).map((l) => ({ value: l, label: t(BOT_LEVELS[l].name), hint: t(BOT_LEVELS[l].blurb) }))} />
           </div>
-        </div>
-        <div className="setting setting--inline">
           <div>
             <label>{t('Match speed')}</label>
             <Seg<Pace> label={t('Match speed')} disabled={!isHost} value={set.pace} onChange={(v) => patch({ pace: v })} options={[{ value: 'quick', label: t('Quick'), hint: t('About 55 seconds a match') }, { value: 'normal', label: t('Normal'), hint: t('About 90 seconds a match') }]} />
           </div>
-          {set.competition === 'league' && (
+        </div>
+        {set.competition === 'league' && (
+          <div className="setting setting--inline">
             <div>
               <label>{t('League length')}</label>
               <Seg<number> label={t('League length')} disabled={!isHost} value={set.legs} onChange={(v) => patch({ legs: v as 1 | 2 })} options={[{ value: 1, label: t('Play everyone once') }, { value: 2, label: t('Home and away') }]} />
             </div>
-          )}
-        </div>
+            <div>
+              <label>{t('Transfer window')}</label>
+              <Seg<string> label={t('Transfer window')} disabled={!isHost} value={set.window ? 'on' : 'off'} onChange={(v) => patch({ window: v === 'on' })} options={[{ value: 'on', label: t('At half-season') }, { value: 'off', label: t('None') }]} />
+            </div>
+          </div>
+        )}
         <p className="settings__tip"><Icon name="info" size={16} /> {t('You only watch matches a human plays in. CPU-versus-CPU games resolve instantly, and the table updates between matchdays.')}</p>
-      </section>
-
-      <section className="panel settings">
-        <h2 className="panel__title">{t('Draft')}</h2>
         <div className="setting">
           <label>{t('Draft style')}</label>
-          <div className="opts opts--3">
-            {(['duel', 'packs', 'turns'] as DraftFormat[]).map((f) => (
+          <div className="opts">
+            {(['spotlight', 'duel', 'packs', 'turns'] as DraftFormat[]).map((f) => (
               <button key={f} disabled={!isHost} className={cx('opt', set.format === f && 'is-on')} onClick={() => patch({ format: f })} aria-pressed={set.format === f}>
                 <b>{t(FORMAT_INFO[f].name)}</b>
                 <span>{t(FORMAT_INFO[f].blurb)}</span>
@@ -403,32 +547,13 @@ function Lobby({ conn, view }: { conn: RoomConnection; view: RoomView }) {
             ))}
           </div>
         </div>
-        <div className="setting">
-          <label>{t('Player pool')}</label>
-          <div className="opts opts--3">
-            {POOL_IDS.map((id) => (
-              <button key={id} disabled={!isHost} className={cx('opt', set.pool === id && 'is-on')} onClick={() => patch({ pool: id, eras: [] })} aria-pressed={set.pool === id}>
-                <b>{t(POOLS[id].name)}</b>
-                <span>{t(POOLS[id].blurb)}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="setting">
-          <label>{t('Eras')} <span className="muted tiny">{t('tap to leave one out; all are on by default')}</span></label>
-          <div className="eras" role="group" aria-label={t('Eras')}>
-            {ERA_IDS.map((e) => {
-              const on = set.eras.length === 0 || set.eras.includes(e);
-              return (
-                <button key={e} type="button" disabled={!isHost || eraTotals[e] === 0} className={cx('era', on && eraTotals[e] > 0 && 'is-on')} aria-pressed={on && eraTotals[e] > 0} onClick={() => toggleEra(e)}>
-                  {t(ERAS[e].name)} <small>{eraTotals[e]}</small>
-                </button>
-              );
-            })}
-          </div>
-          <p className={cx('pool__note', !depth.ok && 'is-warn')} role={depth.ok ? undefined : 'alert'}>{depth.ok ? tn('{n} players in the mix.', '{n} players in the mix.', depth.players) : poolProblem(depth.problem ?? '', lang, t, tn)}</p>
-        </div>
         <div className="setting setting--inline">
+          {set.format === 'spotlight' && (
+            <div>
+              <label>{t('Steals each')}</label>
+              <Seg<number> label={t('Steals each')} disabled={!isHost} value={set.steals} onChange={(v) => patch({ steals: v as 0 | 1 | 2 })} options={[0, 1, 2].map((v) => ({ value: v, label: String(v) }))} />
+            </div>
+          )}
           <div>
             <label>{t('Ratings on cards')}</label>
             <Seg<RatingsMode> label={t('Ratings on cards')} disabled={!isHost} value={set.ratings} onChange={(v) => patch({ ratings: v })} options={[
@@ -439,7 +564,7 @@ function Lobby({ conn, view }: { conn: RoomConnection; view: RoomView }) {
           </div>
           <div>
             <label>{t('Pick timer')}</label>
-            <Seg<number> label={t('Pick timer')} disabled={!isHost} value={set.pickSeconds} onChange={(v) => patch({ pickSeconds: v as 0 | 15 | 25 | 40 })} options={PICK_SECONDS.map((s) => ({ value: s, label: s === 0 ? t('Off') : `${s}s` }))} />
+            <Seg<number> label={t('Pick timer')} disabled={!isHost} value={set.pickSeconds} onChange={(v) => patch({ pickSeconds: v as 0 | 15 | 25 | 40 })} options={PICK_SECONDS.map((sec) => ({ value: sec, label: sec === 0 ? t('Off') : `${sec}s` }))} />
           </div>
         </div>
         <div className="setting">
@@ -447,7 +572,7 @@ function Lobby({ conn, view }: { conn: RoomConnection; view: RoomView }) {
           <Seg<string> label={t('Your formation')} value={me.formation} onChange={(v) => conn.send({ t: 'formation', formation: v as Seat['formation'] })} options={FORMATION_IDS.map((id) => ({ value: id, label: FORMATIONS[id].name }))} />
           <p className="muted tiny">{t('You can change it again after the draft.')}</p>
         </div>
-      </section>
+      </details>
 
       <div className="lobby__cta">
         {isHost ? (
@@ -472,7 +597,7 @@ function DraftRoom({ conn, view, offset }: PhaseProps) {
   const humans = humansOf(view);
   const seatOf = (id: string) => view.seats.find((s) => s.id === id);
   const turnsMode = !!d.turns;
-  const turnId = d.shared || turnsMode ? d.order[d.turn] : undefined;
+  const turnId = d.spot ? d.spot.seat : d.shared || turnsMode ? d.order[d.turn] : undefined;
   const pending = !d.shared && !turnsMode ? humans.filter((s) => !d.picked.includes(s.id) && s.id !== you) : [];
   const iPicked = d.picked.includes(you);
 
@@ -490,7 +615,7 @@ function DraftRoom({ conn, view, offset }: PhaseProps) {
   let turnName: string | undefined;
   let turnHue = 0;
   let canPick: boolean;
-  if (d.shared || turnsMode) {
+  if (d.spot || d.shared || turnsMode) {
     turn = turnId === you ? 'me' : 'rival';
     const tseat = turnId ? seatOf(turnId) : undefined;
     turnName = tseat?.name;
@@ -530,7 +655,11 @@ function DraftRoom({ conn, view, offset }: PhaseProps) {
       rivals={rivals}
       log={log}
       onPick={send}
-      statusNote={!d.shared && !turnsMode && iPicked ? t('Locked in. Waiting for {who}…', { who: turnName ?? '' }) : undefined}
+      statusNote={!d.spot && !d.shared && !turnsMode && iPicked ? t('Locked in. Waiting for {who}…', { who: turnName ?? '' }) : undefined}
+      spot={d.spot}
+      onSteal={(card) => conn.send({ t: 'steal', round: d.round, card })}
+      nameOf={(id) => seatOf(id)?.name ?? ''}
+      you={you}
     />
   );
 }
@@ -548,7 +677,7 @@ function SetupRoom({ conn, view, offset }: PhaseProps) {
       mode={view.settings.ratings}
       deadline={st.deadline}
       offset={offset}
-      totalMs={SETUP_SECONDS * 1000}
+      totalMs={view.settings.gate === 'limit' ? view.settings.limitHours * 3_600_000 : SETUP_SECONDS * 1000}
       ready={!!st.ready[view.you]}
       rivals={humansOf(view).filter((s) => s.id !== view.you).map((s) => ({ id: s.id, name: s.name, hue: s.hue, ready: !!st.ready[s.id], connected: s.connected }))}
       onFormation={(f) => conn.send({ t: 'formation', formation: f })}
@@ -637,6 +766,158 @@ function MatchRoom({ conn, view, offset }: PhaseProps) {
   );
 }
 
+/* ═════════════════════════════ A match of yours you have not watched ═════════════════════════════ */
+
+function ReplayRoom({ conn, view }: PhaseProps) {
+  const { t } = useI18n();
+  const r = view.replay!;
+  const you = view.you;
+  const f = view.comp?.days[r.day]?.fixtures.find((x) => x.id === r.fixture);
+  const seats = useMemo(() => seatMap(view.seats), [view.seats]);
+  const [startAt, setStartAt] = useState<number | null>(null);
+  // the story never changes; the key avoids rebuilding the whole movie on every state message
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const fx = useMemo(() => (f?.result ? [fixtureFor(view, f)] : null), [r.day, r.fixture]);
+  useEffect(() => { if (!fx) conn.send({ t: 'seen' }); }, [fx, conn]); // nothing to show (should not happen): never leave them stuck
+  if (!f || !fx) return <div className="gate gate--loading"><Spinner size={36} /></div>;
+  if (startAt === null) {
+    return (
+      <div className="gate panel gate--wide">
+        <p className="eyebrow">{stageLabel(f.stage, t)}</p>
+        <h1>{t('Your match has been played')}</h1>
+        <p className="spec"><TeamName seat={seats.get(f.a)} you={you} /> <i>{t('v')}</i> <TeamName seat={seats.get(f.b)} you={you} /></p>
+        <p className="muted">{t('Nobody else is shown the score until you have watched it.')}</p>
+        <div className="row row--center">
+          <Button variant="primary" size="lg" icon="play" onClick={() => { sfx.whistle(); setStartAt(Date.now() + 1500); }}>{t('Watch the match')}</Button>
+          <Button variant="ghost" onClick={() => conn.send({ t: 'seen' })}>{t('Just show me the score')}</Button>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <MatchPlayer fixtures={fx} pace={view.settings.pace} startAt={startAt} you={() => (f.a === you ? 0 : 1)} onSeen={() => undefined} continueLabel={t('Continue')} onContinue={() => conn.send({ t: 'seen' })} />
+  );
+}
+
+/* ═════════════════════════════ Mid-season transfer window ═════════════════════════════ */
+
+function WindowRoom({ conn, view, offset }: PhaseProps) {
+  const { t } = useI18n();
+  const w = view.window!;
+  const you = view.you;
+  const seats = useMemo(() => seatMap(view.seats), [view.seats]);
+  const live = w.turn >= 0;
+  const mine = w.seats[you];
+  // played live, everyone watches the manager on the clock; on a time limit each manager sees their own pack
+  const shownId = live ? w.order[w.turn] : mine ? you : undefined;
+  const shown = shownId ? w.seats[shownId] : undefined;
+  const shownSeat = shownId ? seats.get(shownId) : undefined;
+  const myMove = w.yourMove && !!mine;
+  const [card, setCard] = useState<string | null>(null);
+  useEffect(() => { if (card && !shown?.board.includes(card)) setCard(null); }, [card, shown]);
+  const squad = view.squads[you];
+  const swaps = useMemo(() => {
+    if (!card || !squad) return [];
+    return FORMATIONS[squad.formation].slots
+      .map((sl) => { const cur = squad.slots[sl.id]; return cur ? { slot: sl.id, role: sl.role, cur, was: effectiveOvr(cur, sl.role), now: effectiveOvr(card, sl.role) } : null; })
+      .filter((x): x is NonNullable<typeof x> => !!x)
+      .sort((a, b) => (b.now - b.was) - (a.now - a.was));
+  }, [card, squad]);
+  const title = myMove
+    ? mine!.stage === 'choose' ? t('Open your pack') : t('Sign one, or keep your squad')
+    : live && shownSeat ? t('{name} is choosing', { name: teamName(shownSeat) })
+    : t('Waiting for the others');
+
+  return (
+    <div className="window">
+      <header className="setup__head">
+        <div>
+          <p className="eyebrow">{t('Mid-season transfer window')}</p>
+          <h1>{title}</h1>
+          <p className="muted">{t('One pack each, bottom of the table first. Sign one player in place of one of yours, or keep your squad.')}</p>
+        </div>
+        <StageClock deadline={w.deadline} offset={offset} liveMs={WINDOW_SECONDS * 1000} view={view} />
+      </header>
+
+      <ol className="worder" aria-label={t('Order')}>
+        {w.order.map((id, i) => {
+          const x = w.seats[id]!;
+          return (
+            <li key={id} className={cx(live && i === w.turn && 'is-on', x.stage === 'done' && 'is-done')}>
+              <TeamName seat={seats.get(id)} you={you} compact />
+              {x.stage === 'done' && <span className="worder__note">{x.signed ? t('signed {a} for {b}', { a: shortName(player(x.signed.in).name), b: shortName(player(x.signed.out).name) }) : t('kept their squad')}</span>}
+            </li>
+          );
+        })}
+      </ol>
+
+      {shown && shown.stage !== 'done' && (
+        <section className="panel">
+          {shown.stage === 'choose' ? (
+            <PackChooser packs={[]} identical={3} canPick={myMove} mode={view.settings.ratings} who={shownSeat ? teamName(shownSeat) : undefined} onOpen={(i) => { sfx.reveal('silver'); conn.send({ t: 'pack', round: 0, index: i }); }} />
+          ) : (
+            <div className="board board--packs board--spot">
+              {shown.board.map((id, i) => (
+                <div key={id} className="cardcol">
+                  <PlayerCard id={id} mode={view.settings.ratings} index={i} reveal selected={card === id} dim={!!card && card !== id} disabled={!myMove} onClick={() => myMove && setCard(card === id ? null : id)} />
+                </div>
+              ))}
+            </div>
+          )}
+          {shown.others.length > 0 && (
+            <div className="missed">
+              <b className="missed__title">{shownId === you ? t('What you missed') : t('What {name} missed', { name: shownSeat ? teamName(shownSeat) : '' })}</b>
+              <div className="missed__row">
+                {shown.others.map((pack, k) => (
+                  <div key={k} className="missed__pack">
+                    <span className="missed__label">{t('Pack left sealed')}</span>
+                    <div className="missed__cards">{pack.map((id) => <PlayerCard key={id} id={id} mode={view.settings.ratings} size="xs" disabled />)}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
+      {myMove && mine!.stage === 'open' && (
+        <section className="panel">
+          <h2 className="panel__title">{card ? t('Who makes way for {name}?', { name: shortName(player(card).name) }) : t('Tap a player in the pack to sign him')}</h2>
+          {card && (
+            <ul className="swaplist">
+              {swaps.map((x) => (
+                <li key={x.slot}>
+                  <button type="button" className="swaplist__row" onClick={() => { sfx.pick(); conn.send({ t: 'sign', card, slot: x.slot }); setCard(null); }}>
+                    <span className="swaplist__role">{x.role}</span>
+                    <span className="swaplist__name">{shortName(player(x.cur).name)}</span>
+                    <span className="swaplist__num">{Math.round(x.was)} → {Math.round(x.now)}</span>
+                    <b className={cx('swaplist__gain', x.now - x.was > 0 ? 'is-up' : 'is-down')}>{x.now - x.was > 0 ? '+' : ''}{Math.round(x.now - x.was)}</b>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <Button variant="ghost" onClick={() => conn.send({ t: 'sign', card: null })}>{t('Keep my squad')}</Button>
+        </section>
+      )}
+
+      {w.signings.length > 0 && <Signings list={w.signings} seats={seats} you={you} />}
+      <GateSwitch conn={conn} view={view} />
+    </div>
+  );
+}
+
+function Signings({ list, seats, you }: { list: RoomView['lastWindow']; seats: ReturnType<typeof seatMap>; you: string }) {
+  const { t } = useI18n();
+  return (
+    <ul className="signings">
+      {list.map((sg, i) => (
+        <li key={i}><TeamName seat={seats.get(sg.team)} you={you} compact /> <span>{t('signed {a} for {b}', { a: shortName(player(sg.in).name), b: shortName(player(sg.out).name) })}</span></li>
+      ))}
+    </ul>
+  );
+}
+
 /* ═════════════════════════════ Hub (between matchdays) ═════════════════════════════ */
 
 function HubRoom({ conn, view, offset }: PhaseProps) {
@@ -657,7 +938,9 @@ function HubRoom({ conn, view, offset }: PhaseProps) {
   const info = roundsInfo(comp);
   const ready = !!hub.ready[you];
   const alive = isAlive(comp, you);
-  const waiting = humansOf(view).filter((s) => s.connected && !hub.ready[s.id] && s.id !== you);
+  const slow = view.settings.gate === 'limit';
+  const stageMs = slow ? view.settings.limitHours * 3_600_000 : HUB_SECONDS * 1000;
+  const waiting = humansOf(view).filter((s) => (slow || s.connected) && !hub.ready[s.id] && s.id !== you);
   const cpuFx = playedDays.flatMap((d) => d.fixtures).filter((f) => !f.humans.length);
   const humanFx = playedDays.flatMap((d) => d.fixtures).filter((f) => f.humans.length);
 
@@ -673,7 +956,7 @@ function HubRoom({ conn, view, offset }: PhaseProps) {
           mode={view.settings.ratings}
           deadline={hub.deadline}
           offset={offset}
-          totalMs={HUB_SECONDS * 1000}
+          totalMs={stageMs}
           ready={ready}
           rivals={humansOf(view).filter((s) => s.id !== you).map((s) => ({ id: s.id, name: s.name, hue: s.hue, ready: !!hub.ready[s.id], connected: s.connected }))}
           onFormation={(f) => conn.send({ t: 'formation', formation: f })}
@@ -682,10 +965,32 @@ function HubRoom({ conn, view, offset }: PhaseProps) {
           onStyle={(s) => conn.send({ t: 'style', style: s })}
           onReady={(r) => conn.send({ t: 'ready', ready: r })}
           title={t('Tweak your lineup')}
-          subtitle={opp ? (oppProf ? t('Next up: {name} (overall {ovr}). Their tactics stay hidden until kick-off.', { name: opp.name, ovr: oppProf.overall.toFixed(1) }) : t('Next up: {name}. Their tactics stay hidden until kick-off.', { name: opp.name })) : t('Change formation, swap players or switch tactics before the next matchday.')}
+          subtitle={opp ? (oppProf ? t('Next up: {name} (overall {ovr}). Their tactics stay hidden until kick-off.', { name: teamName(opp), ovr: oppProf.overall.toFixed(1) }) : t('Next up: {name}. Their tactics stay hidden until kick-off.', { name: teamName(opp) })) : t('Change formation, swap players or switch tactics before the next matchday.')}
           readyLabel={t('Ready for the next matchday')}
-          opponent={opp && oppProf ? { name: opp.name, overall: oppProf.overall, stage: next?.label ? stageLabel(next.label, t) : t('Next') } : undefined}
+          opponent={opp && oppProf ? { name: teamName(opp), overall: oppProf.overall, stage: next?.label ? stageLabel(next.label, t) : t('Next') } : undefined}
         />
+      </div>
+    );
+  }
+
+  // On a time limit the season can be over while somebody still has their last match to watch: the result waits for them.
+  if (hub.final) {
+    const owing = [...new Set(comp.days.flatMap((d) => d.fixtures).flatMap((f) => f.unseen ?? []))].map((id) => seats.get(id)?.name).filter(Boolean).join(', ');
+    return (
+      <div className="hub">
+        <header className="setup__head">
+          <div>
+            <p className="eyebrow">{compName(comp.kind, t)}</p>
+            <h1>{t('The season is over')}</h1>
+            <p className="muted">{t('The final table is shown once everyone has watched their last match. Still to watch: {who}.', { who: owing || '…' })}</p>
+          </div>
+          <StageClock deadline={hub.deadline} offset={offset} liveMs={stageMs} view={view} />
+        </header>
+        <section className="panel">
+          <h2 className="panel__title">{t('Standings')}</h2>
+          <CompetitionTables comp={comp} seats={seats} you={you} />
+        </section>
+        <GateSwitch conn={conn} view={view} />
       </div>
     );
   }
@@ -700,8 +1005,9 @@ function HubRoom({ conn, view, offset }: PhaseProps) {
             {alive ? t('Take a look at the table, tweak your lineup, then get ready.') : t('You are out, but the tournament carries on. Watch the table fill in.')}
           </p>
         </div>
-        <Timer deadline={hub.deadline} offset={offset} totalMs={HUB_SECONDS * 1000} size={56} />
+        <StageClock deadline={hub.deadline} offset={offset} liveMs={stageMs} view={view} />
       </header>
+      <GateSwitch conn={conn} view={view} />
 
       <div className="hubtabs" role="tablist" aria-label={t('Between matchdays')}>
         <button role="tab" aria-selected className="tab is-on">{t('Table and results')}</button>
@@ -733,6 +1039,13 @@ function HubRoom({ conn, view, offset }: PhaseProps) {
           <CompetitionTables comp={comp} seats={seats} you={you} />
         </section>
       </div>
+
+      {view.lastWindow.length > 0 && (
+        <details className="panel transfers">
+          <summary className="panel__title">{t('Transfer window')} <span className="count">{view.lastWindow.length}</span></summary>
+          <Signings list={view.lastWindow} seats={seats} you={you} />
+        </details>
+      )}
 
       <section className="panel nextup">
         {opp && nextMine ? (
@@ -789,7 +1102,7 @@ function ResultRoom({ conn, view }: { conn: RoomConnection; view: RoomView }) {
   }, [youWon]);
 
   const shareText = useMemo(() => {
-    const lines = [`${BRAND.name} · ${compName(comp.kind, t)} · ${champSeat ? t('{name} won', { name: `${champSeat.name}${champSeat.bot ? ' (CPU)' : ''}` }) : t('no winner')}`];
+    const lines = [`${BRAND.name} · ${compName(comp.kind, t)} · ${champSeat ? t('{name} won', { name: `${teamName(champSeat)}${champSeat.bot ? ' (CPU)' : ''}` }) : t('no winner')}`];
     const prof = profile(view.squads[you]!);
     lines.push(t('My XI: {formation} · {ovr} OVR · {chem}% chem', { formation: FORMATIONS[view.squads[you]!.formation].name, ovr: prof.overall.toFixed(1), chem: prof.chem.score }));
     if (myFixtures.length) lines.push(myFixtures.map((f) => { const l = f.lite!; const w = l.winner === (f.a === you ? 0 : 1); return l.winner === null ? '🟨' : w ? '🟩' : '🟥'; }).join(''));
@@ -818,7 +1131,7 @@ function ResultRoom({ conn, view }: { conn: RoomConnection; view: RoomView }) {
       {youWon && <Confetti burst="win" count={60} />}
       <section className={cx('panel winner', youWon && 'winner--you')}>
         <p className="eyebrow">{comp.kind === 'match' ? t('Full time') : compName(comp.kind, t)}</p>
-        <h1>{youWon ? (comp.kind === 'match' ? t('You win!') : t('You are champion!')) : champSeat ? (comp.kind === 'match' ? t('{name} wins', { name: champSeat.name }) : t('{name} are champions', { name: champSeat.name })) : t('All square')}</h1>
+        <h1>{youWon ? (comp.kind === 'match' ? t('You win!') : t('You are champion!')) : champSeat ? (comp.kind === 'match' ? t('{name} wins', { name: teamName(champSeat) }) : t('{name} are champions', { name: teamName(champSeat) })) : t('All square')}</h1>
         <p className="winner__sum">{last ? seriesSummary(last.summary, lang, t) : undefined}</p>
         {comp.kind !== 'match' && <ChampionBanner id={champ} seats={seats} you={you} />}
         {comp.kind === 'match' && finalFx.lite && <p className="winner__head">“{finalFx.result ? headlineText(finalFx.result, lang) : finalFx.lite.headline}”</p>}
@@ -881,7 +1194,7 @@ function ResultRoom({ conn, view }: { conn: RoomConnection; view: RoomView }) {
               if (!pid) return null;
               const role = FORMATIONS[viewSquad.formation].slots.find((s) => s.id === slot)!.role;
               const p = player(pid);
-              return <li key={slot}><b className="roster__ovr">{p.ovr}</b><span>{p.name}</span><i>{role}</i></li>;
+              return <li key={slot}><b className="roster__ovr">{Math.round(p.ovr)}</b><span>{p.name}</span><i>{role}</i></li>;
             })}
           </ul>
         </div>

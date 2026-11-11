@@ -79,7 +79,6 @@ export default function App() {
       <header className="topbar">
         <Wordmark onClick={() => navigate('/')} />
         <nav className="topbar__nav" aria-label={t('Main')}>
-          <a href="/career" onClick={(e) => { e.preventDefault(); navigate('/career'); }}>{t('Career')}</a>
           <a href="/how-to-play" onClick={(e) => { e.preventDefault(); navigate('/how-to-play'); }}>{t('How to play')}</a>
           <span id="topbar-slot" className="topbar__slot" />
           <LangToggle />

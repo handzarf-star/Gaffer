@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ROUNDS, openRoles, suggestSlot, type RatingsMode } from '../../shared/draft';
 import type { TFn } from '../../shared/i18n';
 import type { PackClue } from '../../shared/packs';
+import type { DraftView } from '../../shared/protocol';
 import { PackChooser } from '../components/PackChooser';
 import { FORMATIONS, fitKind, penalty, type Role } from '../../shared/formations';
 import { player, shortName, tierOf, type Tier } from '../../shared/players';
@@ -13,6 +14,7 @@ import { Timer } from '../components/Timer';
 import { Avatar, Button, Icon, cx } from '../components/ui';
 import { announce, prefersReducedMotion, toast } from '../lib/hooks';
 import { useI18n } from '../lib/i18n';
+import { useBands } from '../lib/tier';
 import { buzz, sfx } from '../lib/sfx';
 
 export interface Rival {
@@ -63,6 +65,24 @@ export interface DraftScreenProps {
   /** a label like "Daily Draft" or room code */
   subtitle?: string;
   statusNote?: string;
+  /** spotlight draft: one manager at a time opens one of three identical packs while everyone watches */
+  spot?: NonNullable<DraftView['spot']>;
+  onSteal?: (card: string) => void;
+  /** a seat's display name, for "X stole Y" and "what X missed" */
+  nameOf?: (id: string) => string;
+  you?: string;
+}
+
+/** Milliseconds left until a server moment, ticking while it is in the future. */
+function useLeft(until: number | null | undefined, offset: number): number {
+  const [, force] = useState(0);
+  const left = until == null ? 0 : Math.max(0, until - (Date.now() + offset));
+  useEffect(() => {
+    if (left <= 0) return;
+    const id = setInterval(() => force((x) => x + 1), 100);
+    return () => clearInterval(id);
+  }, [left > 0, until]); // eslint-disable-line react-hooks/exhaustive-deps
+  return left;
 }
 
 /** the short name of a role for the tooltip on a "still need" chip */
@@ -87,6 +107,15 @@ function roleWord(t: TFn, role: Role): string {
 
 export function DraftScreen(p: DraftScreenProps) {
   const { t } = useI18n();
+  const bands = useBands();
+  const spot = p.spot;
+  const [rip, setRip] = useState<number | null>(null);
+  const stealLeft = useLeft(spot?.stage === 'open' ? spot.stealUntil : null, p.offset);
+  /** watching someone else's pack (take-turns or spotlight): look, do not touch */
+  const watching = (!!p.turns || !!spot) && !p.canPick;
+  /** my pack is open but rivals may still steal from it: I pick when the window has closed */
+  const locked = !!spot && p.canPick && stealLeft > 0;
+  const canStealNow = !!spot && spot.canSteal && stealLeft > 0;
   const [selected, setSelected] = useState<string | null>(null);
   const [pending, setPending] = useState<string | null>(null);
   const [fresh, setFresh] = useState<string | null>(null);
@@ -132,13 +161,48 @@ export function DraftScreen(p: DraftScreenProps) {
 
   // Packs format: the pack starts sealed. Its glow hints at the best card inside; tap to open (or it opens by itself).
   // (the single sealed pack is the solo cup's; rooms with packs choose between three instead)
-  const choosing = !!p.packs?.length && p.board.length === 0 && !p.shared;
-  const sealed = !p.packs && !p.shared && !p.turns && p.canPick && p.board.length > 0 && opened !== p.round;
+  const choosing = spot ? spot.stage === 'choose' : !!p.packs?.length && p.board.length === 0 && !p.shared;
+  const sealed = !spot && !p.packs && !p.shared && !p.turns && p.canPick && p.board.length > 0 && opened !== p.round;
   const bestTier: Tier | 'mystery' = useMemo(() => {
     if (p.mode === 'hidden') return 'mystery';
     const order: Tier[] = ['bronze', 'silver', 'gold', 'icon'];
-    return p.board.reduce<Tier>((best, id) => (order.indexOf(tierOf(player(id).ovr)) > order.indexOf(best) ? tierOf(player(id).ovr) : best), 'bronze');
-  }, [p.board, p.mode]);
+    return p.board.reduce<Tier>((best, id) => (order.indexOf(tierOf(player(id).ovr, bands)) > order.indexOf(best) ? tierOf(player(id).ovr, bands) : best), 'bronze');
+  }, [p.board, p.mode, bands]);
+
+  // Spotlight: the pack opens for everyone at once. The weakest card turns first and the best one last; a gold or an icon gets its own sound.
+  const revealRank = useMemo(() => {
+    const sorted = [...p.board].sort((a, b) => player(a).ovr - player(b).ovr);
+    return new Map(sorted.map((id, i) => [id, i]));
+  }, [p.board]);
+  const openKey = spot ? `${spot.done}:${spot.opened ?? '-'}` : '';
+  useEffect(() => {
+    if (!spot || spot.stage !== 'open') return;
+    setRip(null);
+    sfx.reveal(bestTier === 'mystery' ? 'silver' : bestTier);
+    buzz(bestTier === 'icon' ? 60 : bestTier === 'gold' ? 40 : 20);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openKey]);
+  // a steal: everyone hears about it, the victim loudest
+  const stolenCard = spot?.stolen?.card;
+  useEffect(() => {
+    if (!spot?.stolen) return;
+    const thief = p.nameOf?.(spot.stolen.by) ?? '';
+    const name = shortName(player(spot.stolen.card).name);
+    if (spot.stolen.by === p.you) { toast(t('You stole {name}!', { name })); sfx.pick(); }
+    else if (spot.seat === p.you) { toast(t('Stolen! {who} took {name}', { who: thief, name }), 'error'); sfx.error(); buzz(60); }
+    else toast(t('{who} stole {name}', { who: thief, name }));
+    if (selected === spot.stolen.card) setSelected(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stolenCard]);
+  const ripOpen = (i: number) => {
+    if (rip !== null) return;
+    sfx.select();
+    buzz(18);
+    if (prefersReducedMotion()) return p.onOpenPack?.(i);
+    setRip(i);
+    setTimeout(() => p.onOpenPack?.(i), 480);
+    setTimeout(() => setRip(null), 2500); // never leave the packs stuck if the reply is lost
+  };
   useEffect(() => {
     if (!sealed) return;
     const t = setTimeout(() => { setOpened(p.round); sfx.reveal(bestTier === 'mystery' ? 'silver' : bestTier); }, prefersReducedMotion() ? 0 : 2200);
@@ -152,7 +216,7 @@ export function DraftScreen(p: DraftScreenProps) {
   const suggestedRole = suggested ? FORMATIONS[p.squad.formation].slots.find((s) => s.id === suggested)?.role : undefined;
 
   const place = (slotId: string) => {
-    if (!selected || !p.canPick || pending) return;
+    if (!selected || !p.canPick || pending || locked) return;
     const slot = FORMATIONS[p.squad.formation].slots.find((s) => s.id === slotId);
     if (!slot || p.squad.slots[slotId]) return;
     setPending(selected);
@@ -167,7 +231,12 @@ export function DraftScreen(p: DraftScreenProps) {
   };
 
   const choose = (id: string) => {
-    if (pending || (p.turns && !p.canPick)) return; // watching someone else's draft: look, don't touch
+    if (pending || watching) return; // watching someone else's draft: look, don't touch
+    // tapping the card you have already chosen signs him at the spot the pitch is showing
+    if (selected === id && p.canPick && !locked) {
+      const s = suggestSlot(p.squad, id);
+      if (s) return place(s);
+    }
     sfx.select();
     setSelected((cur) => (cur === id ? null : id));
   };
@@ -241,8 +310,8 @@ export function DraftScreen(p: DraftScreenProps) {
             <>
               <Avatar name={p.turnName ?? '?'} hue={p.turnHue ?? 0} size={34} />
               <div className="turn__text">
-                <b>{t('{name} is picking', { name: p.turnName ?? '' })}</b>
-                <span>{p.shared ? t('Tap a card to plan your next move') : p.turns ? t('Watch them build their squad. You are up next.') : t('Waiting on them')}</span>
+                <b>{spot && choosing ? t('{name} is choosing a pack', { name: p.turnName ?? '' }) : t('{name} is picking', { name: p.turnName ?? '' })}</b>
+                <span>{spot ? (canStealNow ? t('Want one of these? Steal it now.') : t('Watching live')) : p.shared ? t('Tap a card to plan your next move') : p.turns ? t('Watch them build their squad. You are up next.') : t('Waiting on them')}</span>
               </div>
             </>
           ) : (
@@ -250,7 +319,7 @@ export function DraftScreen(p: DraftScreenProps) {
               <span className="turn__badge"><Icon name="bolt" size={18} /></span>
               <div className="turn__text">
                 <b>{choosing ? t('Choose a pack') : sealed ? t('Open your pack') : p.turn === 'all' ? t('Your pack is open') : t('Your pick')}</b>
-                <span>{choosing ? t('Read the clues. They are rumours, not promises') : sealed ? t('Tap it. The glow hints at what is inside') : selected ? t('Tap a green spot or press Enter') : t('Choose one card')}</span>
+                <span>{choosing ? (spot ? t('They all look the same. Pick one.') : t('Read the clues. They are rumours, not promises')) : sealed ? t('Tap it. The glow hints at what is inside') : locked ? t('Hold on: a rival may steal one') : selected ? t('Tap the card again to sign him') : t('Choose one card')}</span>
               </div>
             </>
           )}
@@ -258,12 +327,24 @@ export function DraftScreen(p: DraftScreenProps) {
         <Timer deadline={p.deadline} offset={p.offset} totalMs={p.pickMs} tick={yourTurn} />
       </header>
 
-      <section className="draft__board" aria-label={p.shared ? t('Shared board') : p.turns && !p.canPick ? t("{name}'s pack", { name: p.turnName ?? '' }) : t('Your pack')}>
+      <section className="draft__board" aria-label={p.shared ? t('Shared board') : watching ? t("{name}'s pack", { name: p.turnName ?? '' }) : t('Your pack')}>
         <div className="board__title">
-          <h2>{p.shared ? t('Shared board') : choosing ? (p.canPick ? t('Three sealed packs') : choosingText) : p.turns && !p.canPick ? t("{name}'s pack", { name: p.turnName ?? '' }) : p.packs && p.opened != null && p.packs[p.opened] ? t(p.packs[p.opened]!.name) : t('Your pack')}</h2>
-          <span>{p.shared ? t("{n} left. Once it's taken, it's gone.", { n: p.board.length }) : choosing ? (p.canPick ? t('Pick one to open') : t('Watching live')) : p.turns && !p.canPick ? t('Watching live') : t('Pick 1 of 3')}</span>
+          <h2>{p.shared ? t('Shared board') : choosing ? (p.canPick ? t('Three sealed packs') : choosingText) : watching ? t("{name}'s pack", { name: p.turnName ?? '' }) : p.packs && p.opened != null && p.packs[p.opened] ? t(p.packs[p.opened]!.name) : t('Your pack')}</h2>
+          <span>{p.shared ? t("{n} left. Once it's taken, it's gone.", { n: p.board.length }) : choosing ? (p.canPick ? t('Pick one to open') : t('Watching live')) : watching ? t('Watching live') : t('Pick 1 of 3')}</span>
         </div>
-        {choosing ? (
+        {spot && stealLeft > 0 && (
+          <p className={cx('stealbar', canStealNow && 'stealbar--go')} role="status">
+            <Icon name="bolt" size={16} />
+            <span>{p.canPick ? t('Rivals can steal one card') : canStealNow ? t('Steal one card? It replaces your next pack.') : t('Steal window')}</span>
+            <b>{Math.ceil(stealLeft / 1000)}</b>
+            <i style={{ width: `${Math.min(100, (stealLeft / 3500) * 100)}%` }} aria-hidden="true" />
+          </p>
+        )}
+        {choosing && spot ? (
+          <div className={cx(rip !== null && 'is-ripping')} data-rip={rip ?? undefined}>
+            <PackChooser packs={[]} identical={spot.packs} canPick={p.canPick && rip === null} mode={p.mode} who={p.turnName} onOpen={ripOpen} />
+          </div>
+        ) : choosing ? (
           <PackChooser packs={p.packs!} canPick={p.canPick} mode={p.mode} who={p.turnName} onOpen={(i) => { sfx.reveal('silver'); buzz(30); p.onOpenPack?.(i); }} />
         ) : sealed ? (
           <button type="button" className={cx('sealed', `sealed--${bestTier}`)} onClick={openPack}>
@@ -273,13 +354,13 @@ export function DraftScreen(p: DraftScreenProps) {
             <small>{bestTier === 'icon' ? t('Something special is in there') : bestTier === 'gold' ? t('This one is glowing') : t('Pick 1 of 3')}</small>
           </button>
         ) : (
-        <div className={cx('board', p.shared ? 'board--duel' : 'board--packs')}>
+        <div className={cx('board', p.shared ? 'board--duel' : 'board--packs', spot && 'board--spot', locked && 'is-locked')}>
           {p.board.map((id, i) => (
+            <div key={`${p.round}-${spot?.done ?? ''}-${id}`} className={cx('cardcol', spot && `cardcol--${tierOf(player(id).ovr, bands)}`)}>
             <PlayerCard
-              key={`${p.round}-${id}`}
               id={id}
               mode={p.mode}
-              index={i}
+              index={spot ? revealRank.get(id) ?? i : i}
               reveal
               selected={selected === id}
               dim={!!selected && selected !== id}
@@ -303,12 +384,28 @@ export function DraftScreen(p: DraftScreenProps) {
               }}
               hotkey={String(i + 1)}
             />
+            {canStealNow && <Button size="sm" variant="primary" icon="bolt" className="stealbtn" onClick={() => { buzz(30); p.onSteal?.(id); }}>{t('Steal')}</Button>}
+            </div>
           ))}
           {p.board.length === 0 && <div className="board__empty">{t('Dealing the next round…')}</div>}
         </div>
         )}
 
-        {!(p.turns && !p.canPick) && (
+        {spot?.missed && (
+          <div className="missed" aria-label={t('What was left behind')}>
+            <b className="missed__title">{spot.missed.seat === p.you ? t('What you missed') : t('What {name} missed', { name: p.nameOf?.(spot.missed.seat) ?? '' })}</b>
+            <div className="missed__row">
+              {[spot.missed.left, ...spot.missed.others].map((pack, k) => (
+                <div key={k} className="missed__pack">
+                  <span className="missed__label">{k === 0 ? t('Same pack') : t('Pack left sealed')}</span>
+                  <div className="missed__cards">{pack.map((id) => <PlayerCard key={id} id={id} mode={p.mode} size="xs" disabled />)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!watching && (
           <div className="needs" aria-label={t('Positions you still need')}>
             <span className="needs__label">{t('Still need')}</span>
             {needs.length === 0 ? <span className="needs__done">{t('All spots filled')}</span> : needs.map(([role, n]) => (
@@ -371,7 +468,7 @@ export function DraftScreen(p: DraftScreenProps) {
               <b>{shortName(heldPlayer.name)}</b>
               <span>{heldPlayer.pos} · {hint ?? t('Choose a spot')}</span>
             </div>
-            <Button variant="primary" icon={p.canPick ? 'check' : 'clock'} disabled={!p.canPick || !suggested || !!pending} loading={!!pending} onClick={() => suggested && place(suggested)}>
+            <Button variant="primary" icon={p.canPick ? 'check' : 'clock'} disabled={!p.canPick || !suggested || !!pending || locked} loading={!!pending} onClick={() => suggested && place(suggested)}>
               {p.canPick ? (suggestedRole ? t('Place at {role}', { role: suggestedRole }) : t('Place')) : (p.turnName != null ? t('Waiting for {name}', { name: p.turnName }) : t('Waiting for turn'))}
             </Button>
             <Button variant="ghost" size="sm" onClick={() => setSelected(null)}>{t('Cancel')}</Button>

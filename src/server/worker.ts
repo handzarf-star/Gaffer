@@ -2,7 +2,7 @@ import { ROOM_CODE_RE } from '../shared/protocol';
 import { randomRoomCode } from '../shared/rng';
 import { Room } from './room-do';
 import { Account, CareerRoom, type Env } from './career-do';
-import { handleApi } from './api';
+import { accountOf, handleApi } from './api';
 import { currentBuild } from './build';
 
 export { Room, CareerRoom, Account };
@@ -62,7 +62,17 @@ async function route(request: Request, env: Env): Promise<Response> {
     const code = ws[1]!;
     if (!ROOM_CODE_RE.test(code)) return new Response('No such room.', { status: 404 });
     const stub = env.ROOMS.get(env.ROOMS.idFromName(code));
-    return stub.fetch(request);
+    // The room is told which account is knocking (a silent guest account is enough), so a seat can be reclaimed on a browser that
+    // lost its seat secret. The header is set here and nowhere else: whatever a client sent under that name is dropped, and a socket
+    // opened by another site's page is not given the visitor's account.
+    const headers = new Headers(request.headers);
+    headers.delete('x-account');
+    const origin = request.headers.get('origin');
+    if (!origin || new URL(origin).host === url.host) {
+      const account = await accountOf(request, env).catch(() => null);
+      if (account) headers.set('x-account', account);
+    }
+    return stub.fetch(new Request(request, { headers }));
   }
 
   if (path.startsWith('/api/')) return json({ error: 'not found' }, 404);
