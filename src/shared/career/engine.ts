@@ -417,32 +417,36 @@ function openMatchday(st: CareerState, now: number): void {
   st.deadline = now + st.settings.dayHours * 3_600_000;
 }
 
-/** Best formation, style and eleven for a club out of everyone fit to play. */
+/**
+ * The style a club plays when the computer picks it. Styles are zero-sum and the rival's choice is hidden (rock, paper, scissors), so
+ * no style is "best" and `overall` cannot choose one: it is spread over the five by the club and the season, the same all season so a
+ * club has an identity. A manager keeps the style they chose.
+ */
+export function clubStyle(st: CareerState, club: Club): StyleId {
+  if (club.human) return club.style;
+  return STYLE_IDS[hashSeed(`${st.seed}/style/${st.season}/${club.id}`) % STYLE_IDS.length]!;
+}
+
+/** Best formation and eleven for a club out of everyone fit to play, in the style it plays. */
 export function autoLineup(w: IndexedWorld, st: CareerState, club: Club): Squad {
   let pool = club.roster.filter((id) => isAvailable(st, id));
   if (pool.length < 11) pool = [...club.roster]; // never field fewer than eleven
-  return withRatings(overlayFor(w, st, club), () => bestSquad(pool));
+  return withRatings(overlayFor(w, st, club), () => bestSquad(pool, clubStyle(st, club)));
 }
 
-/** The best formation, style and eleven out of a pool of players, at the ratings currently in force (call inside withRatings for overrides). */
-export function bestSquad(pool: readonly string[]): Squad {
+/** The best formation and eleven out of a pool of players, at the ratings currently in force (call inside withRatings for overrides). */
+export function bestSquad(pool: readonly string[], style: StyleId = 'possession'): Squad {
   let best: Squad | null = null;
   let bestO = -1;
   for (const f of FORMATION_IDS) {
     const placed = assignBest([...pool], FORMATIONS[f]);
     const slots: Record<string, string | null> = {};
     for (const s of FORMATIONS[f].slots) slots[s.id] = placed[s.id] ?? null;
-    const sq: Squad = { formation: f, slots, style: 'possession' };
+    const sq: Squad = { formation: f, slots, style };
     const o = profile(sq).overall;
     if (o > bestO) { best = sq; bestO = o; }
   }
-  let style: StyleId = 'possession';
-  let so = -1;
-  for (const s of STYLE_IDS) {
-    const o = profile({ ...best!, style: s }).overall;
-    if (o > so) { so = o; style = s; }
-  }
-  return { ...best!, style };
+  return best!;
 }
 
 function autoFormation(w: IndexedWorld, st: CareerState, club: Club): void {
@@ -614,7 +618,7 @@ export function runDay(w: IndexedWorld, st: CareerState, now: number): void {
       const seed = `${st.seed}/s${st.season}/d${day}/l${lid}/${fi}`;
       const res = withRatings({ ...overlayFor(w, st, A), ...overlayFor(w, st, B) }, () => {
         const sa = lineupFor(w, st, A), sb = lineupFor(w, st, B);
-        const r = simulateMatch(sa, sb, [A.name, B.name], seed, { knockout: false });
+        const r = simulateMatch(sa, sb, [A.name, B.name], seed, { knockout: false, gkPivot: w.gkPivot });
         return { r, sa, sb };
       });
       f.r = [res.r.score[0], res.r.score[1]];

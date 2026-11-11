@@ -40,6 +40,11 @@ async function sessionOf(request: Request, env: Env): Promise<Session | null> {
   return verifySession(await secretOf(env), readCookie(request.headers.get('cookie'), SESSION_COOKIE), Date.now());
 }
 
+/** The account behind a request's sign-in cookie, or null. Used by the room socket so a seat can be reclaimed without the stored seat secret. */
+export async function accountOf(request: Request, env: Env): Promise<string | null> {
+  return (await sessionOf(request, env))?.a ?? null;
+}
+
 function sameOrigin(request: Request, url: URL): boolean {
   const origin = request.headers.get('origin');
   return !origin || new URL(origin).host === url.host;

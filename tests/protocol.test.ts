@@ -4,7 +4,7 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import WebSocket from 'ws';
 import { autoPick } from '../src/shared/draft';
-import type { RoomView, S2C, C2S } from '../src/shared/protocol';
+import { CLASSIC_SETTINGS, type RoomView, type S2C, type C2S } from '../src/shared/protocol';
 
 let base = process.env.GAFFER_URL ?? '';
 let child: ChildProcess | null = null;
@@ -82,9 +82,9 @@ describe('over real WebSockets', () => {
     await a.connect();
     await b.connect();
     await a.until((v) => v.seats.length === 2);
-    a.send({ t: 'settings', patch: { format: 'duel', pickSeconds: 15 } });
+    a.send({ t: 'settings', patch: { ...CLASSIC_SETTINGS, pickSeconds: 15 } });
     await b.until((v) => v.settings.pickSeconds === 15);
-    b.send({ t: 'settings', patch: { pool: 'all' } });
+    b.send({ t: 'settings', patch: { pools: ['all'] } });
     await new Promise((r) => setTimeout(r, 100));
     expect(b.errors.some((e) => e.t === 'err' && e.code === 'not_host')).toBe(true);
     a.send({ t: 'start' });
@@ -178,5 +178,21 @@ describe('over real WebSockets', () => {
     await b.until((v) => v.seats.some((s) => s.name === 'Samuel'));
     a.close();
     b.close();
+  });
+});
+
+describe('build id handshake', () => {
+  it('health names the build, and the socket welcome carries the very same one', async () => {
+    const health = (await (await fetch(`${base}/api/health`)).json()) as { ok: boolean; build?: string };
+    expect(health.ok).toBe(true);
+    expect(typeof health.build).toBe('string');
+    const { code } = (await (await fetch(`${base}/api/rooms`, { method: 'POST' })).json()) as { code: string };
+    const welcome = await new Promise<S2C>((resolve, reject) => {
+      const ws = new WebSocket(`${base.replace('http', 'ws')}/ws/${code}`);
+      ws.on('open', () => ws.send(JSON.stringify({ t: 'hello', code, name: 'Sam', build: 'client-old-1' } satisfies C2S)));
+      ws.on('message', (d) => { const m = JSON.parse(d.toString()) as S2C; if (m.t === 'welcome') { ws.close(); resolve(m); } });
+      ws.on('error', reject);
+    });
+    expect(welcome.t === 'welcome' && welcome.build).toBe(health.build);
   });
 });

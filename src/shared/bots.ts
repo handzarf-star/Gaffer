@@ -26,10 +26,11 @@ export function botNames(seed: string, count: number): string[] {
   return Array.from({ length: count }, (_, i) => `${prefixes[i % prefixes.length]} ${rng.pick(SUFFIX)}`);
 }
 
-export function buildBotSquad(seed: string, pool: PoolKey, level: BotLevel, taken: Set<string>, key: string): Squad {
+/** `forceFormation` drafts for (and keeps) that formation; it exists so the balance harness can measure formations on squads drafted for them. */
+export function buildBotSquad(seed: string, pool: PoolKey, level: BotLevel, taken: Set<string>, key: string, forceFormation?: FormationId): Squad {
   const rng = new Rng(`${seed}/bot/${key}`);
   const cfg = BOT_LEVELS[level];
-  const formation: FormationId = rng.pick(FORMATION_IDS);
+  const formation: FormationId = forceFormation ?? rng.pick(FORMATION_IDS);
   let sq = emptySquad(formation);
   for (let round = 1; round <= 11; round++) {
     const board = dealBoard({
@@ -51,7 +52,7 @@ export function buildBotSquad(seed: string, pool: PoolKey, level: BotLevel, take
   }
   sq = autoArrange(sq);
   // smarter CPUs also pick the formation and tactic that suit their players
-  if (level !== 'easy') {
+  if (level !== 'easy' && !forceFormation) {
     let best = sq;
     let bestOvr = profile(sq).overall;
     for (const f of FORMATION_IDS) {
@@ -61,13 +62,8 @@ export function buildBotSquad(seed: string, pool: PoolKey, level: BotLevel, take
     }
     sq = best;
   }
-  let style = rng.pick(STYLE_IDS);
-  if (level !== 'easy' && rng.chance(cfg.skill)) {
-    let bestOvr = -1;
-    for (const st of STYLE_IDS) {
-      const o = profile({ ...sq, style: st }).overall;
-      if (o > bestOvr) { bestOvr = o; style = st; }
-    }
-  }
+  // Styles are zero-sum and the rival's choice is hidden (rock, paper, scissors), so no style is "best": a CPU picks one at random,
+  // which is also the best mixed strategy. (It used to take the style with the highest `overall`, which was always Possession.)
+  const style = rng.pick(STYLE_IDS);
   return { ...sq, style };
 }

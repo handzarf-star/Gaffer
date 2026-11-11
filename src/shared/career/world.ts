@@ -37,6 +37,8 @@ export interface IndexedWorld extends World {
   player: (id: string) => WorldPlayer;
   has: (id: string) => boolean;
   byClub: ReadonlyMap<string, readonly WorldPlayer[]>;
+  /** the keeper rating that stops the average share of shots in this league (see GK_PIVOT_ABOVE_MEAN) */
+  gkPivot: number;
 }
 
 export function lineOf(pos: Pos): Line {
@@ -48,6 +50,13 @@ export function lineOf(pos: Pos): Line {
   }
 }
 
+/**
+ * Keeper rating that stops the average share of shots in a career league: the mean keeper of the world plus this. A career league is not
+ * a pool of drafted stars (its keepers average 64, the draft game's 87), so the keeper curve is centred on its own level. The offset keeps
+ * goals per match where they were before the curve was steepened (2.60 on the real data, six seeds, 14 matchdays); `npm run check:balance` watches it.
+ */
+export const GK_PIVOT_ABOVE_MEAN = 5.5;
+
 /** Index a world and make its players known to the match engine. Safe to call again with the same data. */
 export function indexWorld(w: World): IndexedWorld {
   const clubs = new Map(w.clubs.map((c) => [c.id, c]));
@@ -57,6 +66,8 @@ export function indexWorld(w: World): IndexedWorld {
     if (!clubs.has(p.club)) throw new Error(`Player ${p.id} belongs to unknown club ${p.club}`);
     (byClub.get(p.club) ?? byClub.set(p.club, []).get(p.club)!).push(p);
   }
+  const keepers = w.players.filter((p) => p.pos === 'GK').map((p) => p.ovr);
+  const gkPivot = keepers.length ? Math.round((keepers.reduce((a, b) => a + b, 0) / keepers.length + GK_PIVOT_ABOVE_MEAN) * 10) / 10 : 85;
   registerPlayers(w.players.map((p) => ({ id: p.id, name: p.name, nat: p.nat, pos: p.pos, ovr: p.ovr, era: 'M' as const })));
   return {
     ...w,
@@ -64,6 +75,7 @@ export function indexWorld(w: World): IndexedWorld {
     player: (id) => { const p = players.get(id); if (!p) throw new Error(`Unknown career player ${id}`); return p; },
     has: (id) => players.has(id),
     byClub,
+    gkPivot,
   };
 }
 

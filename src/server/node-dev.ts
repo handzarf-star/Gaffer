@@ -7,6 +7,7 @@ import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer, type WebSocket } from 'ws';
+import { parseBuildId } from '../shared/build';
 import { MAX_SEATS, ROOM_CODE_RE } from '../shared/protocol';
 import { randomRoomCode } from '../shared/rng';
 import { RoomEngine } from '../shared/room';
@@ -22,6 +23,7 @@ const rooms = new Map<string, Live>();
 const PORT = Number(process.env.PORT ?? 8787);
 const here = path.dirname(fileURLToPath(import.meta.url));
 const STATIC_DIR = path.resolve(here, '../../dist/client');
+const BUILD_ID = (() => { try { return parseBuildId(fs.readFileSync(path.join(STATIC_DIR, 'index.html'), 'utf8')); } catch { return 'dev'; } })();
 
 function makeConn(live: Live, ws: WebSocket): Conn {
   return {
@@ -45,6 +47,7 @@ function createRoom(code: string): Live {
   live.host = new RoomHost(engine, {
     conns: () => [...live.sockets.keys()].map(connOf),
     now: () => Date.now(),
+    build: () => BUILD_ID,
     persist: () => undefined,
     schedule: (at) => {
       if (live.timer) clearTimeout(live.timer);
@@ -80,7 +83,7 @@ function send(res: http.ServerResponse, status: number, body: unknown) {
 const server = http.createServer((req, res) => {
   const url = new URL(req.url ?? '/', 'http://localhost');
   const p = url.pathname;
-  if (p === '/api/health') return send(res, 200, { ok: true, t: Date.now() });
+  if (p === '/api/health') return send(res, 200, { ok: true, t: Date.now(), build: BUILD_ID });
   if (p === '/api/rooms' && req.method === 'POST') {
     for (let i = 0; i < 8; i++) {
       const code = randomRoomCode();

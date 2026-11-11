@@ -36,6 +36,7 @@ export function HowTo() {
       <section>
         <h2>{t('5. Pick your tactics')}</h2>
         <p>{t('After the draft pick a formation and one of five tactics: Possession, High Press, Wide Attack, Fortress or Counter. Each has a clear trade-off. Your rival cannot see your choices until kick-off.')}</p>
+        <p>{t('Tactics play rock, paper, scissors: High Press beats Possession, Possession beats Fortress, Fortress beats Counter and Counter beats High Press. Wide Attack is the neutral choice. Since your rival hides theirs, there is some guessing to do.')}</p>
       </section>
       <section>
         <h2>{t('6. Watch it play out')}</h2>

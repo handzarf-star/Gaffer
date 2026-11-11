@@ -1,12 +1,17 @@
 import { DurableObject } from 'cloudflare:workers';
 import { MAX_SEATS, ROOM_CODE_RE, type RoomState } from '../shared/protocol';
 import { RoomEngine } from '../shared/room';
+import { currentBuild } from './build';
+import { restoreRoom, type LockReason } from './restore';
 import { RoomHost, type Conn, type HostIO } from './host';
 
 export interface Env {
   ROOMS: DurableObjectNamespace<Room>;
   ASSETS: Fetcher;
 }
+
+/** what survives hibernation with each socket: the seat it speaks for and the account it came in with */
+interface Attachment { id: string | null; account: string | null }
 
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
@@ -20,19 +25,28 @@ export class Room extends DurableObject<Env> {
   private lastComp: RoomState['comp'] | undefined = undefined;
   private alarmAt: number | null = null;
   private conns = new WeakMap<WebSocket, Conn>();
+  private build = 'dev';
+  /** set when the stored room cannot be served by this build; the storage is left exactly as it was */
+  private locked: LockReason | null = null;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
     // Keep-alive pings are answered by the runtime without waking the object.
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'));
     ctx.blockConcurrencyWhile(async () => {
-      const core = await ctx.storage.get<Omit<RoomState, 'comp'>>('core');
-      if (core && (core as { v?: number }).v === 2) {
-        const comp = (await ctx.storage.get<RoomState['comp']>('comp')) ?? null;
-        this.start({ ...core, comp } as RoomState);
-      } else if (core) {
-        // a room saved by an older version of the game cannot be resumed; drop it so the code is free again
+      this.build = await currentBuild(env.ASSETS);
+      const r = restoreRoom(await ctx.storage.get('core'), await ctx.storage.get('comp'));
+      if (r.kind === 'ready') {
+        this.start(r.state);
+        // an old save is rewritten in the current shape once, so the next wake-up has nothing to migrate
+        if (r.changed) await this.io().persist(r.state);
+      } else if (r.kind === 'drop') {
+        // too old to read and a room is never more than a game: free the code
         await ctx.storage.deleteAll();
+      } else if (r.kind === 'locked') {
+        // written by a newer build, or damaged beyond repair: do not touch it, do not serve it, do not let a new room overwrite it
+        this.locked = r.reason;
+        console.error(`room not loaded: ${r.reason} (saved v${r.from ?? '?'}) ${r.detail ?? ''}`);
       }
     });
   }
@@ -47,8 +61,9 @@ export class Room extends DurableObject<Env> {
     if (!c) {
       c = {
         raw: ws,
-        getId: () => (ws.deserializeAttachment() as { id: string | null } | null)?.id ?? null,
-        setId: (id) => ws.serializeAttachment({ id }),
+        getId: () => (ws.deserializeAttachment() as Attachment | null)?.id ?? null,
+        setId: (id) => ws.serializeAttachment({ ...((ws.deserializeAttachment() as Attachment | null) ?? { account: null }), id }),
+        account: () => (ws.deserializeAttachment() as Attachment | null)?.account ?? null,
         send: (data) => ws.send(data),
         close: (code, reason) => ws.close(code, reason.slice(0, 100)),
       };
@@ -61,6 +76,7 @@ export class Room extends DurableObject<Env> {
     return {
       conns: () => this.ctx.getWebSockets().map((ws) => this.conn(ws)),
       now: () => Date.now(),
+      build: () => this.build,
       persist: async (state) => {
         const { comp, ...core } = state;
         const puts: Record<string, unknown> = { core: { ...core, comp: null } };
@@ -91,13 +107,19 @@ export class Room extends DurableObject<Env> {
     const url = new URL(request.url);
 
     if (url.pathname === '/init' && request.method === 'POST') {
-      if (this.host) return new Response('exists', { status: 409 });
+      if (this.host || this.locked) return new Response('exists', { status: 409 });
       const code = request.headers.get('x-room-code') ?? '';
       if (!ROOM_CODE_RE.test(code)) return new Response('bad code', { status: 400 });
       const state = RoomEngine.create(code, Date.now()).s;
       this.start(state);
       await this.host!.changed(Date.now());
       return new Response('ok', { status: 201 });
+    }
+
+    if (this.locked) {
+      // a newer or damaged save: the room exists, it just cannot be played from this build right now
+      if (url.pathname === '/info') return json({ exists: true, joinable: false, locked: this.locked });
+      return new Response('This room is being updated. Reload in a minute.', { status: 503 });
     }
 
     if (url.pathname === '/info') {
@@ -111,7 +133,8 @@ export class Room extends DurableObject<Env> {
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair) as [WebSocket, WebSocket];
     this.ctx.acceptWebSocket(server);
-    server.serializeAttachment({ id: null });
+    // the worker verified the sign-in cookie and set this header; clients cannot reach this object directly
+    server.serializeAttachment({ id: null, account: request.headers.get('x-account') || null } satisfies Attachment);
     return new Response(null, { status: 101, webSocket: client });
   }
 

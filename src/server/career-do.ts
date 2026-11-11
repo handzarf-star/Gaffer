@@ -1,6 +1,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import { b64u, randomId } from './auth';
 import { CareerHost, type CareerIO, type Stored } from './career-host';
+import { restoreCareer, type LockReason } from './restore';
 
 export interface Env {
   ROOMS: DurableObjectNamespace;
@@ -20,6 +21,8 @@ const json = (data: unknown, status = 200) =>
 export class CareerRoom extends DurableObject<Env> {
   private host: CareerHost | null = null;
   private alarmAt: number | null = null;
+  /** set when the stored league cannot be served by this build; the storage is left exactly as it was and is never overwritten */
+  private locked: LockReason | null = null;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -32,8 +35,21 @@ export class CareerRoom extends DurableObject<Env> {
     return {
       now: () => Date.now(),
       load: async () => {
-        const st = await this.ctx.storage.get<Stored['st']>('st');
-        if (!st || st.v !== 1) return null;
+        const raw = await this.ctx.storage.get('st');
+        const r = restoreCareer(raw);
+        if (r.kind === 'fresh') return null;
+        if (r.kind !== 'ready') {
+          // never delete a league: a newer build wrote it (a deploy was rolled back) or it needs a fix we have not shipped yet
+          this.locked = r.kind === 'locked' ? r.reason : 'broken';
+          console.error(`league not loaded: ${this.locked} (saved v${r.kind === 'locked' ? r.from ?? '?' : '?'}) ${r.kind === 'locked' ? r.detail ?? '' : ''}`);
+          return null;
+        }
+        const st = r.state;
+        if (r.from !== st.v) {
+          // keep the pre-migration copy once, under its own key, so a faulty migration can be redone from the original
+          try { await this.ctx.storage.put(`st@v${r.from}`, raw); } catch (e) { console.error('could not keep the pre-migration copy', e); }
+        }
+        if (r.changed) await this.ctx.storage.put('st', st);
         const auth = (await this.ctx.storage.get<{ accountOf: Record<string, string>; touched: number }>('auth')) ?? { accountOf: {}, touched: Date.now() };
         return { st, accountOf: auth.accountOf, touched: auth.touched };
       },
@@ -44,7 +60,7 @@ export class CareerRoom extends DurableObject<Env> {
         if (at === null) await this.ctx.storage.deleteAlarm();
         else await this.ctx.storage.setAlarm(at);
       },
-      destroy: async () => { this.host = null; this.alarmAt = null; await this.ctx.storage.deleteAlarm(); await this.ctx.storage.deleteAll(); },
+      destroy: async () => { this.host = null; this.locked = null; this.alarmAt = null; await this.ctx.storage.deleteAlarm(); await this.ctx.storage.deleteAll(); },
     };
   }
 
@@ -54,11 +70,12 @@ export class CareerRoom extends DurableObject<Env> {
     const account = request.headers.get('x-account') || null;
 
     if (url.pathname === '/init' && request.method === 'POST') {
-      if (this.host) return new Response('exists', { status: 409 });
+      if (this.host || this.locked) return new Response('exists', { status: 409 });
       const code = request.headers.get('x-code') ?? '';
       this.host = await CareerHost.create(code, randomId(12), this.io());
       return new Response('ok', { status: 201 });
     }
+    if (this.locked) return json({ exists: true, locked: this.locked, msg: 'This league is being updated. Reload in a minute.' }, 503);
     if (!this.host) return json({ exists: false }, 404);
 
     if (url.pathname === '/info') {

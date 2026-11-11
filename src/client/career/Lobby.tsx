@@ -6,7 +6,7 @@ import { Badge } from './Badge';
 import type { LeagueCtx } from './ctx';
 import { ClubTag, Section, W } from './parts';
 
-function BadgeEditor({ value, onChange, initial }: { value: BadgeT; onChange: (b: BadgeT) => void; initial: string }) {
+export function BadgeEditor({ value, onChange, initial }: { value: BadgeT; onChange: (b: BadgeT) => void; initial: string }) {
   const { t } = useI18n();
   const swatch = (key: 'c1' | 'c2', label: string) => (
     <div className="swatches" role="group" aria-label={label}>

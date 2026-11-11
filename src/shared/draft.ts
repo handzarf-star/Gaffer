@@ -1,14 +1,15 @@
 import { FORMATIONS, ROLE_TO_POS, effectiveOvr, type Role } from './formations';
 import { Rng } from './rng';
 import { PLAYERS, player, tierOf, type Pos, type Tier } from './players';
-import { parsePoolKey, poolPlayers, type PoolId, type PoolKey } from './pools';
+import { parsePoolKey, poolBands, poolPlayers, type PoolId, type PoolKey } from './pools';
 import type { Squad } from './squad';
 
-export type DraftFormat = 'duel' | 'packs' | 'turns';
+export type DraftFormat = 'spotlight' | 'duel' | 'packs' | 'turns';
 export type RatingsMode = 'hidden' | 'tier' | 'full';
 export const ROUNDS = 11;
 
 export const FORMAT_INFO: Record<DraftFormat, { name: string; blurb: string }> = {
+  spotlight: { name: 'Spotlight', blurb: 'One manager at a time opens one of three identical packs while everyone watches. One steal each.' },
   duel: { name: 'Duel', blurb: 'One shared board each round, picks alternate. Steal your mate\'s target.' },
   packs: { name: 'Packs', blurb: 'Everyone opens their own pack at the same time. Fast and lucky.' },
   turns: { name: 'Take turns', blurb: 'One of you drafts a whole squad while the other watches live, then you swap. CPU teams go last.' },
@@ -23,12 +24,20 @@ const POS_WEIGHT: Record<Pos, number> = {
 };
 
 const TIER_WEIGHT: Record<PoolId, Record<Tier, number>> = {
+  bl: { bronze: 0.3, silver: 0.44, gold: 0.21, icon: 0.05 },
   modern: { bronze: 0.3, silver: 0.44, gold: 0.21, icon: 0.05 },
   legends: { bronze: 0.02, silver: 0.28, gold: 0.5, icon: 0.2 },
   all: { bronze: 0.18, silver: 0.4, gold: 0.31, icon: 0.11 },
   epl: { bronze: 0.2, silver: 0.4, gold: 0.29, icon: 0.11 },
   balkan: { bronze: 0.3, silver: 0.45, gold: 0.2, icon: 0.05 },
 };
+
+/** With several pools on, the widest star pool sets how often each tier is dealt (league players are then the bronze of that mix). */
+const WEIGHT_ORDER: PoolId[] = ['all', 'epl', 'legends', 'modern', 'balkan', 'bl'];
+function tierWeights(key: PoolKey): Record<Tier, number> {
+  const { pools } = parsePoolKey(key);
+  return TIER_WEIGHT[pools.length === 1 ? pools[0]! : WEIGHT_ORDER.find((p) => pools.includes(p)) ?? 'all'];
+}
 
 export function openRoles(sq: Squad): Array<{ slotId: string; role: Role }> {
   return FORMATIONS[sq.formation].slots.filter((s) => !sq.slots[s.id]).map((s) => ({ slotId: s.id, role: s.role }));
@@ -73,7 +82,8 @@ export function dealBoard(inp: DealInput): string[] {
   const { all, byPos } = poolIndex(inp.pool);
   const chosen: string[] = [];
   const used = new Set<string>(inp.taken);
-  const tierW = TIER_WEIGHT[parsePoolKey(inp.pool).pool];
+  const tierW = tierWeights(inp.pool);
+  const bands = poolBands(inp.pool);
 
   const draw = (pos: Pos | null): string | null => {
     const pickTier = (): Tier => rng.weighted(['bronze', 'silver', 'gold', 'icon'] as Tier[], (t) => tierW[t]);
@@ -82,7 +92,7 @@ export function dealBoard(inp: DealInput): string[] {
     if (free.length === 0) return null;
     // try the rolled tier, then relax to any tier
     const t = pickTier();
-    const inTier = free.filter((p) => tierOf(p.ovr) === t);
+    const inTier = free.filter((p) => tierOf(p.ovr, bands) === t);
     const pool = inTier.length ? inTier : free;
     const p = rng.pick(pool);
     used.add(p.id);

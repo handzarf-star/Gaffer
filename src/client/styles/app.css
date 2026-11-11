@@ -199,3 +199,27 @@
   .hero__sub { font-size: 16px; }
   .panel { padding: 16px; }
 }
+
+/* ═════════════ League Night: home and lobby ═════════════ */
+.start { display: grid; gap: 12px; max-width: 460px; margin: 0 auto; width: 100%; }
+.start .namefield { max-width: none; margin: 0; }
+.start__note { text-align: center; margin: 0; }
+details.more { border-radius: var(--r-md); }
+details.more > summary, details.advanced > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; min-height: 44px; font-weight: 700; color: var(--text-2); }
+details.more > summary::-webkit-details-marker, details.advanced > summary::-webkit-details-marker { display: none; }
+details.more > summary::after, details.advanced > summary::after, details.transfers > summary::after { content: '▾'; margin-left: auto; transition: transform .15s; }
+details.more[open] > summary::after, details.advanced[open] > summary::after, details.transfers[open] > summary::after { transform: rotate(180deg); }
+details.transfers > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; }
+details.transfers > summary::-webkit-details-marker { display: none; }
+details.advanced > summary { margin: 0; color: var(--text); }
+details.advanced[open] > summary { margin-bottom: 4px; }
+.more--home { max-width: 460px; margin: 0 auto; width: 100%; }
+.morelist { list-style: none; padding: 0; margin: 4px 0 0; display: grid; gap: 8px; }
+.morelist button { width: 100%; text-align: left; display: grid; gap: 3px; padding: 12px 14px; border-radius: var(--r-md); border: 1.5px solid var(--border); background: var(--surface); }
+.morelist button:hover { border-color: var(--border-input); }
+.morelist b { font: 800 15px var(--font-display); }
+.morelist span { font-size: 13px; color: var(--muted); line-height: 1.35; }
+.club__row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center; }
+.club__fields { display: grid; gap: 6px; }
+.club__fields label { font-weight: 700; font-size: 13px; color: var(--text-2); }
+.seat .badge { flex: none; }

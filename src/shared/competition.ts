@@ -59,8 +59,12 @@ export interface CompFixture {
   /** human team ids playing in this fixture */
   humans: string[];
   lite: LiteResult | null;
-  /** the full story, kept only for fixtures a human plays in, and only while that matchday is live */
+  /** the full story, kept only for fixtures a human plays in, and only until every human in it has watched it */
   result: MatchResult | null;
+  /** humans in this fixture who have not watched it yet. While it is not empty the fixture is SEALED: nobody else is sent its score. */
+  unseen?: string[];
+  /** set only in the copy sent to a viewer: this fixture has been played but its score is being kept from them */
+  sealed?: boolean;
 }
 
 export interface Matchday {
@@ -77,8 +81,9 @@ export interface CompState {
   days: Matchday[];
   day: number;
   champion: string | null;
-  /** total matchdays if already known (league and group stage), else null */
   seed: string;
+  /** keeper rating that stops the average share of shots in this competition; unset = the stars' level (sim.ts GK_PIVOT) */
+  gkPivot?: number;
 }
 
 export interface TableRow {
@@ -243,7 +248,8 @@ export function completeDay(c: CompState, humanIds: string[]): void {
   const humans = new Set(humanIds);
   const today = c.days[c.day]!;
   const kept = today.fixtures.map((f) => f.result);
-  for (const f of today.fixtures) f.result = null;
+  // a story somebody has yet to watch is kept until they have (the room drops it then, or when the next matchday is played)
+  for (const f of today.fixtures) if (!f.unseen?.length) f.result = null;
   const keepResults = () => today.fixtures.forEach((f, i) => { f.result = kept[i] ?? null; }); // the final's story stays for "watch again"
 
   if (c.kind === 'match') {

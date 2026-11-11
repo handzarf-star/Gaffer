@@ -35,6 +35,7 @@ registerDict('bs', {
   "You need at least two teams to start. Add CPU teams or invite a friend.": "Za početak trebaju najmanje dvije ekipe. Dodaj CPU ekipe ili pozovi prijatelja.",
   "That combination does not work. Try a different number of teams.": "Ta kombinacija ne radi. Probaj drugi broj ekipa.",
   "Easy there. Slow down a little.": "Polako. Uspori malo.",
+  "Something went wrong on our side. That move was not applied; try again.": "Greška je na našoj strani. Taj potez nije primijenjen; pokušaj ponovo.",
   "You were removed from the room.": "Uklonjen si iz sobe.",
   "Room not found": "Soba nije pronađena",
   "Check the code, or ask your friend to create a fresh room.": "Provjeri šifru ili zamoli prijatelja da napravi novu sobu.",

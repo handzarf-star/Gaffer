@@ -3,6 +3,7 @@
 import { registerDict } from './index';
 
 registerDict('bs', {
+  'A new version is available.': 'Dostupna je nova verzija.',
   // ── Solo Cup and Daily Draft: intro
   'Daily Draft · {date}': 'Dnevni draft · {date}',
   'Daily {date}': 'Dnevni draft {date}',
@@ -79,6 +80,7 @@ registerDict('bs', {
   'Teammates from the <b>same nation</b> who stand next to each other on the pitch are linked. Linked players play a little better.': 'Saigrači iz <b>iste države</b> koji stoje jedan pored drugog na terenu su povezani. Povezani igrači igraju malo bolje.',
   '5. Pick your tactics': '5. Izaberi taktiku',
   'After the draft pick a formation and one of five tactics: Possession, High Press, Wide Attack, Fortress or Counter. Each has a clear trade-off. Your rival cannot see your choices until kick-off.': 'Poslije drafta izaberi formaciju i jednu od pet taktika: Posjed lopte, Visoki presing, Napad preko krila, Tvrđava ili Kontranapad. Svaka ima jasnu cijenu. Rival ne vidi tvoje izbore do početka utakmice.',
+  'Tactics play rock, paper, scissors: High Press beats Possession, Possession beats Fortress, Fortress beats Counter and Counter beats High Press. Wide Attack is the neutral choice. Since your rival hides theirs, there is some guessing to do.': 'Taktike se igraju kao kamen, papir, makaze: Visoki presing pobjeđuje Posjed lopte, Posjed lopte pobjeđuje Tvrđavu, Tvrđava pobjeđuje Kontranapad, a Kontranapad pobjeđuje Visoki presing. Napad preko krila je neutralan izbor. Pošto protivnik svoju taktiku krije, treba i malo pogađati.',
   '6. Watch it play out': '6. Gledaj kako se odigra',
   'The engine compares attack, midfield, defence and keepers, adds some luck, and plays 90 minutes: chances, saves, cards, goals, extra time and penalties. Better squads win more often, but upsets always happen. Both players see the same match at the same time, and you can skip to the end.': 'Simulator poredi napad, sredinu terena, odbranu i golmane, doda malo sreće i odigra 90 minuta: prilike, odbrane, kartone, golove, produžetke i penale. Bolji kadrovi češće pobjeđuju, ali iznenađenja se uvijek dese. Oba igrača gledaju istu utakmicu u isto vrijeme, a možeš i preskočiti do kraja.',
   'If something goes wrong': 'Ako nešto pođe po zlu',

@@ -9,17 +9,33 @@ const SCENT_GLYPH: Record<Scent, string> = { goals: '⚽', grit: '🛡', engine:
  * Three sealed packs. Their names, glow, smell and rumour are hints, not promises: the person choosing reads the clues
  * and the squad they still need, and mostly gets lucky or unlucky. Watching your friend choose is half the fun.
  */
-export function PackChooser({ packs, canPick, mode, onOpen, who }: {
+export function PackChooser({ packs, canPick, mode, onOpen, who, identical }: {
   packs: PackClue[];
   canPick: boolean;
   mode: RatingsMode;
   onOpen: (index: number) => void;
   who?: string;
+  /** spotlight draft: this many packs with nothing to tell them apart (no name, no glow, no clue) */
+  identical?: number;
 }) {
   const { t } = useI18n();
+  const label = canPick ? t('Choose a pack') : who != null ? t('{name} is choosing a pack', { name: who }) : t('Someone is choosing a pack');
+  if (identical) {
+    return (
+      <div className="packs packs--same" role="group" aria-label={label}>
+        {Array.from({ length: identical }, (_, i) => (
+          <button key={i} type="button" className="pack pack--same" disabled={!canPick} onClick={() => onOpen(i)} data-pack={i} aria-label={t('Pack {n} of {total}', { n: i + 1, total: identical })}>
+            <span className="pack__foil" aria-hidden="true" />
+            <span className="pack__art" aria-hidden="true"><span className="pack__mark" data-g="?" /></span>
+            <span className="pack__tap" aria-hidden="true">{canPick ? t('Tap to open') : ''}</span>
+          </button>
+        ))}
+      </div>
+    );
+  }
   // the clue texts come from the server in English (shared/packs.ts); they are translated here, where they are shown
   return (
-    <div className="packs" role="group" aria-label={canPick ? t('Choose a pack') : who != null ? t('{name} is choosing a pack', { name: who }) : t('Someone is choosing a pack')}>
+    <div className="packs" role="group" aria-label={label}>
       {packs.map((c, i) => {
         const glow = mode === 'hidden' ? 'mystery' : c.glow;
         const glowText = mode === 'hidden' ? t('No telling') : t(GLOW_TEXT[c.glow]);

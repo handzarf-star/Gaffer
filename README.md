@@ -27,7 +27,7 @@
 - **Take turns draft.** One of you drafts a whole squad while the other watches the pack and the pitch fill up live, then you swap, then the CPU teams draft. Nobody drafts at the same time, and because each person has their own packs there is no stealing. Who goes first alternates every game.
 - **Themed pools and eras.** Draft from Modern Stars, the Hall of Legends, Everyone, the **Premier League** (anyone who played there) or the **Balkans** (Bosnia, Croatia and Serbia, with some league players), and narrow it by era with a tap: up to the 70s, the 80s, 90s, 2000s, 2010s or today. A mix that is too thin for the number of teams is refused, with the reason on screen.
 - **See the fit.** Every spot on the pitch shows how well a player suits it (natural, close, a stretch, out of position) as colour, icon and words, with the exact rating penalty. Same-nation neighbours link for chemistry.
-- **Pick tactics.** Five styles, each with a stated trade-off. Your rival can't see your lineup or tactics until kick-off.
+- **Pick tactics.** Five styles, each a stated trade-off between sectors (no style is free), and they play rock, paper, scissors: High Press beats Possession, Possession beats Fortress, Fortress beats Counter, Counter beats High Press; Wide Attack is neutral. Your rival can't see your lineup or tactics until kick-off, so there is some guessing.
 - **Watch the match as a story.** Quiet play is one big arrow across the pitch with the team's name on it: it points at the goal that team is attacking, its tip creeps toward that goal as the attack gets dangerous, and a clear-cut chance reads BIG CHANCE and turns their half red-hot. The danger is the match engine's own chance of scoring, so the arrow never overstates. Dots and the ball appear only for real highlights (goals, penalties, red cards and real chances), move at a believable pace (nobody runs faster than a sprinter, nothing teleports, measured by a test) and fade away again. Yellow cards, speculative shots and routine set pieces are a label on the arrow. A match takes about a minute and a half, and extra time and penalties happen when the stage needs a winner. Skip is still there if you want it.
 - **Real-world rates.** Cards, penalties and free kicks follow Premier League and top-five-league averages, and individual players are booked, fouled and take penalties in line with their reputation (see the note on the players).
 - **Keep score.** A series score survives rematches; the first pick rotates so it stays fair.
@@ -56,11 +56,12 @@ That is the whole deploy: it builds the client and publishes one Worker that ser
 ## Test it
 
 ```bash
-npm test                   # 296 unit, simulation, tournament, room-machine, chaos, socket, career, sign-in, data and translation tests
+npm test                   # 370 unit, simulation, tournament, room-machine, chaos, socket, career, sign-in, data and translation tests
 npm run test:e2e           # real browsers: two-player games, two phones in a league, one phone at five sizes,
                            # reconnects, accessibility audit, and a hard kill-and-restart of the runtime
 npm run check:persistence  # just the kill-and-restart check (boots its own copy of the runtime)
 npm run check:career       # career API on the real runtime: sign-in, a league, SIGKILL and restart
+npm run check:balance      # the match engine's balance harness: keeper worth, tactics matrix, formations, career goals (about 2 minutes; see docs/balance.md)
 npm run test:all           # typecheck + unit + build + e2e + brand sweep
 ```
 

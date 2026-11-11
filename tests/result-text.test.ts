@@ -24,49 +24,53 @@ const play = (i: number): MatchResult => {
 };
 const matches = Array.from({ length: 40 }, (_, i) => play(i));
 
-// Recorded BEFORE hk/rk were added to the engine: [score, went, headline, motm.reason] of play(0..39). Adding the structured fields
-// must not change a single English word (nor, because the headline has its own random stream, anything else).
+// [score, went, headline, motm.reason] of play(0..39). Originally recorded BEFORE hk/rk were added to the engine, to prove that adding the
+// structured fields changed not a single English word. These matches follow the match engine, so they are re-recorded when the engine is
+// changed ON PURPOSE (and only then; say why in the commit). Re-recorded, each time on purpose:
+//   - Sprint 2.2: the keeper's shot-stopping curve was steepened (sim.ts gkFactor) so +5 on the keeper is worth +0.10 points a match instead of +0.03.
+//   - Sprint 2.3: tactics are zero-sum with a rock-paper-scissors matchup term, the fortress keeper bonus is real, and the computer picks its tactic at random instead of by overall.
+//   - Sprint 2.3: keeper divisor 38 -> 36 after the new tactics moved the baseline, so +5 on the keeper is centred in its band in both the draft game and a career league.
 const BEFORE: Array<[string, string, string, string]> = [
-  ['0-5', 'ft', 'Beta run riot', '2 goals'],
+  ['0-3', 'ft', 'Beta cruise past Alpha', '20 saves'],
   ['2-1', 'ft', 'Alpha win a tight one', '1 goal'],
-  ['3-2', 'et', 'Extra-time winner sends Alpha through', '2 goals'],
+  ['3-1', 'ft', 'Alpha get the better of Beta', '2 goals'],
   ['0-1', 'ft', 'Beta grind out a 1-0', '1 goal'],
-  ['0-1', 'ft', 'Beta win it from the spot', '4 saves'],
+  ['0-0', 'pens', 'Penalty drama: Beta win it from the spot', '4 saves'],
   ['4-1', 'ft', 'Comfortable night for Alpha', '15 saves'],
-  ['0-2', 'ft', 'Beta take the points', '1 goal'],
+  ['1-0', 'ft', 'Shock! Alpha topple the favourites', '7 saves'],
   ['0-1', 'et', 'Extra-time winner sends Beta through', '1 goal'],
-  ['3-2', 'ft', 'Last-gasp winner breaks Beta hearts', '1 goal'],
+  ['3-2', 'ft', "Goal-fest! Everyone gets their money's worth", '1 goal'],
   ['1-0', 'ft', 'Alpha grind out a 1-0', '1 goal'],
   ['2-1', 'ft', 'Alpha take the points', '1 goal'],
   ['2-0', 'ft', 'Alpha win a tight one', '4 saves'],
-  ['1-1', 'ft', 'Everything level at the final whistle', '11 saves'],
-  ['3-1', 'et', 'Alpha edge it in extra time', '2 goals'],
-  ['1-1', 'pens', 'Alpha survive the shootout, 5-4', '1 goal'],
+  ['0-0', 'ft', 'Nil-nil: nothing to separate them', '9 saves'],
+  ['2-1', 'ft', 'Alpha take the points', '1 goal'],
+  ['1-1', 'pens', 'Alpha survive the shootout, 5-3', '1 goal'],
   ['1-1', 'ft', 'Honours even in a thriller', '1 goal'],
-  ['1-0', 'ft', 'Alpha grind out a 1-0', '9 saves'],
-  ['1-0', 'ft', 'Alpha grind out a 1-0', '1 goal'],
+  ['1-1', 'pens', 'Beta survive the shootout, 4-3', '12 saves'],
+  ['2-1', 'ft', 'Alpha snatch it late', '1 goal'],
   ['0-1', 'ft', 'One goal is enough for Beta', '14 saves'],
-  ['2-1', 'ft', 'Alpha win a tight one', '1 goal'],
-  ['1-0', 'ft', 'One goal is enough for Alpha', '4 saves'],
-  ['0-0', 'ft', 'Nil-nil: nothing to separate them', '6 saves'],
-  ['0-1', 'ft', 'Beta grind out a 1-0', '7 saves'],
-  ['1-0', 'ft', 'One goal is enough for Alpha', '1 goal'],
-  ['0-2', 'ft', 'Beta win a tight one', '16 saves'],
+  ['3-1', 'et', 'Extra-time winner sends Alpha through', '9 saves'],
+  ['1-0', 'et', 'Extra-time winner sends Alpha through', '4 saves'],
+  ['0-1', 'ft', 'Beta grind out a 1-0', '6 saves'],
+  ['1-2', 'ft', 'Beta snatch it late', '1 goal'],
+  ['2-1', 'ft', 'Alpha get the better of Beta', '1 goal'],
+  ['0-2', 'ft', 'Beta win a tight one', '2 goals'],
   ['1-0', 'ft', 'One goal is enough for Alpha', '1 goal'],
   ['3-1', 'ft', 'Alpha win a tight one', '1 goal'],
-  ['3-0', 'ft', 'Alpha cruise past Beta', '2 goals'],
-  ['1-0', 'ft', 'One goal is enough for Alpha', '10 saves'],
+  ['0-0', 'ft', 'Nil-nil: nothing to separate them', '9 saves'],
+  ['1-1', 'pens', 'Alpha heartbroken as Beta take it on penalties', '9 saves'],
   ['2-1', 'ft', 'Alpha take the points', '1 goal'],
-  ['0-6', 'ft', 'Vidic hat-trick sinks Alpha', '3 goals'],
+  ['0-4', 'ft', 'Demolition: Beta 4-0 Alpha', '2 goals'],
   ['2-0', 'ft', 'Alpha take the points', '1 goal'],
-  ['2-0', 'ft', 'Alpha win a tight one', '1 goal'],
-  ['0-2', 'ft', 'Beta get the better of Alpha', '1 goal'],
+  ['2-1', 'ft', 'Alpha win a tight one', '1 goal'],
+  ['0-1', 'ft', 'Beta snatch it late', '1 goal'],
   ['1-0', 'ft', 'Alpha grind out a 1-0', '1 goal'],
-  ['4-0', 'ft', 'Alpha run riot', '21 saves'],
+  ['1-0', 'ft', 'Alpha grind out a 1-0', '14 saves'],
+  ['0-2', 'ft', 'Beta take the points', '9 saves'],
+  ['1-0', 'ft', 'Alpha grind out a 1-0', '5 saves'],
+  ['0-0', 'pens', 'Beta heartbroken as Alpha take it on penalties', '15 saves'],
   ['0-3', 'ft', 'Beta cruise past Alpha', '1 goal'],
-  ['1-0', 'ft', 'Alpha grind out a 1-0', '4 saves'],
-  ['5-0', 'ft', 'Beta torn apart: Alpha are ruthless', '1 goal'],
-  ['0-0', 'ft', 'Nil-nil: nothing to separate them', '4 saves'],
 ];
 
 describe('result text: English is untouched', () => {

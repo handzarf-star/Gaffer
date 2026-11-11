@@ -1,7 +1,9 @@
 import { Component, type ReactNode } from 'react';
 import { ROOM_CODE_RE } from '../shared/protocol';
-import { SoundToggle, ThemeToggle, Toasts, Wordmark, Button } from './components/ui';
+import { Banner, SoundToggle, ThemeToggle, Toasts, Wordmark, Button } from './components/ui';
 import { navigate, usePath } from './lib/hooks';
+import { useEffect } from 'react';
+import { useStaleBuild, watchBuild } from './lib/build';
 import { CareerHome } from './career/CareerHome';
 import { LeaguePage } from './career/League';
 import { LangToggle, useI18n } from './lib/i18n';
@@ -53,9 +55,23 @@ function Route({ path }: { path: string }) {
   return <Home />;
 }
 
+/** A page left open across a deploy keeps running old code against the new server. Never reload on its own (it could cost a draft): ask. */
+function UpdateBanner() {
+  const { t } = useI18n();
+  const stale = useStaleBuild();
+  if (!stale) return null;
+  return (
+    <Banner tone="info" icon="refresh">
+      <span>{t('A new version is available.')}</span>
+      <Button size="sm" variant="ink" onClick={() => location.reload()}>{t('Reload')}</Button>
+    </Banner>
+  );
+}
+
 export default function App() {
   const path = usePath();
   const { t } = useI18n();
+  useEffect(() => watchBuild(), []);
   return (
     <div className="app">
       <div className="app__bg" aria-hidden="true"><i /><i /><i /></div>
@@ -63,7 +79,6 @@ export default function App() {
       <header className="topbar">
         <Wordmark onClick={() => navigate('/')} />
         <nav className="topbar__nav" aria-label={t('Main')}>
-          <a href="/career" onClick={(e) => { e.preventDefault(); navigate('/career'); }}>{t('Career')}</a>
           <a href="/how-to-play" onClick={(e) => { e.preventDefault(); navigate('/how-to-play'); }}>{t('How to play')}</a>
           <span id="topbar-slot" className="topbar__slot" />
           <LangToggle />
@@ -72,6 +87,7 @@ export default function App() {
         </nav>
       </header>
       <main id="main" className="page">
+        <UpdateBanner />
         <Boundary>
           <Route path={path} />
         </Boundary>

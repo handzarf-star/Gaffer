@@ -4,6 +4,7 @@ import type { MatchResult } from '../../shared/sim';
 import type { Badge } from '../../shared/career/world';
 import type { Squad } from '../../shared/squad';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { reportServerBuild } from './build';
 
 export type ApiError = { code: string; msg: string; status: number };
 export type Out<T> = { ok: true; data: T } | { ok: false; error: ApiError };
@@ -11,6 +12,7 @@ export type Out<T> = { ok: true; data: T } | { ok: false; error: ApiError };
 async function call<T>(method: 'GET' | 'POST', url: string, body?: unknown): Promise<Out<T>> {
   try {
     const res = await fetch(url, { method, credentials: 'same-origin', headers: body === undefined ? undefined : { 'content-type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) });
+    reportServerBuild(res.headers.get('x-build'));
     let data: unknown = null;
     try { data = await res.json(); } catch { /* empty */ }
     const d = (data ?? {}) as Record<string, unknown>;
@@ -19,6 +21,16 @@ async function call<T>(method: 'GET' | 'POST', url: string, body?: unknown): Pro
   } catch {
     return { ok: false, error: { code: 'network', msg: '', status: 0 } };
   }
+}
+
+/**
+ * Make sure this browser has an account before it joins a room: a silent guest account if there is none. The room binds the seat to
+ * it, so the seat can be reclaimed later even if the browser has lost the seat secret. Never blocks play: a host without accounts
+ * (the plain Node host) or a failed call simply means the seat is tied to the browser only, as it always was.
+ */
+export async function ensureAccount(name: string): Promise<void> {
+  const me = await api.me();
+  if (me.ok && !me.data.user) await api.guest(name);
 }
 
 export interface Me { user: { name: string; kind: 'google' | 'guest' } | null; googleClientId: string | null }

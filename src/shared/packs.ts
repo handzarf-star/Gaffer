@@ -67,11 +67,17 @@ export function clueFor(cards: string[], name: string, rumour: string, rng: Rng)
   const best = cards.reduce<Tier>((b, id) => (TIER_ORDER[tierOf(player(id).ovr)] > TIER_ORDER[b] ? tierOf(player(id).ovr) : b), 'bronze');
   const glow = rng.chance(GLOW_HONEST) ? best : rng.weighted(TIERS, (t) => ({ bronze: 0.35, silver: 0.4, gold: 0.2, icon: 0.05 })[t]);
   const inside = cards.map((id) => SCENT_OF[player(id).pos]);
-  const scent = rng.chance(SCENT_HONEST) ? rng.pick(inside) : rng.pick(SCENTS);
+  // `&&` keeps the draws identical for every real pack (chance first, then the pick); an empty pack cannot be honest about anything
+  const scent = rng.chance(SCENT_HONEST) && inside.length > 0 ? rng.pick(inside) : rng.pick(SCENTS);
   return { name, glow, scent, rumour };
 }
 
-/** Three sealed packs for one seat in one round. Every pack on its own is playable: it holds a card for a role the seat still needs. */
+/**
+ * Three sealed packs for one seat in one round. Every pack on its own is playable: it holds a card for a role the seat still needs.
+ * When the pool is nearly spent the later packs get fewer cards, then none. An empty pack is never offered (there would be nothing to
+ * pick inside it), so the answer has between 0 and `count` packs, each with at least one card, and no card is in two of them.
+ * It is [] only when no card at all is left. Real rooms refuse pools this thin (poolHealth); this is the backstop.
+ */
 export function dealPacks(inp: DealInput & { count?: number }): PackOffer[] {
   const count = inp.count ?? PACKS_PER_ROUND;
   const rng = new Rng(`${inp.seed}/packs/${inp.round}/${inp.key}`);
@@ -81,6 +87,7 @@ export function dealPacks(inp: DealInput & { count?: number }): PackOffer[] {
   const offers: PackOffer[] = [];
   for (let i = 0; i < count; i++) {
     const cards = dealBoard({ ...inp, key: `${inp.key}#${i}`, taken: used });
+    if (cards.length === 0) break; // nothing is left for this pack, so nothing is left for the next ones either
     for (const c of cards) used.add(c);
     offers.push({ cards, clue: clueFor(cards, names[i]!, rumours[i]!, rng) });
   }

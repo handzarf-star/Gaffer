@@ -3,7 +3,7 @@ import { autoPick } from '../src/shared/draft';
 import { Rng } from '../src/shared/rng';
 import { AFK_GRACE_MS, DROP_GRACE_MS, HUB_SECONDS, ROOM_ABANDONED_MS, RoomEngine, SETUP_SECONDS, testDeps } from '../src/shared/room';
 import { tables, currentDay } from '../src/shared/competition';
-import type { C2S, RoomState, Settings } from '../src/shared/protocol';
+import { CLASSIC_SETTINGS, type C2S, type RoomState, type Settings } from '../src/shared/protocol';
 
 interface Ctx {
   eng: RoomEngine;
@@ -22,7 +22,8 @@ function mk(n: number, settings: Partial<Settings> = {}, prefix = 't'): Ctx {
     ids.push(r.id);
     secrets.push(r.secret);
   }
-  if (Object.keys(settings).length) expect(eng.handle(ids[0]!, { t: 'settings', patch: settings }, t).ok).toBe(true);
+  // these tests cover the game as it was before League Night changed the defaults: a Duel draft for one match, unless a test says otherwise
+  expect(eng.handle(ids[0]!, { t: 'settings', patch: { ...CLASSIC_SETTINGS, ...settings } }, t).ok).toBe(true);
   return { eng, ids, secrets, t };
 }
 
@@ -86,10 +87,10 @@ describe('lobby', () => {
   });
   it('only the host changes settings, and only valid ones', () => {
     const c = mk(2);
-    expect(c.eng.handle(c.ids[1]!, { t: 'settings', patch: { pool: 'legends' } }, c.t)).toMatchObject({ ok: false, code: 'not_host' });
+    expect(c.eng.handle(c.ids[1]!, { t: 'settings', patch: { pools: ['legends'] } }, c.t)).toMatchObject({ ok: false, code: 'not_host' });
     expect(c.eng.handle(c.ids[0]!, { t: 'settings', patch: { pickSeconds: 99 as never } }, c.t)).toMatchObject({ ok: false });
-    expect(c.eng.handle(c.ids[0]!, { t: 'settings', patch: { pool: 'legends', format: 'packs' } }, c.t).ok).toBe(true);
-    expect(c.eng.s.settings.pool).toBe('legends');
+    expect(c.eng.handle(c.ids[0]!, { t: 'settings', patch: { pools: ['legends'], format: 'packs' } }, c.t).ok).toBe(true);
+    expect(c.eng.s.settings.pools).toEqual(['legends']);
   });
   it('drops disconnected ghosts at start, and a lone human plays a CPU team', () => {
     const c = mk(2);
@@ -148,7 +149,7 @@ describe('duel draft', () => {
   });
 
   it('nobody ever gets the same player twice in a shared draft', () => {
-    const c = mk(3, { format: 'duel', pool: 'all' });
+    const c = mk(3, { format: 'duel', pools: ['all'] });
     c.eng.handle(c.ids[0]!, { t: 'start' }, c.t);
     playDraft(c);
     expect(c.eng.s.phase).toBe('setup');
@@ -470,7 +471,7 @@ describe('chaos: random players, random disconnects, random timing', () => {
       const kind = n > 2 ? rng.pick(['league', 'groups', 'knockout'] as const) : rng.pick(['match', 'league', 'groups', 'knockout'] as const);
       const c = mk(n, {
         format: rng.pick(['duel', 'packs', 'turns'] as const),
-        pool: rng.pick(['modern', 'legends', 'all'] as const),
+        pools: [rng.pick(['modern', 'legends', 'all'] as const)],
         pickSeconds: rng.pick([0, 15, 25, 40] as const),
         competition: kind,
       }, 'chaos' + seed);
@@ -543,7 +544,7 @@ describe('persistence', () => {
       if (!r.ok) throw new Error(r.msg);
       c.ids.push(r.id);
     }
-    expect(c.eng.handle(c.ids[0]!, { t: 'settings', patch: { format: 'packs', ...comp } }, c.t).ok).toBe(true);
+    expect(c.eng.handle(c.ids[0]!, { t: 'settings', patch: { ...CLASSIC_SETTINGS, format: 'packs', ...comp } }, c.t).ok).toBe(true);
     expect(c.eng.handle(c.ids[0]!, { t: 'start' }, c.t).ok).toBe(true);
     let restores = 0;
     for (let guard = 0; c.eng.s.phase !== 'result' && guard < 2000; guard++) {
@@ -914,5 +915,32 @@ describe('pick-a-pack in the room', () => {
     for (let i = 0; i < 40 && c.eng.s.phase === 'draft'; i++) { c.t += 20_000; c.eng.tick(c.t); }
     expect(c.eng.s.phase).toBe('setup');
     for (const id of c.ids) expect(Object.values(c.eng.s.squads[id]!.slots).filter(Boolean)).toHaveLength(11);
+  });
+});
+
+describe('a packs draft with nothing left to choose from', () => {
+  it('skips the seat at once instead of waiting for a timer, and never throws', () => {
+    const c = mk(2, { format: 'packs', pickSeconds: 0 }); // no timer at all: only the guard can move this on
+    const [a, b] = c.ids as [string, string];
+    c.eng.handle(a, { t: 'start' }, c.t);
+    const d = c.eng.s.draft!;
+    d.offers![a] = []; d.boards[a] = [];
+    expect(() => c.eng.tick(c.t)).not.toThrow();
+    expect(d.picked).toContain(a);      // a was skipped
+    expect(d.picked).not.toContain(b);  // b still has a real choice and the round waits for them
+    expect(c.eng.s.draft!.round).toBe(1);
+    expect(pickFor(c, b).ok).toBe(true);
+    expect(c.eng.s.draft!.round).toBe(2);
+  });
+  it('an out-of-time seat with no packs is skipped, not turned into a NaN index', () => {
+    const c = mk(2, { format: 'packs', pickSeconds: 15 });
+    const [a, b] = c.ids as [string, string];
+    c.eng.handle(a, { t: 'start' }, c.t);
+    const d = c.eng.s.draft!;
+    d.offers![a] = []; d.boards[a] = []; d.offers![b] = []; d.boards[b] = [];
+    c.t = d.deadline! + 1000;
+    expect(() => c.eng.tick(c.t)).not.toThrow();
+    expect(c.eng.s.draft?.round ?? 99).toBeGreaterThanOrEqual(2); // everyone was skipped, the round moved on
+    expect(JSON.stringify(c.eng.s)).not.toContain('NaN');
   });
 });
