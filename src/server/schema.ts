@@ -22,8 +22,13 @@ export const C2SSchema = z.discriminatedUnion('t', [
   z.object({
     t: z.literal('settings'),
     patch: z.object({
-      format: z.enum(['duel', 'packs', 'turns']).optional(),
-      pool: enumOf(POOLS).optional(),
+      format: z.enum(['spotlight', 'duel', 'packs', 'turns']).optional(),
+      pools: z.array(enumOf(POOLS)).min(1).max(6).optional(),
+      nations: z.array(z.string().regex(/^[A-Z]{3}$/)).max(80).optional(),
+      steals: z.union([z.literal(0), z.literal(1), z.literal(2)]).optional(),
+      gate: z.enum(['live', 'limit']).optional(),
+      limitHours: z.union([z.literal(12), z.literal(24), z.literal(48)]).optional(),
+      window: z.boolean().optional(),
       eras: z.array(enumOf(ERAS)).max(6).optional(),
       ratings: z.enum(['hidden', 'tier', 'full']).optional(),
       pickSeconds: z.union([z.literal(0), z.literal(15), z.literal(25), z.literal(40)]).optional(),
@@ -47,6 +52,9 @@ export const C2SSchema = z.discriminatedUnion('t', [
   z.object({ t: z.literal('lobby') }),
   z.object({ t: z.literal('kick'), id: z.string().max(32) }),
   z.object({ t: z.literal('emote'), e: z.string().max(8) }),
+  z.object({ t: z.literal('club'), name: z.string().max(40), badge: z.object({ shape: z.string().max(12), c1: z.string().max(9), c2: z.string().max(9), mark: z.string().max(12) }).optional() }),
+  z.object({ t: z.literal('steal'), round: z.number().int().min(0).max(99), card: z.string().max(80) }),
+  z.object({ t: z.literal('sign'), card: z.string().max(80).nullable(), slot: slotId.optional() }),
 ]);
 
 export function parseMessage(raw: string): C2S | null {

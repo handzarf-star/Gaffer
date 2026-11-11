@@ -37,7 +37,7 @@ describe('a move that throws is rolled back', () => {
     await expect(r.say({ t: 'name', name: 'Samuel' })).resolves.toBeUndefined(); // never rejects: the socket handler cannot crash
     expect(JSON.stringify(r.engine.s)).toBe(before); // byte for byte the room that existed before the move
     expect(r.engine.s.seats[0]!.name).toBe('Sam');
-    expect(r.engine.s.settings.teams).toBe(2);
+    expect(r.engine.s.settings.teams).toBe(JSON.parse(before).settings.teams);
     expect(Number.isNaN(r.engine.s.series.games)).toBe(false);
     expect(r.errors().at(-1)).toMatchObject({ t: 'err', code: 'internal' });
     for (const s of r.persisted) { expect(JSON.stringify(s)).not.toContain('CORRUPTED'); expect(JSON.stringify(s)).not.toContain('null,"games"'); }

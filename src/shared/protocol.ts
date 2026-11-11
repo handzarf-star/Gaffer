@@ -1,4 +1,5 @@
 import type { BotLevel } from './bots';
+import type { Badge } from './career/world';
 import type { CompetitionKind, CompState } from './competition';
 import type { DraftFormat, RatingsMode } from './draft';
 import type { PackClue, PackOffer } from './packs';
@@ -13,11 +14,18 @@ export const MIN_SEATS = 1;
 export const MAX_TEAMS = 16;
 export const ROOM_CODE_RE = /^[A-HJ-NP-Z]{4}$/;
 
-export type Phase = 'lobby' | 'draft' | 'setup' | 'match' | 'hub' | 'result';
+export type Phase = 'lobby' | 'draft' | 'setup' | 'match' | 'hub' | 'window' | 'result';
+
+/** How a league moves on: everybody together with short timers, or each stage with a time limit so it can run over days. */
+export type Gate = 'live' | 'limit';
+export const LIMIT_HOURS = [12, 24, 48] as const;
 
 export interface Settings {
   format: DraftFormat;
-  pool: PoolId;
+  /** which pools the draft takes its players from; several can be on */
+  pools: PoolId[];
+  /** countries the players may come from; empty means all of them */
+  nations: string[];
   /** which eras of the pool to draft from; empty means all of them */
   eras: EraId[];
   ratings: RatingsMode;
@@ -31,12 +39,22 @@ export interface Settings {
   pace: Pace;
   /** league only: play everyone once or twice */
   legs: 1 | 2;
+  /** spotlight draft: how many times each manager may take a card out of a rival's opened pack */
+  steals: 0 | 1 | 2;
+  gate: Gate;
+  /** on `limit`: how long each stage (line-ups, a matchday, the transfer window) may take */
+  limitHours: (typeof LIMIT_HOURS)[number];
+  /** leagues: a transfer window at half-season, one pack each, bottom of the table first */
+  window: boolean;
 }
 
+/** What a new room starts with: League Night. */
 export const DEFAULT_SETTINGS: Settings = {
-  format: 'duel', pool: 'modern', eras: [], ratings: 'tier', pickSeconds: 25,
-  competition: 'match', teams: 2, botLevel: 'normal', pace: 'normal', legs: 1,
+  format: 'spotlight', pools: ['bl'], nations: [], eras: [], ratings: 'full', pickSeconds: 25,
+  competition: 'league', teams: 8, botLevel: 'normal', pace: 'quick', legs: 1, steals: 1, gate: 'live', limitHours: 24, window: true,
 };
+/** The defaults the game had before League Night (a Duel draft for one match between two). The older draft styles are tested from here. */
+export const CLASSIC_SETTINGS: Partial<Settings> = { format: 'duel', pools: ['modern'], ratings: 'tier', competition: 'match', window: false };
 export const PICK_SECONDS = [0, 15, 25, 40] as const;
 
 export const SEAT_HUES = ['#ff5a3c', '#2f6bff', '#10a56a', '#a855f7'] as const;
@@ -53,13 +71,49 @@ export interface Seat {
   formation: FormationId;
   /** a CPU team */
   bot: boolean;
+  /** the club this manager runs (a CPU team's `name` is already a club name). Tables, scoreboards and commentary use it. */
+  club?: string;
+  badge?: Badge;
 }
+
+/** The name of a seat's team: its club, or the manager's name for a seat from before clubs existed. */
+export const teamName = (seat: Pick<Seat, 'name' | 'club'> | undefined): string => seat?.club || seat?.name || '???';
 
 export interface DraftLogEntry {
   round: number;
   seat: string;
   player: string;
   auto: boolean;
+  /** stolen out of this seat's opened pack */
+  from?: string;
+}
+
+/** What the manager on the clock did not get: the rest of the pack they opened, and the two packs they left sealed. */
+export interface Missed {
+  seat: string;
+  round: number;
+  picked: string | null;
+  left: string[];
+  others: string[][];
+}
+
+/** Spotlight draft: one manager at a time, three packs that look the same, everybody watches. */
+export interface SpotState {
+  /** every pick of the draft in order (seat ids, snake by round) */
+  queue: string[];
+  i: number;
+  stage: 'choose' | 'open';
+  /** the three sealed packs of the manager on the clock. Server only: nobody is told what is in a sealed pack. */
+  packs: string[][];
+  opened: number | null;
+  /** rivals may steal from the opened pack until this moment; the manager on the clock picks after it */
+  stealUntil: number | null;
+  stolen: { by: string; card: string } | null;
+  /** steals each manager has left */
+  steals: Record<string, number>;
+  /** turns a manager will skip because a steal already filled them */
+  owed: Record<string, number>;
+  missed: Missed | null;
 }
 
 export interface DraftState {
@@ -80,6 +134,7 @@ export interface DraftState {
   picked: string[];
   taken: string[];
   log: DraftLogEntry[];
+  spot?: SpotState;
 }
 
 /** The matchday that is being watched right now. */
@@ -96,6 +151,31 @@ export interface HubState {
   ready: Record<string, boolean>;
   /** indexes into comp.days that were played since the last hub (includes CPU-only rounds skipped over) */
   played: number[];
+  /** the season is over; the result waits here until every manager has watched their last match (or the time limit) */
+  final?: boolean;
+}
+
+export interface Signing { team: string; in: string; out: string }
+
+export interface WindowSeat {
+  stage: 'choose' | 'open' | 'done';
+  /** the pack this manager opened, for everyone to see on `live` */
+  board: string[];
+  /** the two packs they left sealed, shown once they have opened one */
+  others: string[][];
+  signed: Signing | null;
+}
+
+/** The mid-season transfer window: one pack each, bottom of the table first. */
+export interface WindowState {
+  /** human team ids, bottom of the table first */
+  order: string[];
+  /** `live`: index into `order` of the manager on the clock. `limit`: -1, everyone opens their pack in their own time. */
+  turn: number;
+  deadline: number | null;
+  seats: Record<string, WindowSeat>;
+  /** every completed signing, managers first, then CPU teams */
+  signings: Signing[];
 }
 
 export interface SeriesEntry {
@@ -112,7 +192,7 @@ export interface Series {
 
 /** Server-side truth. Never sent to clients as-is. */
 export interface RoomState {
-  v: 2;
+  v: 3;
   code: string;
   rev: number;
   createdAt: number;
@@ -134,6 +214,13 @@ export interface RoomState {
   hub: HubState | null;
   series: Series;
   rematch: Record<string, boolean>;
+  window: WindowState | null;
+  /** this league's transfer window has been and gone */
+  windowDone: boolean;
+  /** what the last window changed, for the table screen after it */
+  lastWindow: Signing[];
+  /** seat id -> account id. Server only: it lets a signed-in visitor reclaim their seat without the stored seat secret. */
+  accounts: Record<string, string>;
 }
 
 /* ───────────── what a client is allowed to see ───────────── */
@@ -153,6 +240,36 @@ export interface DraftView {
   turn: number;
   picked: string[];
   log: DraftLogEntry[];
+  /** spotlight draft */
+  spot?: {
+    /** the manager on the clock */
+    seat: string;
+    stage: 'choose' | 'open';
+    /** how many identical sealed packs they are looking at (their contents are never sent) */
+    packs: number;
+    opened: number | null;
+    stealUntil: number | null;
+    stolen: { by: string; card: string } | null;
+    steals: Record<string, number>;
+    owed: Record<string, number>;
+    /** may the viewer steal from the pack that is open right now? */
+    canSteal: boolean;
+    missed: Missed | null;
+    /** picks made and picks in the whole draft, for the progress bar */
+    done: number;
+    total: number;
+  };
+}
+
+export interface WindowView {
+  order: string[];
+  turn: number;
+  deadline: number | null;
+  /** per manager: where they are, and what they opened (on `live` everyone sees it; on `limit` only once they are done) */
+  seats: Record<string, WindowSeat>;
+  signings: Signing[];
+  /** may the viewer act now? */
+  yourMove: boolean;
 }
 
 export interface RoomView {
@@ -176,6 +293,10 @@ export interface RoomView {
   hub: HubState | null;
   series: Series;
   rematch: Record<string, boolean>;
+  window: WindowView | null;
+  lastWindow: Signing[];
+  /** a played match of yours that you have not watched yet (outside a live matchday): which day and fixture of `comp` */
+  replay: { day: number; fixture: string } | null;
 }
 
 /* ───────────── wire messages ───────────── */
@@ -196,7 +317,11 @@ export type C2S =
   | { t: 'rematch'; want: boolean }
   | { t: 'lobby' }
   | { t: 'kick'; id: string }
-  | { t: 'emote'; e: string };
+  | { t: 'emote'; e: string }
+  | { t: 'club'; name: string; badge?: Badge }
+  | { t: 'steal'; round: number; card: string }
+  /** transfer window: sign `card` into `slot` (the player there is released), or `card: null` to keep the squad */
+  | { t: 'sign'; card: string | null; slot?: string };
 
 export type ErrorCode =
   | 'bad_message'

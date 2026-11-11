@@ -3,14 +3,16 @@
 // player peaked in, are my own rough judgement calls. They give the flavour of a themed draft, not a record book.
 // Edit the lists below and `npm test` checks every name still matches a real player.
 
-import { PLAYERS, slug, type Player, type Pos } from './players';
+import { getWorld } from './career/data';
+import { PLAYERS, STAR_BANDS, player, slug, type Player, type Pos, type TierBands } from './players';
 
-export type PoolId = 'modern' | 'legends' | 'all' | 'epl' | 'balkan';
+export type PoolId = 'bl' | 'modern' | 'legends' | 'all' | 'epl' | 'balkan';
 export type EraId = 'classic' | '80s' | '90s' | '00s' | '10s' | 'now';
-/** a pool plus its era filter in one string, e.g. "epl@90s,00s". Lets every deal and every CPU draft take a single value. */
+/** one or more pools, an era filter and a country filter in one string, e.g. "epl@90s,00s" or "bl+all@now#BIH,CRO". Lets every deal and every CPU draft take a single value. */
 export type PoolKey = string;
 
 export const POOLS: Record<PoolId, { id: PoolId; name: string; blurb: string }> = {
+  bl: { id: 'bl', name: 'Balkan League', blurb: 'Today\'s real squads of 32 clubs from Bosnia, Croatia and Serbia' },
   modern: { id: 'modern', name: 'Modern Stars', blurb: 'Players from the last few seasons' },
   legends: { id: 'legends', name: 'Hall of Legends', blurb: 'Retired greats from every era' },
   all: { id: 'all', name: 'Everyone', blurb: 'Legends and modern stars in one draft' },
@@ -18,6 +20,10 @@ export const POOLS: Record<PoolId, { id: PoolId; name: string; blurb: string }> 
   balkan: { id: 'balkan', name: 'Balkans', blurb: 'Bosnia, Croatia and Serbia, with league players too' },
 };
 export const POOL_IDS = Object.keys(POOLS) as PoolId[];
+/** what the lobby offers up front: real leagues first, then the stars. The other ids are older themed pools and still work. */
+export const LOBBY_POOLS: PoolId[] = ['bl', 'epl', 'all'];
+/** pools made of the hand-rated stars; everything else is a sourced league */
+const STAR_POOLS: ReadonlySet<PoolId> = new Set(['modern', 'legends', 'all', 'epl', 'balkan']);
 /** the three pools the solo cup and daily draft use */
 export const BASE_POOL_IDS: PoolId[] = ['modern', 'legends', 'all'];
 
@@ -62,15 +68,26 @@ export const hasDecade = (id: string): boolean => DECADE_OF.has(id);
 
 /* ───────────── pool keys and filtering ───────────── */
 
-export function poolKey(pool: PoolId, eras: readonly EraId[] = []): PoolKey {
+/**
+ * The sourced Balkan League squads as draft cards. They are the career world's players (registered with the match engine when the world
+ * is built), so `player(id)` knows them everywhere this module is loaded: the room engine, the worker and the client.
+ */
+const LEAGUE_PLAYERS: readonly Player[] = getWorld().players.map((p) => player(p.id));
+
+export function poolKey(pools: PoolId | readonly PoolId[], eras: readonly EraId[] = [], nations: readonly string[] = []): PoolKey {
+  const list = typeof pools === 'string' ? [pools] : [...new Set(pools)].filter((x) => x in POOLS).sort((a, b) => POOL_IDS.indexOf(a) - POOL_IDS.indexOf(b));
   const e = [...new Set(eras)].filter((x) => x in ERAS).sort((a, b) => ERA_IDS.indexOf(a) - ERA_IDS.indexOf(b));
-  return e.length && e.length < ERA_IDS.length ? `${pool}@${e.join(',')}` : pool;
+  const n = [...new Set(nations)].filter((x) => /^[A-Z]{3}$/.test(x)).sort();
+  return `${list.length ? list.join('+') : 'all'}${e.length && e.length < ERA_IDS.length ? `@${e.join(',')}` : ''}${n.length ? `#${n.join(',')}` : ''}`;
 }
-export function parsePoolKey(key: PoolKey): { pool: PoolId; eras: EraId[] } {
-  const [base, e] = key.split('@');
-  const pool = (base && base in POOLS ? base : 'all') as PoolId;
+export function parsePoolKey(key: PoolKey): { pool: PoolId; pools: PoolId[]; eras: EraId[]; nations: string[] } {
+  const [head, nat] = key.split('#');
+  const [base, e] = (head ?? '').split('@');
+  const pools = (base ?? '').split('+').filter((x): x is PoolId => x in POOLS);
+  if (pools.length === 0) pools.push('all');
   const eras = e ? (e.split(',').filter((x) => x in ERAS) as EraId[]) : [];
-  return { pool, eras };
+  const nations = nat ? nat.split(',').filter((x) => /^[A-Z]{3}$/.test(x)) : [];
+  return { pool: pools[0]!, pools, eras, nations };
 }
 
 const sourceOk = (pool: PoolId, p: Player): boolean => {
@@ -81,25 +98,64 @@ const sourceOk = (pool: PoolId, p: Player): boolean => {
     case 'all': return true;
     case 'epl': return inPremierLeague(p);
     case 'balkan': return BALKAN_NATS.has(p.nat);
+    case 'bl': return false; // league players are not in PLAYERS
   }
 };
+
+/** Everyone a set of pools holds, before the era and country filters. A footballer who is both a star and in a league squad appears once: the star entry. */
+function sourcePlayers(pools: readonly PoolId[]): Player[] {
+  const out = PLAYERS.filter((p) => pools.some((pool) => sourceOk(pool, p)));
+  if (pools.includes('bl')) {
+    const stars = new Set(out.map((p) => p.id));
+    for (const p of LEAGUE_PLAYERS) if (!stars.has(slug(p.name))) out.push(p);
+  }
+  return out;
+}
 
 const cache = new Map<PoolKey, Player[]>();
 export function poolPlayers(key: PoolKey): Player[] {
   let list = cache.get(key);
   if (!list) {
-    const { pool, eras } = parsePoolKey(key);
-    list = PLAYERS.filter((p) => sourceOk(pool, p) && (eras.length === 0 || eras.includes(eraOf(p))));
+    const { pools, eras, nations } = parsePoolKey(key);
+    list = sourcePlayers(pools).filter((p) => (eras.length === 0 || eras.includes(eraOf(p))) && (nations.length === 0 || nations.includes(p.nat)));
     cache.set(key, list);
   }
   return list.slice();
 }
 
-/** how many players each era has inside a pool, so the lobby can grey out eras that would be empty */
-export function eraCounts(pool: PoolId): Record<EraId, number> {
+/** does the mix contain hand-rated stars (then cards are graded on the stars' thresholds), or only sourced league players? */
+export const poolHasStars = (key: PoolKey): boolean => parsePoolKey(key).pools.some((p) => STAR_POOLS.has(p));
+
+const bandCache = new Map<PoolKey, TierBands>();
+/**
+ * Where bronze, silver, gold and icon begin for this mix. Star pools use the fixed thresholds. A pool of league players only is graded
+ * against itself (top 3% icon, next 17% gold, next 40% silver): on the stars' thresholds every one of them would be bronze, and a
+ * pack where every card looks the same is not a pack.
+ */
+export function poolBands(key: PoolKey): TierBands {
+  if (poolHasStars(key)) return STAR_BANDS;
+  let b = bandCache.get(key);
+  if (!b) {
+    const sorted = poolPlayers(key).map((p) => p.ovr).sort((x, y) => y - x);
+    const at = (share: number) => sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * share))] ?? 0;
+    b = sorted.length ? [at(0.6), at(0.2), at(0.03)] : STAR_BANDS;
+    bandCache.set(key, b);
+  }
+  return b;
+}
+
+/** how many players each era has inside a mix, so the lobby can grey out eras that would be empty */
+export function eraCounts(pools: PoolId | readonly PoolId[], nations: readonly string[] = []): Record<EraId, number> {
   const out = Object.fromEntries(ERA_IDS.map((e) => [e, 0])) as Record<EraId, number>;
-  for (const p of PLAYERS) if (sourceOk(pool, p)) out[eraOf(p)]++;
+  for (const p of sourcePlayers(typeof pools === 'string' ? [pools] : pools)) if (nations.length === 0 || nations.includes(p.nat)) out[eraOf(p)]++;
   return out;
+}
+
+/** the countries in a mix (with the eras applied) and how many players each has, biggest first */
+export function nationCounts(pools: readonly PoolId[], eras: readonly EraId[] = []): Array<[nat: string, players: number]> {
+  const m = new Map<string, number>();
+  for (const p of poolPlayers(poolKey(pools, eras))) m.set(p.nat, (m.get(p.nat) ?? 0) + 1);
+  return [...m.entries()].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1));
 }
 
 /* ───────────── is there enough to draft from? ───────────── */

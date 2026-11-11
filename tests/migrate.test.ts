@@ -183,19 +183,32 @@ describe('a damaged league is repaired where it can be and refused where it cann
 });
 
 describe('saved rooms', () => {
+  // The fixtures are version 2 (before League Night). The build writes version 3, so every one of them goes through steps[2].
   for (const name of ROOMS) {
-    it(`${name}: loads unchanged and the engine runs on it`, () => {
+    it(`${name}: migrates v2 -> v3 with nothing lost, nothing undefined, and the engine runs on it`, () => {
       const raw = fx(name);
       const r = loadRoom(raw);
       expect(r.ok).toBe(true);
       if (!r.ok) return;
-      expect(r.changed).toBe(false);
-      expect(r.state).toEqual(raw);
+      expect(r.from).toBe(2);
+      expect(r.changed).toBe(true);
+      expect(r.state.v).toBe(3);
       expect(bad(r.state)).toEqual([]);
+      // one pool became a list of pools; what League Night added starts at its neutral value
+      const { pool, ...oldSettings } = raw.settings;
+      expect(r.state.settings).toMatchObject({ ...oldSettings, pools: [pool], nations: [], gate: 'live', window: false });
+      expect((r.state.settings as unknown as Record<string, unknown>)['pool']).toBeUndefined();
+      expect(r.state).toMatchObject({ window: null, windowDone: false, lastWindow: [], accounts: {} });
+      // everything that was there is still there, untouched
+      for (const k of ['code', 'rev', 'phase', 'hostId', 'seats', 'secrets', 'game', 'seed', 'draft', 'squads', 'setup', 'comp', 'day', 'hub', 'series', 'rematch']) expect((r.state as unknown as Record<string, unknown>)[k], k).toEqual(raw[k]);
+      // a room that was mid-game carries on under the rules it started with: its own draft style, and no transfer window
+      expect(r.state.settings.format).toBe(raw.settings.format);
       const eng = new RoomEngine(clone(r.state), testDeps('fx'));
       const id = eng.s.seats.find((s) => !s.bot)!.id;
       expect(() => eng.view(id, eng.s.lastActive + 1)).not.toThrow();
       expect(() => eng.tick(eng.s.lastActive + 1000)).not.toThrow();
+      // and once rewritten as v3 it is a fixed point
+      expect(loadRoom(clone(r.state))).toMatchObject({ ok: true, from: 3, changed: false });
     });
   }
   it('a setting added after the room was saved takes its default instead of undefined', () => {
@@ -205,7 +218,8 @@ describe('saved rooms', () => {
     const r = loadRoom(raw);
     if (!r.ok) throw new Error(JSON.stringify(r));
     expect(r.changed).toBe(true);
-    expect(r.state.settings).toEqual({ ...DEFAULT_SETTINGS, eras: ['80s'] });
+    // what the save had is kept (its draft style, its pool, now a list); what it lacked or had mangled takes the default
+    expect(r.state.settings).toEqual({ ...DEFAULT_SETTINGS, format: 'duel', pools: ['modern'], ratings: 'tier', competition: 'match', window: false, eras: ['80s'] });
     expect((r.state.settings as unknown as Record<string, unknown>)['shiny']).toBeUndefined();
   });
   it('repairs broken seats and tables, and refuses a room with no usable code or phase', () => {
@@ -244,7 +258,7 @@ describe('what a Durable Object does with what it finds in storage', () => {
     expect(restoreCareer(league)).toMatchObject({ kind: 'ready', from: 1, changed: false });
     expect(restoreCareer({ ...league, rev: -3, news: 'x' })).toMatchObject({ kind: 'ready', changed: true });
     const { comp, ...core } = fx('room-league.v2');
-    expect(restoreRoom(core, comp)).toMatchObject({ kind: 'ready', changed: false });
+    expect(restoreRoom(core, comp)).toMatchObject({ kind: 'ready', from: 2, changed: true }); // a v2 room is rewritten as v3 once
     expect(restoreRoom({ ...core, settings: {} }, comp)).toMatchObject({ kind: 'ready', changed: true });
   });
   it('a league is never dropped, whatever is wrong with it; a newer one is locked untouched', () => {
@@ -258,7 +272,7 @@ describe('what a Durable Object does with what it finds in storage', () => {
     const { comp, ...core } = fx('room-league.v2');
     expect(restoreRoom({ ...core, v: 1 }, comp)).toEqual({ kind: 'drop', reason: 'too_old' });
     expect(restoreRoom({ not: 'a room' }, null)).toEqual({ kind: 'drop', reason: 'not_state' });
-    expect(restoreRoom({ ...core, v: 3 }, comp)).toMatchObject({ kind: 'locked', reason: 'too_new' });
+    expect(restoreRoom({ ...core, v: 4 }, comp)).toMatchObject({ kind: 'locked', reason: 'too_new' });
     expect(restoreRoom({ ...core, code: 'x' }, comp)).toMatchObject({ kind: 'locked', reason: 'broken' });
   });
   it('the competition stored beside the room is merged back in', () => {
@@ -269,8 +283,8 @@ describe('what a Durable Object does with what it finds in storage', () => {
     expect(r.state.comp).toEqual(comp);
     expect(r.state satisfies RoomState).toBeTruthy();
   });
-  it('the versions this build writes are the versions the fixtures were frozen at', () => {
+  it('the versions this build writes', () => {
     expect(careerPipeline.current).toBe(1);
-    expect(roomPipeline.current).toBe(2);
+    expect(roomPipeline.current).toBe(3); // the room fixtures are v2 and migrate; freeze v3 fixtures before the next bump
   });
 });

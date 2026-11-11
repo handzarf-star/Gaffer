@@ -362,10 +362,15 @@ export function player(id: string): Player {
   return p;
 }
 
-export function tierOf(ovr: number): Tier {
-  if (ovr >= 93) return 'icon';
-  if (ovr >= 87) return 'gold';
-  if (ovr >= 80) return 'silver';
+/** The lowest rating that is silver, gold and icon. */
+export type TierBands = readonly [silver: number, gold: number, icon: number];
+/** The thresholds of the star pools. A pool with no stars in it grades its cards against itself instead (see pools.ts, poolBands). */
+export const STAR_BANDS: TierBands = [80, 87, 93];
+
+export function tierOf(ovr: number, bands: TierBands = STAR_BANDS): Tier {
+  if (ovr >= bands[2]) return 'icon';
+  if (ovr >= bands[1]) return 'gold';
+  if (ovr >= bands[0]) return 'silver';
   return 'bronze';
 }
 

@@ -51,8 +51,8 @@ describe('pools and eras', () => {
     expect(poolKey('epl', [])).toBe('epl');
     expect(poolKey('epl', ['00s', '90s'])).toBe('epl@90s,00s');
     expect(poolKey('epl', ['90s', '90s'])).toBe('epl@90s');
-    expect(parsePoolKey('epl@90s,00s')).toEqual({ pool: 'epl', eras: ['90s', '00s'] });
-    expect(parsePoolKey('nonsense@zzz')).toEqual({ pool: 'all', eras: [] });
+    expect(parsePoolKey('epl@90s,00s')).toEqual({ pool: 'epl', pools: ['epl'], eras: ['90s', '00s'], nations: [] });
+    expect(parsePoolKey('nonsense@zzz')).toEqual({ pool: 'all', pools: ['all'], eras: [], nations: [] });
   });
 
   it('the Balkan pool is Bosnians, Croatians and Serbians, and its extras appear nowhere else', () => {
@@ -98,7 +98,7 @@ describe('a room drafts only from the chosen mix', () => {
   };
 
   it('Premier League 90s and 00s: every pack card and every CPU player belongs to it', () => {
-    const { eng, ids } = room({ pool: 'epl', eras: ['90s', '00s'] });
+    const { eng, ids } = room({ pools: ['epl'], eras: ['90s', '00s'] });
     expect(eng.s.settings.eras).toEqual(['90s', '00s']);
     expect(eng.handle(ids[0], { t: 'start' }, 1_000_000).ok).toBe(true);
     const allowed = new Set(poolPlayers('epl@90s,00s').map((p) => p.id));
@@ -106,7 +106,7 @@ describe('a room drafts only from the chosen mix', () => {
   });
 
   it('Balkans: CPU teams draft Balkan players too, with nobody on two CPU teams', () => {
-    const { eng, ids } = room({ pool: 'balkan' });
+    const { eng, ids } = room({ pools: ['balkan'] });
     expect(eng.handle(ids[0], { t: 'start' }, 1_000_000).ok).toBe(true);
     // finish the draft by the clock
     let t = 1_000_000;
@@ -120,7 +120,7 @@ describe('a room drafts only from the chosen mix', () => {
   });
 
   it('a mix that is too thin for the number of teams will not start, and says why', () => {
-    const { eng, ids } = room({ pool: 'epl', eras: ['classic'] });
+    const { eng, ids } = room({ pools: ['epl'], eras: ['classic'] });
     const r = eng.handle(ids[0], { t: 'start' }, 1_000_000);
     expect(r).toMatchObject({ ok: false, code: 'bad_settings' });
     expect(eng.s.phase).toBe('lobby');
@@ -128,10 +128,10 @@ describe('a room drafts only from the chosen mix', () => {
 
   it('settings reject unknown pools and eras', () => {
     const { eng, ids } = room({});
-    expect(eng.handle(ids[0], { t: 'settings', patch: { pool: 'nope' } as never }, 1_000_000).ok).toBe(false);
+    expect(eng.handle(ids[0], { t: 'settings', patch: { pools: ['nope'] } as never }, 1_000_000).ok).toBe(false);
     expect(eng.handle(ids[0], { t: 'settings', patch: { eras: ['stone-age'] } as never }, 1_000_000).ok).toBe(false);
-    expect(parseMessage(JSON.stringify({ t: 'settings', patch: { pool: 'epl', eras: ['90s', 'now'] } }))).toEqual({ t: 'settings', patch: { pool: 'epl', eras: ['90s', 'now'] } });
-    expect(parseMessage(JSON.stringify({ t: 'settings', patch: { pool: 'nope' } }))).toBeNull();
+    expect(parseMessage(JSON.stringify({ t: 'settings', patch: { pools: ['epl'], eras: ['90s', 'now'] } }))).toEqual({ t: 'settings', patch: { pools: ['epl'], eras: ['90s', 'now'] } });
+    expect(parseMessage(JSON.stringify({ t: 'settings', patch: { pools: ['nope'] } }))).toBeNull();
     expect(parseMessage(JSON.stringify({ t: 'settings', patch: { eras: ['stone-age'] } }))).toBeNull();
   });
 });
